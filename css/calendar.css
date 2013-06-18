@@ -70,8 +70,8 @@ th.h7, th.h8, th.h9, th.h10, th.h11, th.h12, th.h13, th.h14, th.h15, th.h16, th.
 #legend {
 	/*clear: left;*/
 	float:right;
-	margin-left: 24px;
 	/*width: 165px;*/
+	position:relative;
 	color: #777;
 	margin-top: 10px;
 	background: #f3f3f3;
@@ -83,7 +83,6 @@ th.h7, th.h8, th.h9, th.h10, th.h11, th.h12, th.h13, th.h14, th.h15, th.h16, th.
 	font-size: 11px;
 	line-height: 11px;
 	margin-bottom: 10px;
-	margin-right: 24px;
 }
 
 #legend ul {
@@ -112,14 +111,11 @@ th.h7, th.h8, th.h9, th.h10, th.h11, th.h12, th.h13, th.h14, th.h15, th.h16, th.
 }
 
 #period {
-	position:absolute;
-	clear: left;
-	margin-left: 24px;
-	width:inherit;
+	position:relative;
 	float: left;
-	margin-bottom: 10px;
-	margin-right: 24px;
+	dis
 }
+
 
 #period h2 {
 	font-size: 11px;
@@ -132,4 +128,16 @@ th.h7, th.h8, th.h9, th.h10, th.h11, th.h12, th.h13, th.h14, th.h15, th.h16, th.
 
 .hidden {
 	display: none!important;
+}
+
+#selectors {
+	position:relative;
+	display:block;
+	margin-bottom: 20px;
+}
+#header {
+		width:inherit;
+		height: 60px;
+	position:relative;
+	display:block;
 }

@@ -1,4 +1,18 @@
 Calendar.i18n = {
+	months : [
+		{ name: 'Janvier', abbr: 'jan' },
+		{ name: 'Février', abbr: 'fev' },
+		{ name: 'Mars', abbr: 'mar' },
+		{ name: 'Avril', abbr: 'avr' },
+		{ name: 'Mai', abbr: 'mai' },
+		{ name: 'Juin', abbr: 'juin' },
+		{ name: 'Juillet', abbr: 'juil' },
+		{ name: 'Août', abbr: 'août' },
+		{ name: 'Septembre', abbr: 'sept' },
+		{ name: 'Octobre', abbr: 'oct' },
+		{ name: 'Novembre', abbr: 'nov' },
+		{ name: 'Décembre', abbr: 'dec' }
+	],
 	days : [
 	    { name: 'Sunday', abbr: 'Su' },
 		{ name: 'Monday', abbr: 'Mo' },

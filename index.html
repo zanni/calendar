@@ -1,20 +1,23 @@
 <html>
 <head>
 	<title>Calendar.js</title>
-	<link rel="stylesheet" href="../g2/css_new/reset.css"></link>
-	<link rel="stylesheet" href="../g2/css_new/colorbrewer.css"></link>
-	<link rel="stylesheet" href="../g2/css_new/calendar.css"></link>
+	<link rel="stylesheet" href="css/reset.css"></link>
+	<link rel="stylesheet" href="css/colorbrewer.css"></link>
+	<link rel="stylesheet" href="css/calendar.css"></link>
 </head>
 <body>
-	<script type="text/javascript" src="../g2/js/jquery/jquery-1.8.3.min.js"></script>
-	<script type="text/javascript" src="../g2/js/d3/d3.min.js"></script>
-	<script type="text/javascript" src="../g2/js/d3/d3.layout.min.js"></script>
-	<script type="text/javascript" src="../g2/js/colorbrewer/colorbrewer.js"></script>
-	<script type="text/javascript" src="../g2/js/calendar/calendar.js"></script>
-	<script type="text/javascript" src="../g2/js/calendar/i18n/calendar.fr.js"></script>
-	<script type="text/javascript" src="../g2/js/calendar/calendar.parser.js"></script>
-	<script type="text/javascript" src="../g2/js/utils/utils.js"></script>
-	<script type="text/javascript" src="../g2/js/browserdetect/browserdetect.js"></script>
+	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="js/d3/d3.min.js"></script>
+	<script type="text/javascript" src="js/d3/d3.layout.min.js"></script>
+	<script type="text/javascript" src="js/colorbrewer/colorbrewer.js"></script>
+	<script type="text/javascript" src="js/calendar/calendar.js"></script>
+	<script type="text/javascript" src="js/calendar/i18n/calendar.fr.js"></script>
+	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.day.js"></script>
+	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.week.js"></script>
+	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.year.js"></script>
+	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.month.js"></script>
+	<script type="text/javascript" src="js/calendar/calendar.parser.js"></script>
+	<script type="text/javascript" src="js/browserdetect/browserdetect.js"></script>
 		<script>
 		/* ************************** */
 		/* 
@@ -34,7 +37,7 @@
 				.attr("value", function(d){ return d});
 			select.exit().remove();
 			
-			// $("#years").css("display", "inline");
+			$("#years").css("display", "inline");
 			
 			years.select("#years_"+selected).attr("selected", true);	
 		}
@@ -64,118 +67,173 @@
 		}
 		/* ************************** */
 		/* 
+			fill weeks select with week data
+		*/
+		function createMonthSelector(data, selected){
+			var months = d3.select("#months");
+			var select = months.selectAll("option")
+				.data(data);
+			select.enter().append("option")
+				.text(function(d){
+					return d.name;
+				})
+				.attr("id", function(d,i){ return "months_"+i})
+				.attr("value", function(d,i){ return i});
+			select.exit().remove();
+			
+			$("#months").css("display", "inline");
+			
+			months.select("#months_"+selected).attr("selected", true);	
+		}
+		/* ************************** */
+		/* 
+			fill weeks select with week data
+		*/
+		function createDaySelector(data, selected){
+			var selected_week = $("#weeks").attr("value");
+			var selected_month = $("#month").attr("value");
+			if( selected_week ){
+				var days = d3.select("#days");
+			
+				var select = days.selectAll("option")
+					.data(Calendar.i18n.days);
+				
+				select.enter().append("option")
+					.text(function(d){
+						return d.name;
+					})
+					.attr("id", function(d){ return "days_"+d.abbr})
+					.attr("value", function(d, i){ return i});
+				select.exit().remove();
+				
+				$("#days").css("display", "inline");
+
+				if(selected){
+					days.select("#days_Lu").attr("selected", true);
+				}
+				else{
+					days.select("#days_"+selected).attr("selected", true);
+				}
+			}
+		}
+		/* ************************** */
+		/* 
+			fill weeks select with week data
+		*/
+		function createThemeSelector(data, selected){
+			var themes = d3.select("#themes");
+			
+			var select = themes.selectAll("option")
+				.data(data);
+			
+			
+
+			select.enter().append("option")
+				.text(function(d){
+					return d;
+				})
+				.attr("id", function(d){ return "theme_"+d})
+				.attr("value", function(d){ return d});
+			select.exit().remove();
+			
+			$("#themes").css("display", "inline");
+			
+			themes.select("#theme_"+selected).attr("selected", true);	
+		}
+		/* ************************** */
+		/* 
 			retreive value generic callback closure
 		*/
 		var retreiveValueCallbackClosure = function(data, specializedFunc, aggregatFunc, filterFunc){
-
-			return function(y, w, d, h){
-				try{	
-					var logs = [];
-
-					for(var i in data[y][w][d][h]){
-
-						var raw = data[y][w][d][h][i];
-						console.log(new Date(raw.date));
-						if(!filterFunc || filterFunc(raw)){
-
-							logs.push(specializedFunc(raw));
-
-						}
-							
-
+			var depth = 0;
+			var recurr = function(array, i){
+				var logs = [];
+					if(specializedFunc(array) != null){
+						return specializedFunc(array);
 					}
-					var val = aggregatFunc(logs);;
-					return val;
+					else{
+						for(var i in array){
+							logs.push(recurr(array[i]));
+						}
+						var val = aggregatFunc(logs);
+						return val;
+					}
+			}
+			return function(){
+				try{	
+					var period = data;
+					for(var i in arguments){
+						period = period[arguments[i]];
+					}
+					return recurr(period, 0);
 				}
 				catch(err){
 					return null;
 				}
-				
 			}
-
 		}
 		/* ************************** */
 		/* 
 			retreive bounds generic callback closure
 		*/
 		var retreiveBoundsCallbackClosure = function(data, specializedTimeFunc, specializedFunc, aggregatFunc, filterFunc){
+			var findStart = function(array, i){
+				var logs = [];
+				if(array != null && specializedFunc(array) != null && specializedTimeFunc(array) != undefined){
+					return specializedTimeFunc(array)
+				}
+				else{
+					for(var j in array){
+						return findStart(array[j]);
+					}
+				}
+			}
+			var recurr = function(array, i){
 
-			return function(selected_year, selected_week){
-				// if(G2_Utils.array.exists(data, selected_year, selected_week)){	
-					var logs = []	
-						, first = true
-						, start;
-
-					for(var y in data){
-
-						for(var w in data[y]){
-
-							for(var d in data[y][w]){
-
-								for(var h in data[y][w][d]){
-
-									var temp = [];
-
-									for(var i in data[y][w][d][h]){
-
-										var raw = data[y][w][d][h][i];
-
-										
-
-										if(!filterFunc || filterFunc(raw)){
-
-											temp.push(specializedFunc(raw));
-
-											if(first
-												&& y == selected_year 
-												&& w == selected_week){
-
-												start = d3.time.monday(specializedTimeFunc(raw));
-
-												first = false;
-
-											}
-
-										}
-
-										logs.push(aggregatFunc(temp));
-											
-
-									}
-
-								}
-
-							}
-
-						}
-
-					// }
-
+				var logs = [];
+				if(array != null && specializedFunc(array) != null){
+					return specializedFunc(array);
+				}
+				else{
+					for(var j in array){
+						logs.push(recurr(array[j]));
+					}
+					if(i==0) return logs;
+					var val = aggregatFunc(logs);
+					return val;
+				}
+			}
+			return function(){
+				try{
+					var period = data;
+					for(var i in arguments){
+						period = period[arguments[i]];
+					}
+					var logs =  recurr(period, 0);
+					var start = findStart(period, 0);
 					return {
 						'min': d3.round(d3.min(logs), 2)
 						, 'max': d3.round(d3.max(logs), 2)
 						, 'mean': d3.round(d3.mean(logs), 2)
 						, 'median': d3.round(d3.median(logs), 2)
 						, 'start' : start
-						, 'end' : new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000)
 					};
-
 				}
-				
-				return null;
+				catch(err){
+					return null;
+				}
 			}
-
 		}
 
 		$.ready = function(){
 
 
-			d3.json('../g2/mokup/rte.json', function(json) {
+			d3.json('mokup/rte.json', function(json) {
 
 				/* 
 					RTE DATA MAPPING
 				*/
-				var rte_data = json.mixenergies.list;
+				var rte_data = json.mixenergies;
 				var rteCo2Callback = function(d){ return d.tauxDeCo2; };
 				var rteTimeCallback = function(el){ return new Date(el.date); }
 				var rte_parser = Calendar.parser.create(rteTimeCallback);
@@ -198,20 +256,28 @@
 					DEFINE INITIAL VIEW
 				*/
 				var selected_year = d3.max(d3.keys(rte_data));
-				var selected_week = d3.max(d3.keys(rte_data[selected_year]));	
-				
+				var selected_week = d3.max(d3.keys(rte_data[selected_year]));
+				var selected_month = 5
+				var themes = ["day", "week", "month", "year"];
+				var selected_theme = "month";
+
 				/* ************************** */
 				/* 
 					INJECT DATA INTO SELECTORS 
 				*/
 				createYearSelector(rte_data, selected_year);
 				createWeekSelector(rte_data, selected_week);
+				createMonthSelector(Calendar.i18n.months, selected_month);
+				createDaySelector(rte_data);
+				createThemeSelector(themes, selected_theme);
 
-
-				
-
+				/* ************************** */
+				/* 
+					CALENDAR INITIALIZATION 
+				*/
 				var calendar = Calendar.init( {
 					name: "Co2 produit par kWh consommé (g)"
+					, period : selected_theme
 					, buckets : 9
 					, colorScheme : 'RdYlGn'
 					, colorSchemeInverse : true
@@ -220,38 +286,79 @@
 						
 				});
 
-				calendar.reColorTiles(selected_year, selected_week);
+				
 
-				$("#weeks, #infras, #year, #color, #color_inversed").change(function(e){
-					
-					calendar.reColorTiles(
-						$("#years").attr("value")
-						, $("#weeks").attr("value")
-					);
+				function switchTheme(){
+					switch($("#themes").attr("value")){
+						case 'day':
+							calendar.createTiles(
+								$("#years").attr("value")
+								, $("#weeks").attr("value")
+								, $("#days").attr("value")
+							);
+							break;
+						case 'week':
+							calendar.createTiles(
+								$("#years").attr("value")
+								, $("#weeks").attr("value")
+							);
+							break;
+						case 'month':
+							calendar.createTiles(
+								$("#years").attr("value")
+								, $("#months").attr("value")
+							);
+							break;
+						case 'year':
+							calendar.createTiles(
+								$("#years").attr("value")
+							);
+							break;
+						default:
+							break;
+					}
+				}
+
+				switchTheme();
+
+				$("#themes").change(function(e){
+					calendar.period = $("#themes").attr("value");
+					switchTheme();
+				});
+				$("#weeks, #year, #months, #days, #color, #color_inversed").change(function(e){
+					switchTheme();
 				});
 		
 			});
 		}
 	</script>
 	<div id="container">
-		<div id="period">
-				<h1>CO2 Produit par kWh consomm&eacute;</h1>
-				<br>
-				<h2>P&eacute;riode &eacute;tudi&eacute;e: <p class="start"></p> - </p><p class="end"></p></h2>
-			</div>		
-		<div id="legend">
-			<div>
-				<ul>
-				</ul>
-				<p class="more"></p>
-				<p class="less"></p>
+		<div id="header">
+			<div id="period">
+					<h1>CO2 Produit par kWh consomm&eacute;</h1>
+					<br>
+					<h2>P&eacute;riode &eacute;tudi&eacute;e: <p class="start"></p> - </p><p class="end"></p></h2>
+				</div>		
+			<div id="legend">
+				<div>
+					<ul>
+					</ul>
+					<p class="more"></p>
+					<p class="less"></p>
+				</div>
 			</div>
+		</div>
+		<div id="selectors" >
+			<select id="themes" class="input-medium" style="display: none"></select>
+			<select id="years" class="input-small" style="display: none"></select>
+			<select id="months" class="input-small" style="display: none"></select>
+			<select id="weeks" class="input-medium" style="display: none"></select>
+			<select id="days" class="input-medium" style="display: none"></select>
 			
 		</div>
-
+		
 		<div id="vis"></div>
-		<select id="years" class="input-small" style="display: none"></select>
-		<select id="weeks" class="input-medium" style="display: none"></select>
+		
 		
 	</div>
 </body>
