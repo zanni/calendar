@@ -60,6 +60,8 @@ Calendar.renderer.day = function(){
 		// Adjust time to first day (if their is no data)
 		/******************************************************/
 		var bounds = calendar.retreiveCalcsCallback(year, week, day);
+		calendar.setBucket(bounds);
+		calendar.setLegend(bounds);
 		var faked = false;
 		var start;
 		if(bounds.start){
@@ -137,6 +139,17 @@ Calendar.renderer.day = function(){
 		var calculLabelHourPosY = function(d,i){
 			return ((i%6))* ( cell_size + space_between_tiles) + 20 ;
 		}
+
+		var calculBBox = function(){
+			return {
+				// mouai ...
+				width : 
+						16 * (  space_between_row+cell_size + space_between_tiles) 
+					+ 3	*  space_between_row+tiles_left_decal
+						
+				, height : 6 * ( cell_size + space_between_tiles )
+			}
+		}
 		/******************************************************/
 		// definitions
 		/******************************************************/
@@ -213,6 +226,7 @@ Calendar.renderer.day = function(){
 		//hour labels exit
 		fadeOut(me.labels_hours.exit().transition(), calendar.duration);
 		
+		return calculBBox();
 
 	}
 

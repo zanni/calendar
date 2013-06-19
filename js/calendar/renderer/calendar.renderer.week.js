@@ -61,6 +61,9 @@ Calendar.renderer.week = function(){
 		// Adjust time to first day (if their is no data)
 		/******************************************************/
 		var bounds = calendar.retreiveCalcsCallback(year, week);
+		calendar.setBucket(bounds);
+		calendar.setLegend(bounds);
+
 		var start = d3.time.monday(bounds.start);
 
 		/******************************************************/
@@ -85,20 +88,27 @@ Calendar.renderer.week = function(){
 		/******************************************************/
 		var cell_size = 36;
 		var space_between_tiles = 2;
-		var tiles_left_decal = 75;
-		var day_label_top_decal = 20;
-		var hour_label_top_decal = 10;
+		var tiles_left_decal = 85;
+		var day_label_top_decal = 30;
+		var tile_top_decal = 10;
+		var hour_label_top_decal = 20;
 		var hour_label_left_decal = 5;
 		var label_fill = "darkgray";
-		var label_fontsize = "12px";
+		var label_fontsize = "14px";
 		var day_label_class = "day_label";
 		var hour_label_class = "hour_label";
-		var day_label_format = d3.time.format("%a %d %b");
-		var hour_label_format = d3.time.format("%Hh");
+		var _day_label_format = d3.time.format("%a %d %b");
+		var day_label_format = function(d,i){
+			return (i % 2 == 0) ? _day_label_format(d) : "";
+		}
+		var _hour_label_format = d3.time.format("%Hh");
+		var hour_label_format = function(d,i){ 
+			return (i % 2 == 0) ? _hour_label_format(d) : "";
+		}
 
-		var initLabel = function(transform){
+		var initLabel = function(transform, klass){
 			return transform.append("text")
-						.classed(day_label_class, true)
+						.classed(klass, true)
 						.attr("fill", label_fill)
 						.attr("font-size", label_fontsize);
 		}
@@ -109,7 +119,7 @@ Calendar.renderer.week = function(){
 
 		// calcul Y for hour / day chart
 		var calculTilePosY = function(d,i){
-			return d.getDay() * (cell_size + space_between_tiles) + hour_label_top_decal
+			return d.getDay() * (cell_size + space_between_tiles) + hour_label_top_decal + tile_top_decal
 		}
 
 		// calcul X for hour / day chart
@@ -129,7 +139,14 @@ Calendar.renderer.week = function(){
 
 		// calcul Y for hour / day chart
 		var calculLabelHourPosY = function(d,i){
-			return 0
+			return hour_label_top_decal;
+		}
+
+		var calculBBox = function(){
+			return {
+				width : tiles_left_decal + 24 * (cell_size + space_between_tiles)
+				, height : 7 * (cell_size + space_between_tiles) + hour_label_top_decal
+			}
 		}
 		/******************************************************/
 		// definitions
@@ -194,7 +211,7 @@ Calendar.renderer.week = function(){
 					, function(d,i){ return i}
 				);
 		//day labels enter
-		initLabel(me.labels_days.enter())
+		initLabel(me.labels_days.enter(), day_label_class)
 			.attr("x", calculLabelDayPosX ) 
 		    .attr("y", calculLabelDayPosY ) 
 		    .text(day_label_format);
@@ -213,7 +230,7 @@ Calendar.renderer.week = function(){
 					getPeriod(start, day_time, d3.time.hours)
 				);
 		//hour labels enter
-		initLabel(me.labels_hours.enter())
+		initLabel(me.labels_hours.enter(), hour_label_class)
 			.attr("x", calculLabelHourPosX ) 
 		    .attr("y", calculLabelHourPosY ) 
 		    .text(hour_label_format);
@@ -227,6 +244,7 @@ Calendar.renderer.week = function(){
 		//hour labels exit
 		fadeOut(me.labels_hours.exit().transition(), calendar.duration);
 
+		return calculBBox();
 	}
 
 	/******************************************************/

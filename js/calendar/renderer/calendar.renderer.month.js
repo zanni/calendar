@@ -49,7 +49,7 @@ Calendar.renderer.month = function(){
 	// DRAW implementation
 	/******************************************************/
 	me.draw = function(year, month){
-		month = [1,3,6,10, 7];
+		
 		/******************************************************/
 		// self ref is supposed to be set with generic calendar
 		// setting when calling draw func with apply
@@ -98,26 +98,14 @@ Calendar.renderer.month = function(){
 		var data = [];
 		var data_month = [];
 		var bounds = [];
-		var decals = [];
-		var look_for_decal;
-		var decal = 0;
 		var first_month;
+		var delcalages = 0;
 
 		if(month instanceof Array){
 			month.sort(function(a,b){ return a - b});
 			for(var m in month){
 				if(!first_month) first_month=month[m];
-				if(!look_for_decal){
-					look_for_decal = month[m];
-					decals[month[m]] = decal;
-				}
-				else{
-					if(month[m] - look_for_decal > 1){
-						decal += (month[m] - look_for_decal - 1)
-					}
-					decals[month[m]] = decal;
-					look_for_decal = month[m];
-				}
+				
 				data = data.concat(getPeriod(month[m],d3.time.days));
 				data_month = data_month.concat(getPeriod(month[m],d3.time.months));
 			}
@@ -127,11 +115,23 @@ Calendar.renderer.month = function(){
 			data = getPeriod(month,d3.time.days);
 			data_month = getPeriod(month,d3.time.months);
 		}
+		var current_week_index = 0;
+		var prev_week;
+		var weeks = [];
 		for(var d in data){
 			var bound = calendar.retreiveCalcsCallback(year, week(data[d]), day(data[d]))
+			if(prev_week < week(data[d])){
+				current_week_index++;
+				if(week(data[d]) - prev_week > 1){ 
+					delcalages++;
+					current_week_index++; 
+				}
+			}
+			prev_week = week(data[d]);
+			weeks[week(data[d])] = current_week_index;
 			if(bound) bounds.push(bound);	
 		}
-
+		console.log(weeks)
 		var min = [];
 		 max = [];
 		 mean = [];
@@ -155,7 +155,8 @@ Calendar.renderer.month = function(){
 			, 'median': d3.round(d3.median(median), 2)
 			, 'start': start
 		};
-		
+		calendar.setBucket(bounds);
+		calendar.setLegend(bounds);
 		var faked = false;
 		start;
 		try{
@@ -169,8 +170,8 @@ Calendar.renderer.month = function(){
 		/******************************************************/
 		// tiles / labels initialization helpers
 		/******************************************************/
-		console.log(decals);
 		var cell_size = 36;
+		var margin = 20;
 		var space_between_tiles = 2;
 		var space_between_months = cell_size;
 		var month_label_left_decal = 80;
@@ -184,29 +185,29 @@ Calendar.renderer.month = function(){
 		var year_label_class = "year_label";
 		var year_label_format = d3.time.format("%Y");
 		
-		var initLabel = function(transform){
+		var initLabel = function(transform, klass){
 			return transform.append("text")
-						.classed(month_label_class, true)
+						.classed(klass, true)
 						.attr("fill", label_fill)
 						.attr("font-size", label_fontsize);
 		}
 		// calcul X for hour / day chart
 		var calculTilePosX = function(d,i){
-			return tiles_left_decal + (week(d)-week(start) - 3 * ((decals[d.getMonth()]) ? decals[d.getMonth()] : 0)) * (cell_size + space_between_tiles);
+			return margin+tiles_left_decal + (weeks[week(d)]) * (cell_size + space_between_tiles);
 		}
 
 		var calculTilePosY = function(d,i){
-			return tiles_top_decal + day(d) * (cell_size + space_between_tiles);
+			return margin+tiles_top_decal + day(d) * (cell_size + space_between_tiles);
 		}
 
 		// calcul X for hour / day chart
 		var calculLabelMonthPosX = function(d,i){
-			return month_label_left_decal + (week(d)-week(start)-3 * ((decals[d.getMonth()]) ? decals[d.getMonth()] : 0) ) * (cell_size + space_between_tiles);
+			return margin+month_label_left_decal + (weeks[week(d)]) * (cell_size + space_between_tiles);
 		}
 
 		// calcul Y for hour / day chart
 		var calculLabelMonthPosY = function(d,i){
-			return 5;
+			return margin;
 		}
 
 		// calcul X for hour / day chart
@@ -216,22 +217,31 @@ Calendar.renderer.month = function(){
 
 		// calcul Y for hour / day chart
 		var calculLabelYearPosY = function(d,i){
-			return 0;
+			return margin;
+		}
+
+		var calculBBox = function(){
+			var j = 0;
+			weeks.map(function(){j++;})
+			return {
+				width : tiles_left_decal + (j) * (cell_size + space_between_tiles) + delcalages * cell_size + 25
+				, height : tiles_top_decal + 7 * (cell_size + space_between_tiles)
+			}
 		}
 
 		function monthPath(t0) {
 
 			var cell = (cell_size + space_between_tiles);
-			var decaled_cell = (cell_size + space_between_tiles - 3 * ((decals[t0.getMonth()]) ? decals[t0.getMonth()] : 0));
+			var decaled_cell = (cell_size + space_between_tiles );
 
 			var t1 = new Date(t0.getFullYear(), t0.getMonth() + 1, 0),
-			  d0 = +day(t0), w0 = +week(t0)-week(start),
-			  d1 = +day(t1), w1 = +week(t1)-week(start);
-			return "M" + ((w0 + 1) * decaled_cell + tiles_left_decal) + "," + (d0 * cell + tiles_top_decal)
-			  + "H" + (w0 * decaled_cell +tiles_left_decal )+ "V" + (7 * cell+ tiles_top_decal)
-			  + "H" + (w1 * decaled_cell + tiles_left_decal) + "V" + ((d1 + 1) * cell+ tiles_top_decal)
-			  + "H" + ((w1 + 1) * decaled_cell + tiles_left_decal) + "V" + tiles_top_decal
-			  + "H" + ((w0 + 1) * decaled_cell + tiles_left_decal) + "Z";
+			  d0 = +day(t0), w0 = +(weeks[week(t0)]) ,
+			  d1 = +day(t1), w1 = +(weeks[week(t1)]) ;
+			return "M" + ((w0 + 1) * decaled_cell + tiles_left_decal+margin) + "," + (margin+d0 * cell + tiles_top_decal)
+			  + "H" + (w0 * decaled_cell +tiles_left_decal +margin)+ "V" + (margin+7 * cell+ tiles_top_decal)
+			  + "H" + (w1 * decaled_cell + tiles_left_decal+margin) + "V" + (margin+(d1 + 1) * cell+ tiles_top_decal)
+			  + "H" + ((w1 + 1) * decaled_cell + tiles_left_decal+margin) + "V" + (tiles_top_decal+margin)
+			  + "H" + ((w0 + 1) * decaled_cell + tiles_left_decal+margin) + "Z";
 		}
 		/******************************************************/
 		// definitions
@@ -278,8 +288,9 @@ Calendar.renderer.month = function(){
 		    .attr("fill", colorize);
 			    
 		// tiles exit
-		tiles.exit().transition().duration(calendar.duration)
-		.attr("fill-opacity", 0)
+		tiles.exit()
+		// .transition().duration(calendar.duration)
+		// .attr("fill-opacity", 0)
 		.remove()
 
 		/******************************************************/
@@ -301,7 +312,8 @@ Calendar.renderer.month = function(){
 			.attr("stroke", "#000")
 		    .attr("d", monthPath)
 
-		fadeOut(me.months_path.exit().transition(), calendar.duration);
+		me.months_path.exit().remove()
+		// fadeOut(me.months_path.exit().transition(), calendar.duration);
 		/******************************************************/
 		// LABELS
 		/******************************************************/
@@ -309,7 +321,7 @@ Calendar.renderer.month = function(){
 		me.labels_months = svg.selectAll("."+month_label_class)
 				.data(data_month);
 		//hour labels enter
-		initLabel(me.labels_months.enter())
+		initLabel(me.labels_months.enter(), month_label_class)
 			.attr("x", calculLabelMonthPosX ) 
 		    .attr("y", calculLabelMonthPosY ) 
 		    .text(month_label_format);
@@ -321,14 +333,14 @@ Calendar.renderer.month = function(){
 		    .text(month_label_format);
 
 		//hour labels exit
-		fadeOut(me.labels_months.exit().transition(), calendar.duration);
+		me.labels_months.exit().remove();
+		// fadeOut(me.labels_months.exit().transition(), calendar.duration);
 		
 		//hours labels
 		me.label_year = svg.selectAll("."+year_label_class)
 				.data(getPeriod(0, d3.time.years));
 		//hour labels enter
-		initLabel(me.label_year.enter())
-			
+		initLabel(me.label_year.enter(), year_label_class)
 		    .attr("transform", "rotate(-90)")
 		    .attr("x", calculLabelYearPosX ) 
 		    .attr("y", calculLabelYearPosY ) 
@@ -344,16 +356,14 @@ Calendar.renderer.month = function(){
 		//hour labels exit
 		fadeOut(me.label_year.exit().transition(), calendar.duration);
 
+		return calculBBox();
 	}
 
 	/******************************************************/
 	// CLEAN implementation
 	/******************************************************/
 	me.clean = function(){
-		var calendar = this;
-		// me.months_path.transition().duration(calendar.duration)
-		// 	.attr("stroke-opacity", 0)
-		// 	.remove();	
+		var calendar = this;	
 		me.months_path
 		    .data([])
 		    .exit()

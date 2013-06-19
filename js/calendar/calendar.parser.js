@@ -22,7 +22,7 @@ Calendar.parser = {
 			}
 			var week = function(d){
 				var format = d3.time.format("%W");
-				return format(timeCallback(d));
+				return parseInt(format(timeCallback(d)));
 			}
 			var hour = function(d){
 				return timeCallback(d).getHours();

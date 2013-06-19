@@ -233,11 +233,12 @@
 				/* 
 					RTE DATA MAPPING
 				*/
-				var rte_data = json.mixenergies;
+				var rte_data = json.mixenergies.list;
 				var rteCo2Callback = function(d){ return d.tauxDeCo2; };
 				var rteTimeCallback = function(el){ return new Date(el.date); }
 				var rte_parser = Calendar.parser.create(rteTimeCallback);
 				rte_data = rte_parser(rte_data);
+				console.log(rte_data)
 				var rte_closure = retreiveValueCallbackClosure(
 					rte_data
 					, rteCo2Callback
@@ -259,7 +260,7 @@
 				var selected_week = d3.max(d3.keys(rte_data[selected_year]));
 				var selected_month = 5
 				var themes = ["day", "week", "month", "year"];
-				var selected_theme = "month";
+				var selected_theme = "year";
 
 				/* ************************** */
 				/* 
@@ -283,6 +284,8 @@
 					, colorSchemeInverse : true
 					, retreiveCalcsCallback : rte_bounds_closure
 					, retreiveValueCallback : rte_closure
+					, width : $("#container").width()
+					, height: 800
 						
 				});
 
@@ -304,9 +307,11 @@
 							);
 							break;
 						case 'month':
+							var selected = $.map( $('#months option:selected'),
+                      			function(e) { return $(e).val(); } );
 							calendar.createTiles(
 								$("#years").attr("value")
-								, $("#months").attr("value")
+								, selected
 							);
 							break;
 						case 'year':
@@ -325,7 +330,9 @@
 					calendar.period = $("#themes").attr("value");
 					switchTheme();
 				});
-				$("#weeks, #year, #months, #days, #color, #color_inversed").change(function(e){
+
+				$("#weeks, #years, #months, #days, #color, #color_inversed").change(function(e){
+					console.log($("#months").attr("value"))
 					switchTheme();
 				});
 		
@@ -351,7 +358,7 @@
 		<div id="selectors" >
 			<select id="themes" class="input-medium" style="display: none"></select>
 			<select id="years" class="input-small" style="display: none"></select>
-			<select id="months" class="input-small" style="display: none"></select>
+			<select id="months" multiple class="input-small" style="display: none"></select>
 			<select id="weeks" class="input-medium" style="display: none"></select>
 			<select id="days" class="input-medium" style="display: none"></select>
 			

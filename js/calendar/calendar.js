@@ -47,8 +47,8 @@ var Calendar = {
 		// self ref
 		var me = this;
 
-		me.height = spec.height || 800;
-		me.width = spec.width || 1200;
+		me.height = spec.height || 600;
+		me.width = spec.width || 800;
 		me.margin = spec.margin
 
 		//retreive data bound callback
@@ -126,7 +126,7 @@ var Calendar = {
 					.attr("width", me.width)
 					.attr("height", me.height)
 					.append('svg:g')
-					.attr("transform", "translate(" + 10 + "," + 10+ ")");
+					.attr("transform", "translate(" + 0 + "," + 0+ ")");
 			// me.createTiles();
 			me.createLegend();
 		}
@@ -179,9 +179,28 @@ var Calendar = {
 				break;
 		}
 		me.current_calendar = calendar;
-		calendar.draw.apply(this, arguments);
+		var bbox = calendar.draw.apply(this, arguments);
 
-		// if(callback) callback();
+		if(bbox && bbox.width){
+			// adjust width
+			// scale down
+			var scale,decal = 0
+			if(bbox.width > me.width){
+				scale = me.width / bbox.width ;
+			}
+			// scale 1 and center
+			else{
+				scale = 1;
+				decal = (me.width - bbox.width) / 2;
+			}
+			me.svg
+			.transition()
+			.duration(me.duration)
+			.attr("transform", "translate(" + decal + "," + 0 + ")"+"scale("+scale+")");
+		}
+		// var found_bbox = me.svg.node().getBBox();
+		// console.log(bbox)
+		// console.log(found_bbox)
 
 		me.data =  data;
 		me.label =  label;
@@ -209,30 +228,39 @@ var Calendar = {
 
 	/* ************************** */
 
-	, setLegend : function() {
+	, setLegend : function(bounds) {
 		var me = this;
-		d3.select('#legend .less').text(me.downBound);
-		d3.select('#legend .more').text(me.upBound);
+		if(bounds){
+			d3.select('#legend .less').text(bounds.min);
+			d3.select('#legend .more').text(bounds.max);
+		}
+		else{
+			d3.select('#legend .less').text(me.downBound);
+			d3.select('#legend .more').text(me.upBound);
+		}
+	}
+
+	, setBucket : function(bounds){
+		
+		var me = this;
+		var range = [];
+		for (var i = 0; i < me.buckets; i++) {
+			range.push(i);
+		}	
+		if(bounds){
+			me.bucket = d3.scale.quantize().domain([bounds.min, bounds.max]).range(range)
+		}
+		else{
+			me.bucket = d3.scale.quantize().domain([me.downBound, me.upBound]).range(range)
+		}
 	}
 
 	/* ************************** */
 
-	 , setPeriod : function(period) {
-		
-		 
-		 
+	 , setPeriod : function(start, end) {
 	 	var me = this;
-	 		 	 
-	 	 
-	 	 
-	 	for (var d = 0; d < me.days.length; d++) {
-	 		var date = new Date();
-	 		date.setTime(period.start.getTime() + d * 24 * 60 * 60 * 1000);
-	 		d3.select('#days_'+d).text(
-	 			me.days[d].abbr + " " + formatDay	(date.getDate()) + "/" + formatMonth(date.getMonth())
-	 		);
-	 	}
-	 	d3.select('#period .start').text(formatPeriodDate(period.start));
-	 	d3.select('#period .end').text(formatPeriodDate(period.end));
+	 	var format = d3.time.format("%c");
+	 	d3.select('#period .start').text(format(start));
+	 	d3.select('#period .end').text(format(end));
 	 }
 }
