@@ -105,7 +105,6 @@ Calendar.renderer.month = function(){
 			month.sort(function(a,b){ return a - b});
 			for(var m in month){
 				if(!first_month) first_month=month[m];
-				
 				data = data.concat(getPeriod(month[m],d3.time.days));
 				data_month = data_month.concat(getPeriod(month[m],d3.time.months));
 			}
@@ -131,7 +130,6 @@ Calendar.renderer.month = function(){
 			weeks[week(data[d])] = current_week_index;
 			if(bound) bounds.push(bound);	
 		}
-		console.log(weeks)
 		var min = [];
 		 max = [];
 		 mean = [];
@@ -258,13 +256,13 @@ Calendar.renderer.month = function(){
 		// TILES
 		/******************************************************/
 		//tiles update
-		var tiles = svg.selectAll(".tile")
+		var tiles = svg.selectAll("."+calendar.tileClass)
 				.data(data)
 		
 		// tiles enter		
 		tiles.enter()
 			.insert("rect")
-				.classed("tile", true)
+				.classed(calendar.tileClass, true)
 				.attr("x", calculTilePosX)
 	    		.attr("y", calculTilePosY)
 			    .attr("width", cell_size+"px")

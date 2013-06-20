@@ -9,32 +9,6 @@ if (!('map' in Array.prototype)) {
   }; 
 };
 
-/* ************************** */
-
-function formatDay(d){
-	if(d < 10){ d = "0" + d;}
-	return d;
-}
-
-/* ************************** */
-
-function formatMonth(m){
-	m++;
-	if(m < 10){ m = "0" + m;}
-	return m;
-}
-
-/* ************************** */
-
-function formatPeriodDate(date){
-	return date.getFullYear()
-		+ "-"
-		+ formatMonth(date.getMonth())
-		+ "-"
-		+ formatDay(date.getDate());
-}
-
-
 /**********************************************************/
 // Calendar
 /**********************************************************/
@@ -63,34 +37,25 @@ var Calendar = {
 		me.noDataColor = spec.noDataColor || "#eee";
 
 		// label i18n
-		me.days = Calendar.i18n.days;
-		me.hours = Calendar.i18n.hours;
+		// me.days = Calendar.i18n.days;
+		// me.hours = Calendar.i18n.hours;
 
 		// Dom balise settings
 		me.visId = spec.visId || '#vis';
 		me.legendId = spec.legendId || '#legend';
+		me.tileClass = spec.tileClass || 'tile';
 
+		// renderer
+		// me.renderer = {};
+		// me.renderer.defaultRenderer = function(){
+		// 	this.draw = function(){}
+		// }
+		// me.renderer.current = spec.renderer || new me.renderer.defaultRenderer();
 		// type of calendar displayed
 		me.period = spec.period ||  'week';
 
 		// animation duration
 		me.duration = spec.duration || 800;
-
-		// calendar dispay settings, should depend on period 
-		// WEEK ORIENTED
-		me.tilesWidth = spec.tilesWidth || 36;
-		me.tilesHeight = spec.tilesHeight || 36;
-		me.tilesWidthSpace = spec.tilesWidthSpace || 2;
-		me.tilesHeightSpace = spec.tilesHeightSpace || 4;
-		me.labelSpace = spec.labelSpace || 60; 
-		me.labelHeightDecal = spec.labelHeightDecal || 24;
-		// DAY ORIENTED
-		me.dayWidthDecal = spec.dayWidthDecal || 20;
-
-		// arrays representing tiles and label
-		// data must be a 2 dim matrix
-		me.data = [];
-		me.label = [];
 
 		me.upBound = spec.upBound || 80;
 		me.downBound = spec.downBound || 20;
@@ -113,10 +78,6 @@ var Calendar = {
 			}
 			return color;
 		}
-
-		// add css classes to activate color scheme on both calendar and legend
-		d3.select(me.legendId).classed(me.colorScheme, true);
-		d3.select(me.visId).classed(me.colorScheme, true);
 
 		// recreate dom only on first initialization
 		if(!exists){
@@ -198,12 +159,6 @@ var Calendar = {
 			.duration(me.duration)
 			.attr("transform", "translate(" + decal + "," + 0 + ")"+"scale("+scale+")");
 		}
-		// var found_bbox = me.svg.node().getBBox();
-		// console.log(bbox)
-		// console.log(found_bbox)
-
-		me.data =  data;
-		me.label =  label;
 	}
 
 	/* ************************** */
@@ -229,10 +184,11 @@ var Calendar = {
 	/* ************************** */
 
 	, setLegend : function(bounds) {
+		var check = function(a){ return (a) ? a : ""; }
 		var me = this;
 		if(bounds){
-			d3.select('#legend .less').text(bounds.min);
-			d3.select('#legend .more').text(bounds.max);
+			d3.select('#legend .less').text(check(bounds.min));
+			d3.select('#legend .more').text(check(bounds.max));
 		}
 		else{
 			d3.select('#legend .less').text(me.downBound);

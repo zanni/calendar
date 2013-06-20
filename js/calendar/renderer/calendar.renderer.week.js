@@ -162,7 +162,7 @@ Calendar.renderer.week = function(){
 		// TILES
 		/******************************************************/
 		//tiles update
-		var tiles = svg.selectAll(".tile")
+		var tiles = svg.selectAll("."+calendar.tileClass)
 				.data(
 					// get each hour in a week
 					getPeriod(start, week_time, d3.time.hours)
@@ -172,7 +172,7 @@ Calendar.renderer.week = function(){
 		// tiles enter		
 		tiles.enter()
 			.insert("rect")
-				.classed("tile", true)
+				.classed(calendar.tileClass, true)
 				.attr("x", calculTilePosX)
 	    		.attr("y", calculTilePosY)
 			    .attr("width", cell_size+"px")

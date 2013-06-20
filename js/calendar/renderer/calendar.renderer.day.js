@@ -59,6 +59,7 @@ Calendar.renderer.day = function(){
 		// Retreive period bounds (val, time)
 		// Adjust time to first day (if their is no data)
 		/******************************************************/
+
 		var bounds = calendar.retreiveCalcsCallback(year, week, day);
 		calendar.setBucket(bounds);
 		calendar.setLegend(bounds);
@@ -86,7 +87,12 @@ Calendar.renderer.day = function(){
 		// color tiles depending on val
 		var colorize = function(d){
 			if(faked) return calendar.getColor();
-			var val = calendar.retreiveValueCallback(year, week, d.getDay() - 1, d.getHours());
+			var day = d.getDay();
+			var val = calendar.retreiveValueCallback(year
+				, week
+				, ( day == 0) ? 6 : day - 1
+				, d.getHours()
+			);
 			return calendar.getColor(val);
 		}
 
@@ -165,7 +171,7 @@ Calendar.renderer.day = function(){
 		// TILES
 		/******************************************************/
 		//tiles update
-		var tiles = svg.selectAll(".tile")
+		var tiles = svg.selectAll("."+calendar.tileClass)
 				.data(
 					// get each hour in a week
 					getPeriod(start, day_time, d3.time.minutes, 15)
@@ -174,7 +180,7 @@ Calendar.renderer.day = function(){
 		// tiles enter		
 		tiles.enter()
 			.insert("rect")
-				.classed("tile", true)
+				.classed(calendar.tileClass, true)
 				.attr("x", calculTilePosX)
 	    		.attr("y", calculTilePosY)
 			    .attr("width", cell_size+"px")
