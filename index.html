@@ -8,16 +8,13 @@
 <body>
 	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="js/d3/d3.min.js"></script>
-	<script type="text/javascript" src="js/d3/d3.layout.min.js"></script>
 	<script type="text/javascript" src="js/colorbrewer/colorbrewer.js"></script>
 	<script type="text/javascript" src="js/calendar/calendar.js"></script>
-	<script type="text/javascript" src="js/calendar/i18n/calendar.fr.js"></script>
 	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.day.js"></script>
 	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.week.js"></script>
 	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.year.js"></script>
 	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.month.js"></script>
 	<script type="text/javascript" src="js/calendar/calendar.parser.js"></script>
-	<script type="text/javascript" src="js/browserdetect/browserdetect.js"></script>
 		<script>
 		/* ************************** */
 		/* 
@@ -69,52 +66,47 @@
 		/* 
 			fill weeks select with week data
 		*/
-		function createMonthSelector(data, selected){
+		function createMonthSelector(){
+			var year = new Date().getFullYear()
+			var data = d3.time.months(
+				new Date(year, 0, 1)
+				, new Date(year+1, 0, 1)
+			);
+
 			var months = d3.select("#months");
 			var select = months.selectAll("option")
 				.data(data);
 			select.enter().append("option")
-				.text(function(d){
-					return d.name;
-				})
+				.text(d3.time.format("%B"))
 				.attr("id", function(d,i){ return "months_"+i})
 				.attr("value", function(d,i){ return i});
 			select.exit().remove();
 			
 			$("#months").css("display", "inline");
 			
-			months.select("#months_"+selected).attr("selected", true);	
+			// months.select("#months_"+selected).attr("selected", true);	
 		}
 		/* ************************** */
 		/* 
 			fill weeks select with week data
 		*/
-		function createDaySelector(data, selected){
-			var selected_week = $("#weeks").attr("value");
-			var selected_month = $("#month").attr("value");
-			if( selected_week ){
-				var days = d3.select("#days");
+		function createDaySelector(){
+			var monday = d3.time.monday(new Date());
+			var sunday = new Date();
+			sunday.setTime(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
+			var data = d3.time.days(monday,sunday);
+			var days = d3.select("#days");
 			
-				var select = days.selectAll("option")
-					.data(Calendar.i18n.days);
-				
-				select.enter().append("option")
-					.text(function(d){
-						return d.name;
-					})
-					.attr("id", function(d){ return "days_"+d.abbr})
-					.attr("value", function(d, i){ return i});
-				select.exit().remove();
-				
-				$("#days").css("display", "inline");
-
-				if(selected){
-					days.select("#days_Lu").attr("selected", true);
-				}
-				else{
-					days.select("#days_"+selected).attr("selected", true);
-				}
-			}
+			var select = days.selectAll("option")
+				.data(data);
+			
+			select.enter().append("option")
+				.text(d3.time.format("%A"))
+				.attr("id", function(d,i){ return "days_"+i})
+				.attr("value", function(d, i){ return i});
+			select.exit().remove();
+			
+			$("#days").css("display", "inline");
 		}
 		/* ************************** */
 		/* 
@@ -196,14 +188,15 @@
 				}
 				else{
 					for(var j in array){
-						logs.push(recurr(array[j]));
+						logs = logs.concat(recurr(array[j]));
 					}
-					if(i==0) return logs;
-					var val = aggregatFunc(logs);
-					return val;
+					// if(i==0) return logs;
+					// var val = aggregatFunc(logs);
+					return logs;
 				}
 			}
 			return function(){
+				// console.log(arguments)
 				try{
 					var period = data;
 					for(var i in arguments){
@@ -238,7 +231,7 @@
 				var rteTimeCallback = function(el){ return new Date(el.date); }
 				var rte_parser = Calendar.parser.create(rteTimeCallback);
 				rte_data = rte_parser(rte_data);
-				console.log(rte_data)
+
 				var rte_closure = retreiveValueCallbackClosure(
 					rte_data
 					, rteCo2Callback
@@ -268,8 +261,8 @@
 				*/
 				createYearSelector(rte_data, selected_year);
 				createWeekSelector(rte_data, selected_week);
-				createMonthSelector(Calendar.i18n.months, selected_month);
-				createDaySelector(rte_data);
+				createMonthSelector();
+				createDaySelector();
 				createThemeSelector(themes, selected_theme);
 
 				/* ************************** */
@@ -292,31 +285,35 @@
 				
 
 				function switchTheme(){
+					var years = $.map( $('#years option:selected'),
+                      			function(e) { return $(e).val(); } );
+
+					var months = $.map( $('#months option:selected'),
+                      			function(e) { return $(e).val(); } );
 					switch($("#themes").attr("value")){
 						case 'day':
 							calendar.createTiles(
-								$("#years").attr("value")
+								d3.max(years)
 								, $("#weeks").attr("value")
 								, $("#days").attr("value")
 							);
 							break;
 						case 'week':
 							calendar.createTiles(
-								$("#years").attr("value")
+								d3.max(years)
 								, $("#weeks").attr("value")
 							);
 							break;
 						case 'month':
-							var selected = $.map( $('#months option:selected'),
-                      			function(e) { return $(e).val(); } );
+							
 							calendar.createTiles(
-								$("#years").attr("value")
-								, selected
+								d3.max(years)
+								, months
 							);
 							break;
 						case 'year':
 							calendar.createTiles(
-								$("#years").attr("value")
+								years
 							);
 							break;
 						default:
@@ -357,7 +354,7 @@
 		</div>
 		<div id="selectors" >
 			<select id="themes" class="input-medium" style="display: none"></select>
-			<select id="years" class="input-small" style="display: none"></select>
+			<select id="years" multiple class="input-small" style="display: none"></select>
 			<select id="months" multiple class="input-small" style="display: none"></select>
 			<select id="weeks" class="input-medium" style="display: none"></select>
 			<select id="days" class="input-medium" style="display: none"></select>
