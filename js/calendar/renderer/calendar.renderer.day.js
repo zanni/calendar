@@ -192,10 +192,10 @@ Calendar.renderer.day = function(){
 
 		tiles
 			.transition()
-			.duration(calendar.duration)
-			// .delay(function(d){
-			// 	return (d.getHours() * 20) + (d.getDay() * 20) + (Math.random() * 50)
-			// })
+			// .duration(calendar.duration)
+			.delay(function(d){
+				return (quarter(d) * 20) + (d.getDay() * 20) + (Math.random() * 50)/ calendar.duration
+			})
 		    .attr("x", calculTilePosX)
 	    	.attr("y", calculTilePosY)
 		    .attr("fill-opacity", 1)
@@ -211,6 +211,9 @@ Calendar.renderer.day = function(){
 		/******************************************************/
 		// LABELS
 		/******************************************************/
+		var labels_hours_transition = function(attr){
+
+		}
 		//hours labels
 		me.labels_hours = svg.selectAll("."+hour_label_class)
 				.data(

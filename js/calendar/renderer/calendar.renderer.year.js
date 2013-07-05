@@ -107,14 +107,17 @@ Calendar.renderer.year = function(){
 		var data_month;
 		var first_year;
 		var bounds;
+		var year_index = [];
 		if(year instanceof Array){
 			data_year = [];
 			data_year_label = [];
 			data_month = [];
 			bounds = [];
 			year.sort(function(a,b){ return a - b});
+			
+			var j = 0;
 			for(var i in year){
-				console.log(year[i])
+				year_index[year[i]] = j++; 
 				if(!first_year) first_year = year[i];
 				data_year = data_year.concat(getPeriod(year[i], d3.time.days))
 				data_year_label.push(new Date(year[i], 1, 1));
@@ -154,6 +157,7 @@ Calendar.renderer.year = function(){
 			console.log(bounds)
 		}
 		else{
+			year_index[year] = 0;
 			first_year = year;
 			data_year = getPeriod(year, d3.time.days);
 			data_year_label = [new Date(year, 0, 1)];
@@ -198,12 +202,13 @@ Calendar.renderer.year = function(){
 		}
 
 		var calculTilePosY = function(d,i){
-			return year_height * ( d.getFullYear() - first_year ) + margin+tiles_top_decal + day(d) * (cell_size + space_between_tiles);
+			return year_height * year_index[d.getFullYear()] //( d.getFullYear() - first_year ) 
+				+ margin+tiles_top_decal + day(d) * (cell_size + space_between_tiles);
 		}
 
 		// calcul X for hour / day chart
 		var calculLabelYearPosX = function(d,i){
-			return -year_label_top_decal-year_height * ( d.getFullYear() - first_year );
+			return -year_label_top_decal-year_height * year_index[d.getFullYear()] //( d.getFullYear() - first_year );
 		}
 
 		// calcul Y for hour / day chart
@@ -221,7 +226,7 @@ Calendar.renderer.year = function(){
 		}
 
 		function monthPath(t0) {
-			var decal = year_height * ( t0.getFullYear() - first_year );
+			var decal = year_height * year_index[t0.getFullYear()]//( t0.getFullYear() - first_year );
 			console.log(decal)
 			var cell = (cell_size + space_between_tiles);
 			var decaled_cell = (cell_size + space_between_tiles );
@@ -269,10 +274,10 @@ Calendar.renderer.year = function(){
 
 		tiles
 			.transition()
-			.duration(calendar.duration)
-			// .delay(function(d){
-			// 	return (d.getHours() * 20) + (d.getDay() * 20) + (Math.random() * 50)
-			// })
+			// .duration(calendar.duration)
+			.delay(function(d){
+				return (week(d) * 20) + (d.getDay() * 20) + (Math.random() * 50) / calendar.duration
+			})
 		    .attr("x", calculTilePosX)
 	    	.attr("y", calculTilePosY)
 		    .attr("fill-opacity", 1)

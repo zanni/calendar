@@ -274,10 +274,10 @@ Calendar.renderer.month = function(){
 
 		tiles
 			.transition()
-			.duration(calendar.duration)
-			// .delay(function(d){
-			// 	return (d.getHours() * 20) + (d.getDay() * 20) + (Math.random() * 50)
-			// })
+			// .duration(calendar.duration)
+			.delay(function(d){
+				return (week(d) * 20) + (d.getDay() * 20) + (Math.random() * 50) / calendar.duration
+			})
 		    .attr("x", calculTilePosX)
 	    	.attr("y", calculTilePosY)
 		    .attr("fill-opacity", 1)

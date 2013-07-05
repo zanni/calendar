@@ -25,6 +25,8 @@ var Calendar = {
 		me.width = spec.width || 800;
 		me.margin = spec.margin
 
+		//retreive data according to your createTiles call
+		me.retreiveDataCallback = spec.retreiveCalcsCallback;
 		//retreive data bound callback
 		me.retreiveCalcsCallback = spec.retreiveCalcsCallback;
 		// retreive 
@@ -114,8 +116,6 @@ var Calendar = {
 			}
 			return args;
 		}
-
-		// var calcs = me.retreiveCalcsCallback.apply(this, arguments);		
 		
 		data = [];
 		label = [];
