@@ -51,7 +51,9 @@ Calendar.renderer.year = function(){
 	/******************************************************/
 	// DRAW implementation
 	/******************************************************/
-	me.draw = function(year){
+	me.draw = function(data, year){
+		console.log(data);
+		console.log(year);
 		// year = parseInt(year);
 		// year = [2012, 2013];
 		/******************************************************/
@@ -90,9 +92,7 @@ Calendar.renderer.year = function(){
 
 		// color tiles depending on val
 		var colorize = function(d, i, u){
-			
-			// if(faked) return calendar.getColor();
-			var val = calendar.retreiveValueCallback(d.getFullYear(), week(d), day(d));
+			var val = calendar.retreiveValueCallback(data, d.getFullYear(), week(d), day(d));
 			return calendar.getColor(val);
 		}
 
@@ -125,7 +125,7 @@ Calendar.renderer.year = function(){
 			}
 			if(!me.cache_bounds[year]){
 				for(var d in data_year){
-					var bound = calendar.retreiveCalcsCallback(data_year[d].getFullYear(), week(data_year[d]), day(data_year[d]))
+					var bound = calendar.retreiveCalcsCallback(data, data_year[d].getFullYear(), week(data_year[d]), day(data_year[d]))
 					if(bound) bounds.push(bound);	
 				}
 				var min = [];
@@ -162,7 +162,7 @@ Calendar.renderer.year = function(){
 			data_year = getPeriod(year, d3.time.days);
 			data_year_label = [new Date(year, 0, 1)];
 			data_month = getPeriod(year, d3.time.months);
-			bounds = calendar.retreiveCalcsCallback(year);
+			bounds = calendar.retreiveCalcsCallback(data, year);
 			calendar.setPeriod(new Date(year, 0, 0), new Date((year+1), 0, 0))
 		}
 
@@ -227,7 +227,6 @@ Calendar.renderer.year = function(){
 
 		function monthPath(t0) {
 			var decal = year_height * year_index[t0.getFullYear()]//( t0.getFullYear() - first_year );
-			console.log(decal)
 			var cell = (cell_size + space_between_tiles);
 			var decaled_cell = (cell_size + space_between_tiles );
 

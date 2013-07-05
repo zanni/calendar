@@ -62,8 +62,7 @@ Calendar.data = {
 	/* 
 		retreive value generic callback closure
 	*/
-	 ,retreiveValueCallbackClosure: function(data, specializedFunc, aggregatFunc, filterFunc){
-		var depth = 0;
+	 ,retreiveValueCallbackClosure: function(specializedFunc, aggregatFunc, filterFunc){
 		var recurr = function(array, i){
 			var logs = [];
 				if(specializedFunc(array) != null){
@@ -79,10 +78,14 @@ Calendar.data = {
 		}
 		return function(){
 			try{	
-				var period = data;
-				for(var i in arguments){
-					period = period[arguments[i]];
-				}
+				// console.log(arguments)
+				var args = [];
+				// get root 
+				var period = arguments[0];
+				for(var i=1; i< arguments.length;i++) args.push(arguments[i])
+				// get through the tree using variable arguments
+				for(var i in args) period = period[args[i]];
+				//start recurrence 
 				return recurr(period, 0);
 			}
 			catch(err){
@@ -94,7 +97,7 @@ Calendar.data = {
 	/* 
 		retreive bounds generic callback closure
 	*/
-	,retreiveBoundsCallbackClosure : function(data, specializedTimeFunc, specializedFunc, aggregatFunc, filterFunc){
+	,retreiveBoundsCallbackClosure : function(specializedTimeFunc, specializedFunc, aggregatFunc, filterFunc){
 		var findStart = function(array, i){
 			var logs = [];
 			if(array != null && specializedFunc(array) != null && specializedTimeFunc(array) != undefined){
@@ -122,12 +125,13 @@ Calendar.data = {
 			}
 		}
 		return function(){
-			// console.log(arguments)
 			try{
-				var period = data;
-				for(var i in arguments){
-					period = period[arguments[i]];
-				}
+				var args = [];
+				// get root 
+				var period = arguments[0];
+				for(var i=1; i< arguments.length;i++) args.push(arguments[i])
+				// get through the tree using variable arguments
+				for(var i in args) period = period[args[i]];
 				var logs =  recurr(period, 0);
 				var start = findStart(period, 0);
 				return {

@@ -137,8 +137,8 @@
 		$.ready = function(){
 
 
-			d3.json('mokup/retreived.json', function(json) {
-
+			d3.json('mokup/rte.json', function(json) {
+				console.log(json)
 				/* 
 					RTE DATA MAPPING
 				*/
@@ -148,15 +148,31 @@
 				var rte_parser = Calendar.data.create(rteTimeCallback);
 				rte_data = rte_parser(rte_data);
 
+				var rte_datagrab_callback = function(){
+					var me = this;
+					d3.json('mokup/rte.json', function(json) {
+						console.log(json)
+						me.draw(json.mixenergies.list);
+					});
+				}
+				rte_datagrab_callback = function(){
+					// d3.json('mokup/rte.json', function(json) {
+					// 	console.log(json)
+					// 	draw(json.mixenergies.list);
+					// });
+					var args = [];
+					args.splice(0, 0, rte_data);
+					for(var i=0; i< arguments.length;i++) args.push(arguments[i])
+					this.draw.apply(this, args);
+				}
+
 				var rte_closure = Calendar.data.retreiveValueCallbackClosure(
-					rte_data
-					, rteCo2Callback
+					rteCo2Callback
 					, d3.mean
 				);
 
 				var rte_bounds_closure = Calendar.data.retreiveBoundsCallbackClosure(
-					rte_data
-					, rteTimeCallback
+					rteTimeCallback
 					, rteCo2Callback
 					, d3.mean
 				);
@@ -191,6 +207,7 @@
 					, buckets : 9
 					, colorScheme : 'RdYlGn'
 					, colorSchemeInverse : true
+					, retreiveDataCallback : rte_datagrab_callback
 					, retreiveCalcsCallback : rte_bounds_closure
 					, retreiveValueCallback : rte_closure
 					, width : $("#container").width()

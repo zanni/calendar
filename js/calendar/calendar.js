@@ -17,7 +17,7 @@ var Calendar = {
 	/******************************************************/
 	// INIT
 	/******************************************************/
-	init : function(spec, exists){
+	init : function(spec){
 		// self ref
 		var me = this;
 
@@ -26,7 +26,7 @@ var Calendar = {
 		me.margin = spec.margin
 
 		//retreive data according to your createTiles call
-		me.retreiveDataCallback = spec.retreiveCalcsCallback;
+		me.retreiveDataCallback = spec.retreiveDataCallback;
 		//retreive data bound callback
 		me.retreiveCalcsCallback = spec.retreiveCalcsCallback;
 		// retreive 
@@ -38,21 +38,11 @@ var Calendar = {
 		me.colorSchemeInverse = spec.colorSchemeInverse || false
 		me.noDataColor = spec.noDataColor || "#eee";
 
-		// label i18n
-		// me.days = Calendar.i18n.days;
-		// me.hours = Calendar.i18n.hours;
-
 		// Dom balise settings
 		me.visId = spec.visId || '#vis';
 		me.legendId = spec.legendId || '#legend';
 		me.tileClass = spec.tileClass || 'tile';
 
-		// renderer
-		// me.renderer = {};
-		// me.renderer.defaultRenderer = function(){
-		// 	this.draw = function(){}
-		// }
-		// me.renderer.current = spec.renderer || new me.renderer.defaultRenderer();
 		// type of calendar displayed
 		me.period = spec.period ||  'week';
 
@@ -81,42 +71,48 @@ var Calendar = {
 			return color;
 		}
 
-		// recreate dom only on first initialization
-		if(!exists){
-			me.svg = d3.select(me.visId)
-					.append('svg:svg')
+		
+		me.svg = d3.select(me.visId)
+				.append('svg:svg')
 
-					.attr("width", me.width)
-					.attr("height", me.height)
-					.append('svg:g')
-					.attr("transform", "translate(" + 0 + "," + 0+ ")");
-			// me.createTiles();
-			me.createLegend();
-		}
+				.attr("width", me.width)
+				.attr("height", me.height)
+				.append('svg:g')
+				.attr("transform", "translate(" + 0 + "," + 0+ ")");
+		me.createLegend();
+		
 	
 		return me;
 	}
 
 	/* ************************** */
 
-	, createTiles : function () {
+	, createTiles : function(){
+		console.log(arguments)
+		// self reference 
+		var me = this;
+
+		if(me.retreiveDataCallback != null 
+			&& typeof me.retreiveDataCallback  == "function" ){
+
+			me.retreiveDataCallback.apply(me, arguments)
+		}
+		else{
+			me._createTiles.apply(me, arguments);
+		}
+		
+	}
+	, draw : function(){
+		this._createTiles.apply(this, arguments);
+	}
+
+	, _createTiles : function () {
 
 		// self reference 
 		var me = this;
 
 		var args = arguments;
 
-		function getArgs(arguments, data){
-			var args = [];
-			for(var i in arguments) {
-				args.push(arguments[i]);
-			}
-			for(var i in data) {
-				args.push(data[i]);
-			}
-			return args;
-		}
-		
 		data = [];
 		label = [];
 		if(me.current_calendar 
@@ -137,6 +133,7 @@ var Calendar = {
 				var calendar = new Calendar.renderer.year();
 				break;
 			default:
+				var calendar = new Calendar.renderer.week();
 				break;
 		}
 		me.current_calendar = calendar;

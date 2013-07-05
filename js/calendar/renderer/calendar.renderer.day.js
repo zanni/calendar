@@ -47,7 +47,7 @@ Calendar.renderer.day = function(){
 	/******************************************************/
 	// DRAW implementation
 	/******************************************************/
-	me.draw = function(year, week, day){
+	me.draw = function(data, year, week, day){
 
 		/******************************************************/
 		// self ref is supposed to be set with generic calendar
@@ -60,7 +60,7 @@ Calendar.renderer.day = function(){
 		// Adjust time to first day (if their is no data)
 		/******************************************************/
 
-		var bounds = calendar.retreiveCalcsCallback(year, week, day);
+		var bounds = calendar.retreiveCalcsCallback(data, year, week, day);
 		calendar.setBucket(bounds);
 		calendar.setLegend(bounds);
 		var faked = false;
@@ -88,7 +88,8 @@ Calendar.renderer.day = function(){
 		var colorize = function(d){
 			if(faked) return calendar.getColor();
 			var day = d.getDay();
-			var val = calendar.retreiveValueCallback(year
+			var val = calendar.retreiveValueCallback(data
+				, year
 				, week
 				, ( day == 0) ? 6 : day - 1
 				, d.getHours()

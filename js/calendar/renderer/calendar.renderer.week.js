@@ -48,7 +48,7 @@ Calendar.renderer.week = function(){
 	/******************************************************/
 	// DRAW implementation
 	/******************************************************/
-	me.draw = function(year, week){
+	me.draw = function(grab_data, year, week){
 
 		/******************************************************/
 		// self ref is supposed to be set with generic calendar
@@ -60,7 +60,7 @@ Calendar.renderer.week = function(){
 		// Retreive period bounds (val, time)
 		// Adjust time to first day (if their is no data)
 		/******************************************************/
-		var bounds = calendar.retreiveCalcsCallback(year, week);
+		var bounds = calendar.retreiveCalcsCallback(grab_data, year, week);
 		calendar.setBucket(bounds);
 		calendar.setLegend(bounds);
 
@@ -79,7 +79,7 @@ Calendar.renderer.week = function(){
 
 		// color tiles depending on val
 		var colorize = function(d){
-			var val = calendar.retreiveValueCallback(year, week, d.getDay(), d.getHours());
+			var val = calendar.retreiveValueCallback(grab_data, year, week, d.getDay(), d.getHours());
 			return calendar.getColor(val);
 		}
 

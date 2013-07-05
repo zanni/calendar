@@ -48,8 +48,10 @@ Calendar.renderer.month = function(){
 	/******************************************************/
 	// DRAW implementation
 	/******************************************************/
-	me.draw = function(year, month){
-		
+	me.draw = function(grab_data, year, month){
+		console.log(grab_data);
+		console.log(year);
+		console.log(month)
 		/******************************************************/
 		// self ref is supposed to be set with generic calendar
 		// setting when calling draw func with apply
@@ -85,7 +87,7 @@ Calendar.renderer.month = function(){
 		// color tiles depending on val
 		var colorize = function(d){
 			if(faked) return calendar.getColor();
-			var val = calendar.retreiveValueCallback(year, week(d), day(d));
+			var val = calendar.retreiveValueCallback(grab_data, year, week(d), day(d));
 			return calendar.getColor(val);
 		}
 
@@ -118,7 +120,7 @@ Calendar.renderer.month = function(){
 		var prev_week;
 		var weeks = [];
 		for(var d in data){
-			var bound = calendar.retreiveCalcsCallback(year, week(data[d]), day(data[d]))
+			var bound = calendar.retreiveCalcsCallback(grab_data, year, week(data[d]), day(data[d]))
 			if(prev_week < week(data[d])){
 				current_week_index++;
 				if(week(data[d]) - prev_week > 1){ 
