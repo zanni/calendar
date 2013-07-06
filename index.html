@@ -191,17 +191,6 @@
 				str += time.getDate();
 				return str;
 			}
-
-		var getRTEURl = function (dateDebut, dateFin){
-			var url =  "https://91.121.178.172:443/G2-RTE-Provider/mixenergie/jsonp?";
-			if(dateDebut != null){
-				url += "start="+ formatTimeStampUrl(dateDebut)
-			}
-			if(dateFin != null){
-				url += "&end="+ formatTimeStampUrl(dateFin)
-			}
-			return url;
-		}
 		
 
 		$.ready = function(){
