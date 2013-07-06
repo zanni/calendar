@@ -131,6 +131,7 @@ Calendar.renderer.month = function(){
 			, 'median': d3.round(d3.median(median), 2)
 			, 'start': start
 		};
+
 		calendar.setBucket(bounds);
 		calendar.setLegend(bounds);
 		var faked = false;
@@ -316,8 +317,36 @@ Calendar.renderer.month = function(){
 	me.clean = function(){
 		var calendar = this;	
 		calendar.monthPathExit();
+
 		Calendar.animation.fadeOut(me.labels_months.transition(), calendar.duration);
-		Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
+		if(me.label_year)
+			Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
+	}
+
+	/******************************************************/
+	// BOUNDS implementation
+	/******************************************************/
+	me.bounds = function(year, month){
+		if(month instanceof Array && month.length > 0){
+			if(month.length < 2){
+				return {
+					start : new Date(year, d3.min(month), 0)
+					, end : new Date(year, d3.min(month) + 1, 0)
+				}
+			}
+			else{
+				return {
+					start : new Date(year, d3.min(month), 0)
+					, end : new Date(year, d3.max(month) + 1, 0)
+				}
+			}			
+		}
+		else{
+			return {
+				start : new Date(year, month, 0)
+				, end : new Date(year, month + 1, 0)
+			}
+		}
 	}
 
 	return me;

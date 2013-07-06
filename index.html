@@ -74,7 +74,7 @@
 			var years = d3.select("#years");
 
 			var select = years.selectAll("option")
-				.data(d3.keys(data));
+				.data(data);
 
 			select.enter().append("option")
 				.text(function(d){
@@ -96,7 +96,7 @@
 			var weeks = d3.select("#weeks");
 			
 			var select = weeks.selectAll("option")
-				.data(d3.keys(data[$("#years").attr("value")]));
+				.data(data);
 			
 			
 
@@ -192,169 +192,200 @@
 				return str;
 			}
 
+		var getRTEURl = function (dateDebut, dateFin){
+			var url =  "https://91.121.178.172:443/G2-RTE-Provider/mixenergie/jsonp?";
+			if(dateDebut != null){
+				url += "start="+ formatTimeStampUrl(dateDebut)
+			}
+			if(dateFin != null){
+				url += "&end="+ formatTimeStampUrl(dateFin)
+			}
+			return url;
+		}
 		
 
 		$.ready = function(){
 
 
-			d3.json('mokup/rte.json', function(json) {
-				/* 
-					RTE DATA MAPPING
-				*/
-				var rte_data = json.mixenergies.list;
-				var rteCo2Callback = function(d){ return d.tauxDeCo2; };
-				var rteTimeCallback = function(el){ return new Date(el.date); }
-				var rte_parser = Calendar.data.create(rteTimeCallback);
-				rte_data = rte_parser(rte_data);
-
-				// var rte_datagrab_callback = function(){
-				// 	var me = this;
-
-				// 	var url = getRTEURl();
-				// 	$.ajax({
-				// 		url : url;
-				// 		, dataType : 'jsonp'
-				// 	});
-				// 		console.log(json)
-				// 		var args = [];
-				// 		args.splice(0, 0, json.mixenergies.list);
-				// 		for(var i=0; i< arguments.length;i++) args.push(arguments[i])
-				// 		this.draw.apply(this, args);
-				// 	});
-				// }
-				rte_datagrab_callback = function(){
-					// d3.json('mokup/rte.json', function(json) {
-					// 	console.log(json)
-					// 	draw(json.mixenergies.list);
-					// });
+			/* 
+				RTE DATA MAPPING
+			*/
+			
+			// var rte_data = json.mixenergies.list;
+			var rteCo2Callback = function(d){ return d.tauxDeCo2; };
+			var rteTimeCallback = function(el){ return new Date(el.date); }
+			var rte_parser = Calendar.data.create(rteTimeCallback);
+			// rte_data = rte_parser(rte_data);
+			// console.log(rte_data)
+			// var rte_datagrab_callback = function(){
+			// 	var me = this;
+			// 	var arguments_call = arguments;
+			// 	if(me.renderer.bounds){
+			// 		var bounds = me.renderer.bounds.apply(me, arguments);
+			// 		// console.log(bounds);
+			// 		var url = getRTEURl(bounds.start);
+			// 		$.ajax({
+			// 			url : url
+			// 			, dataType : 'jsonp'
+			// 			, success : function(json){
+			// 				console.log(json)
+			// 				var data = rte_parser(json.list);
+			// 				console.log(data)
+			// 				var args = [];
+			// 				args.splice(0, 0, data);
+			// 				for(var i=0; i< arguments_call.length;i++) args.push(arguments_call[i])
+			// 				me.draw.apply(me, args);
+			// 			}
+			// 		});
+			// 	}
+			// 	else{
+			// 		d3.json("mokup/rte.json", function(json){
+						// var args = [];
+			// 			var data =  rte_parser(json.mixenergies.list));
+			// 			args.splice(0, 0, rte_data);
+			// 			for(var i=0; i< arguments.length;i++) args.push(arguments[i])
+			// 			this.draw.apply(this, args);
+			// 		})
+			// 	}
+			// }
+			var rte_datagrab_callback = function(){
+				var arguments_call = arguments;
+				var me = this;
+				d3.json("mokup/rte.json", function(json){
 					var args = [];
-					args.splice(0, 0, rte_data);
-					for(var i=0; i< arguments.length;i++) args.push(arguments[i])
-					this.draw.apply(this, args);
-				}
+					var data =  rte_parser(json.mixenergies.list);
+					args.splice(0, 0, data);
+					for(var i=0; i< arguments_call.length;i++) args.push(arguments_call[i])
+					me.draw.apply(me, args);
+				})
+			}
+			
 
-				var rte_closure = Calendar.data.retreiveValueCallbackClosure(
-					rteCo2Callback
-					, d3.mean
-				);
+			var rte_closure = Calendar.data.retreiveValueCallbackClosure(
+				rteCo2Callback
+				, d3.mean
+			);
 
-				var rte_bounds_closure = Calendar.data.retreiveBoundsCallbackClosure(
-					rteTimeCallback
-					, rteCo2Callback
-					, d3.mean
-				);
+			var rte_bounds_closure = Calendar.data.retreiveBoundsCallbackClosure(
+				rteTimeCallback
+				, rteCo2Callback
+				, d3.mean
+			);
 
-				/* ************************** */
-				/* 
-					DEFINE INITIAL VIEW
-				*/
-				var selectedColorScheme = 'RdYlGn';
-				var selectedColorSchemeInverse = true;
-				var selectedBuckets = 9;
-				var selected_year = d3.max(d3.keys(rte_data));
-				var selected_week = d3.max(d3.keys(rte_data[selected_year]));
-				var selected_month = 5
-				var themes = ["day", "week", "month", "year"];
-				var selected_theme = "year";
+			/* ************************** */
+			/* 
+				DEFINE INITIAL VIEW
+			*/
+			var selectedColorScheme = 'RdYlGn';
+			var selectedColorSchemeInverse = true;
+			var selectedBuckets = 9;
+			var selected_year = 2013
+			var selected_week = 22
+			var selected_month = 5
+			var themes = ["day", "week", "month", "year"];
+			var selected_theme = "year";
+			var years = [2011, 2012, 2013];
+			var weeks = [21,22,23];
+			
 
-				/* ************************** */
-				/* 
-					INJECT DATA INTO SELECTORS 
-				*/
-				createColorSelector(
-					colorbrewer
-					, selectedColorScheme
-					, selectedColorSchemeInverse
-				);
-				createYearSelector(rte_data, selected_year);
-				createWeekSelector(rte_data, selected_week);
-				createMonthSelector(selected_month);
-				createDaySelector();
-				createThemeSelector(themes, selected_theme);
+			/* ************************** */
+			/* 
+				INJECT DATA INTO SELECTORS 
+			*/
+			createColorSelector(
+				colorbrewer
+				, selectedColorScheme
+				, selectedColorSchemeInverse
+			);
+			createYearSelector(years, selected_year);
+			createWeekSelector(weeks, selected_week);
+			createMonthSelector(selected_month);
+			createDaySelector();
+			createThemeSelector(themes, selected_theme);
 
-				/* ************************** */
-				/* 
-					CALENDAR INITIALIZATION 
-				*/
-				var calendar = new Calendar( {
-					name: "Co2 produit par kWh consommé (g)"
-					, renderer : new Calendar.renderer.year()
-					, buckets : selectedBuckets
-					, colorScheme : selectedColorScheme
-					, colorSchemeInverse : selectedColorSchemeInverse
-					, retreiveDataCallback : rte_datagrab_callback
-					, retreiveCalcsCallback : rte_bounds_closure
-					, retreiveValueCallback : rte_closure
-					, width : $("#container").width()
-					, height: 800		
-				});
-
-				
-
-				function refresh(switch_renderer){
-					var years = $.map( $('#years option:selected'),
-                      			function(e) { return $(e).val(); } );
-
-					var months = $.map( $('#months option:selected'),
-                      			function(e) { return $(e).val(); } );
-					switch($("#themes").attr("value")){
-						case 'day':
-							if(switch_renderer)
-								calendar.renderer = new Calendar.renderer.day();
-							calendar.createTiles(
-								d3.max(years)
-								, $("#weeks").attr("value")
-								, $("#days").attr("value")
-							);
-							break;
-						case 'week':
-							if(switch_renderer)
-								calendar.renderer = new Calendar.renderer.week();
-							calendar.createTiles(
-								d3.max(years)
-								, $("#weeks").attr("value")
-							);
-							break;
-						case 'month':
-							if(switch_renderer)
-								calendar.renderer = new Calendar.renderer.month();
-							calendar.createTiles(
-								d3.max(years)
-								, months
-							);
-							break;
-						case 'year':
-							if(switch_renderer)
-								calendar.current_renderer = new Calendar.renderer.year();
-							calendar.createTiles(
-								years
-							);
-							break;
-						default:
-							break;
-					}
-				}
-
-				refresh();
-
-				$("#themes").change(function(e){
-					refresh(true);
-				});
-
-				$("#color, #color_inversed").change(function(e){
-					calendar.colorScheme = $("#color").attr("value");
-					console.log($("#color_inversed").attr("value"))
-					calendar.colorSchemeInverse = ($("#color_inversed").attr("value") == "inversed")? true : false;
-					console.log(calendar.colorSchemeInverse )
-					calendar.createLegend();
-					refresh();
-				});
-
-				$("#weeks, #years, #months, #days").change(function(e){
-					refresh();
-				});
-		
+			/* ************************** */
+			/* 
+				CALENDAR INITIALIZATION 
+			*/
+			var calendar = new Calendar( {
+				name: "Co2 produit par kWh consommé (g)"
+				, renderer : new Calendar.renderer.year()
+				, buckets : selectedBuckets
+				, colorScheme : selectedColorScheme
+				, colorSchemeInverse : selectedColorSchemeInverse
+				, retreiveDataCallback : rte_datagrab_callback
+				, retreiveCalcsCallback : rte_bounds_closure
+				, retreiveValueCallback : rte_closure
+				, width : $("#container").width()
+				, height: 800		
 			});
+
+			
+
+			function refresh(switch_renderer){
+				var years = $.map( $('#years option:selected'),
+                  			function(e) { return parseInt($(e).val()) } );
+
+				var months = $.map( $('#months option:selected'),
+                  			function(e) { return parseInt($(e).val()); } );
+				switch($("#themes").attr("value")){
+					case 'day':
+						if(switch_renderer)
+							calendar.renderer = new Calendar.renderer.day();
+						calendar.createTiles(
+							d3.max(years)
+							, $("#weeks").attr("value")
+							, $("#days").attr("value")
+						);
+						break;
+					case 'week':
+						if(switch_renderer)
+							calendar.renderer = new Calendar.renderer.week();
+						calendar.createTiles(
+							d3.max(years)
+							, $("#weeks").attr("value")
+						);
+						break;
+					case 'month':
+						if(switch_renderer)
+							calendar.renderer = new Calendar.renderer.month();
+						calendar.createTiles(
+							d3.max(years)
+							, months
+						);
+						break;
+					case 'year':
+						if(switch_renderer)
+							calendar.renderer = new Calendar.renderer.year();
+						calendar.createTiles(
+							years
+						);
+						break;
+					default:
+						break;
+				}
+			}
+
+			refresh();
+
+			$("#themes").change(function(e){
+				refresh(true);
+			});
+
+			$("#color, #color_inversed").change(function(e){
+				calendar.colorScheme = $("#color").attr("value");
+				console.log($("#color_inversed").attr("value"))
+				calendar.colorSchemeInverse = ($("#color_inversed").attr("value") == "inversed")? true : false;
+				console.log(calendar.colorSchemeInverse )
+				calendar.createLegend();
+				refresh();
+			});
+
+			$("#weeks, #years, #months, #days").change(function(e){
+				refresh();
+			});
+		
+		
 		}
 	</script>
 	<div id="container">

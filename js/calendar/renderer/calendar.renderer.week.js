@@ -42,7 +42,14 @@ Calendar.renderer.week = function(){
 		calendar.setBucket(bounds);
 		calendar.setLegend(bounds);
 
-		var start = d3.time.monday(bounds.start);
+		var start; 
+		if(bounds && bounds.start){
+			start = d3.time.monday(bounds.start);
+		}
+		else{
+			start = new Date(year,0,0);
+			faked = true;
+		}
 
 		/******************************************************/
 		// Helpers

@@ -131,6 +131,7 @@ Calendar.renderer.year = function(){
 			}			
 		}
 		else{
+			first_year = year;
 			year_index[year] = 0;
 			data_year = getPeriod(year, d3.time.days);
 			data_year_label = [new Date(year, 0, 1)];
@@ -138,7 +139,7 @@ Calendar.renderer.year = function(){
 			bounds = calendar.retreiveCalcsCallback(data, year);
 			calendar.setPeriod(new Date(year, 0, 0), new Date((year+1), 0, 0))
 		}
-
+		
 		calendar.setBucket(bounds);
 		calendar.setLegend(bounds);
 
@@ -272,7 +273,7 @@ Calendar.renderer.year = function(){
 		//hour labels exit
 		Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
 
-		 	
+		
 		return calculBBox();
 		
 	}
@@ -284,6 +285,33 @@ Calendar.renderer.year = function(){
 		var calendar = this;	
 		calendar.monthPathExit();
 		Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
+	}
+
+	/******************************************************/
+	// BOUNDS implementation
+	/******************************************************/
+	me.bounds = function(year){
+		if(year instanceof Array && year.length > 0){
+			if(year.length < 2){
+				return {
+					start : new Date(d3.min(year), 0, 0)
+					, end : new Date(d3.min(year) + 1, 0, 0)
+				}
+			}
+			else{
+				return {
+					start : new Date(d3.min(year), 0, 0)
+					, end : new Date(d3.max(year) + 1, 0, 0)
+				}
+			}			
+		}
+		else{
+
+			return {
+				start : new Date(year, 0, 0)
+				, end : new Date(year+1, 0, 0)
+			}
+		}
 	}
 
 	return me;

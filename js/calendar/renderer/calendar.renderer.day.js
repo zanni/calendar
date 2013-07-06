@@ -43,7 +43,7 @@ Calendar.renderer.day = function(){
 		calendar.setLegend(bounds);
 		var faked = false;
 		var start;
-		if(bounds.start){
+		if(bounds && bounds.start){
 			start = d3.time.day(bounds.start);
 		}
 		else{
@@ -168,7 +168,7 @@ Calendar.renderer.day = function(){
 			.transition()
 			// .duration(calendar.duration)
 			.delay(function(d){
-				return (quarter(d) * 20) + (d.getDay() * 20) + (Math.random() * 50)/ calendar.duration
+				return (quarter(d) * (Math.random() * 50)) + ((d.getHours() %6)) * (Math.random() * 50)/ calendar.duration
 			})
 		    .attr("x", calculTilePosX)
 	    	.attr("y", calculTilePosY)
