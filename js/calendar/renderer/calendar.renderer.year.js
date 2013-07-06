@@ -1,7 +1,3 @@
-if(!Calendar.renderer){
-	Calendar.renderer = {};
-}
-
 /*********************************************************/
 //
 // Calendar.renderer.week
@@ -31,34 +27,15 @@ Calendar.renderer.year = function(){
 	me.rendererId = "year";
 
 	/******************************************************/
-	// animation utils
-	/******************************************************/
-	// fade in animation
-	var fadeIn = function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 1)	
-	}
-
-	// fade out animation
-	var fadeOut = function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 0)
-			.remove();	
-	}
-
-	/******************************************************/
 	// DRAW implementation
+	// in this case, data are given to the renderer
+	// cause they are grabbed just before displaying calendar
+	// , in order to load just the correct amount of data
 	/******************************************************/
 	me.draw = function(data, year){
-		console.log(data);
-		console.log(year);
-		// year = parseInt(year);
-		// year = [2012, 2013];
 		/******************************************************/
 		// self ref is supposed to be set with generic calendar
-		// setting when calling draw func with apply
+		// settings when calling draw func with apply
 		/******************************************************/
 		var calendar = this;
 
@@ -132,7 +109,6 @@ Calendar.renderer.year = function(){
 				 max = [];
 				 mean = [];
 				 median = [];
-				startdate = [];
 				bounds.map(function(d){
 					if(d.start){
 						min.push(d.min);
@@ -152,13 +128,10 @@ Calendar.renderer.year = function(){
 			}
 			else{
 				bounds = me.cache_bounds[year];
-			}
-			
-			console.log(bounds)
+			}			
 		}
 		else{
 			year_index[year] = 0;
-			first_year = year;
 			data_year = getPeriod(year, d3.time.days);
 			data_year_label = [new Date(year, 0, 1)];
 			data_month = getPeriod(year, d3.time.months);
@@ -241,36 +214,20 @@ Calendar.renderer.year = function(){
 		}
 
 		/******************************************************/
-		// definitions
-		/******************************************************/
-
-		// time helpers
-		var day_time = 24 * 60 * 60 * 1000;
-		var week_time = 7 * day_time;
-
-		// ref on DOM
-		var svg = calendar.svg;
-
-		/******************************************************/
 		// TILES
 		/******************************************************/
-		//tiles update
-		var tiles = svg.selectAll("."+calendar.tileClass)
+		//tiles select
+		var tiles = calendar.svg.selectAll("."+calendar.tileClass)
 				.data(data_year);
 		
 		// tiles enter		
-		tiles.enter()
-			.insert("rect")
-				.classed(calendar.tileClass, true)
+		calendar.tilesEnter(tiles)
 				.attr("x", calculTilePosX)
 	    		.attr("y", calculTilePosY)
 			    .attr("width", cell_size+"px")
 		    	.attr("height", cell_size+"px")
-			    .attr("stroke-width", "2px")
-				.attr("fill", "#fff")
-				.attr("fill-opacity", 0)
 			     
-
+		// tiles update
 		tiles
 			.transition()
 			// .duration(calendar.duration)
@@ -285,57 +242,18 @@ Calendar.renderer.year = function(){
 		    .attr("fill", colorize);
 			    
 		// tiles exit
-		tiles.exit()
-		// .transition().duration(calendar.duration)
-		// .attr("fill-opacity", 0)
-		.remove()
+		calendar.tilesExit(tiles);
 
 		/******************************************************/
 		// MONTH PATH
 		/******************************************************/
-		me.months_path = svg.selectAll(".month")
-		    .data(data_month, function(d,i){return i;})
-		
-		me.months_path.enter()
-			.append("path")
-		    .attr("class", "month")
-		    .attr("stroke-width", "2px")
-		    .attr("stroke", "#FFF")
-		    .attr("fill-opacity", 0)
-		    .attr("stroke-opacity", 1)
-		    .attr("d", monthPath)
+		calendar.monthPathEnter(data_month,monthPath);
 
-		me.months_path.transition().duration(calendar.duration).attr("stroke", "#000")
-			.attr("stroke", "#000")
-		    .attr("d", monthPath)
-
-		me.months_path.exit().remove()
-		// fadeOut(me.months_path.exit().transition(), calendar.duration);
 		/******************************************************/
 		// LABELS
 		/******************************************************/
-		
-		// //hours labels
-		// me.labels_months = svg.selectAll("."+month_label_class)
-		// 		.data(data_month);
-		// //hour labels enter
-		// initLabel(me.labels_months.enter(), month_label_class)
-		// 	.attr("x", calculLabelMonthPosX ) 
-		//     .attr("y", calculLabelMonthPosY ) 
-		//     .text(month_label_format);
-
-		// //hour labels update
-		// fadeIn(me.labels_months.transition(), calendar.duration)
-		//     .attr("x", calculLabelMonthPosX ) 
-		//     .attr("y", calculLabelMonthPosY ) 
-		//     .text(month_label_format);
-
-		// //hour labels exit
-		// me.labels_months.exit().remove();
-		// // fadeOut(me.labels_months.exit().transition(), calendar.duration);
-		
 		//hours labels
-		me.label_year = svg.selectAll("."+year_label_class)
+		me.label_year = calendar.svg.selectAll("."+year_label_class)
 				.data(data_year_label);
 		//hour labels enter
 		initLabel(me.label_year.enter(), year_label_class)
@@ -346,15 +264,15 @@ Calendar.renderer.year = function(){
 		    .text(year_label_format);
 
 		//hour labels update
-		fadeIn(me.label_year.transition(), calendar.duration)
+		Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration)
 		    .attr("x", calculLabelYearPosX ) 
 		    .attr("y", calculLabelYearPosY ) 
 		    .text(year_label_format);
 
 		//hour labels exit
-		fadeOut(me.label_year.exit().transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
 
-		
+		 	
 		return calculBBox();
 		
 	}
@@ -364,13 +282,8 @@ Calendar.renderer.year = function(){
 	/******************************************************/
 	me.clean = function(){
 		var calendar = this;	
-		me.months_path
-		    .data([])
-		    .exit()
-			// .transition().duration(calendar.duration).attr("fill-opacity", 0)
-			.remove();
-		// fadeOut(me.labels_months.transition(), calendar.duration);
-		fadeOut(me.label_year.transition(), calendar.duration);
+		calendar.monthPathExit();
+		Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
 	}
 
 	return me;

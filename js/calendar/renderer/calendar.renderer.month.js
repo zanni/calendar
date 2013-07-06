@@ -1,7 +1,3 @@
-if(!Calendar.renderer){
-	Calendar.renderer = {};
-}
-
 /*********************************************************/
 //
 // Calendar.renderer.week
@@ -28,30 +24,10 @@ Calendar.renderer.month = function(){
 	me.rendererId = "month";
 
 	/******************************************************/
-	// animation utils
-	/******************************************************/
-	// fade in animation
-	var fadeIn = function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 1)	
-	}
-
-	// fade out animation
-	var fadeOut = function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 0)
-			.remove();	
-	}
-
-	/******************************************************/
 	// DRAW implementation
 	/******************************************************/
 	me.draw = function(grab_data, year, month){
-		console.log(grab_data);
-		console.log(year);
-		console.log(month)
+
 		/******************************************************/
 		// self ref is supposed to be set with generic calendar
 		// setting when calling draw func with apply
@@ -261,18 +237,12 @@ Calendar.renderer.month = function(){
 		var tiles = svg.selectAll("."+calendar.tileClass)
 				.data(data)
 		
-		// tiles enter		
-		tiles.enter()
-			.insert("rect")
-				.classed(calendar.tileClass, true)
-				.attr("x", calculTilePosX)
+		// tiles enter			
+		calendar.tilesEnter(tiles)
+			     .attr("x", calculTilePosX)
 	    		.attr("y", calculTilePosY)
 			    .attr("width", cell_size+"px")
 		    	.attr("height", cell_size+"px")
-			    .attr("stroke-width", "2px")
-				.attr("fill", "#fff")
-				.attr("fill-opacity", 0)
-			     
 
 		tiles
 			.transition()
@@ -288,32 +258,13 @@ Calendar.renderer.month = function(){
 		    .attr("fill", colorize);
 			    
 		// tiles exit
-		tiles.exit()
-		// .transition().duration(calendar.duration)
-		// .attr("fill-opacity", 0)
-		.remove()
+		calendar.tilesExit(tiles);
 
 		/******************************************************/
 		// MONTH PATH
 		/******************************************************/
-		me.months_path = svg.selectAll(".month")
-		    .data(data_month, function(d,i){return i;})
-		
-		me.months_path.enter()
-			.append("path")
-		    .attr("class", "month")
-		    .attr("stroke-width", "2px")
-		    .attr("stroke", "#FFF")
-		    .attr("fill-opacity", 0)
-		    .attr("stroke-opacity", 1)
-		    .attr("d", monthPath)
+		calendar.monthPathEnter(data_month,monthPath );
 
-		me.months_path.transition().duration(calendar.duration).attr("stroke", "#000")
-			.attr("stroke", "#000")
-		    .attr("d", monthPath)
-
-		me.months_path.exit().remove()
-		// fadeOut(me.months_path.exit().transition(), calendar.duration);
 		/******************************************************/
 		// LABELS
 		/******************************************************/
@@ -327,7 +278,7 @@ Calendar.renderer.month = function(){
 		    .text(month_label_format);
 
 		//hour labels update
-		fadeIn(me.labels_months.transition(), calendar.duration)
+		Calendar.animation.fadeIn(me.labels_months.transition(), calendar.duration)
 		    .attr("x", calculLabelMonthPosX ) 
 		    .attr("y", calculLabelMonthPosY ) 
 		    .text(month_label_format);
@@ -348,13 +299,13 @@ Calendar.renderer.month = function(){
 		    .text(year_label_format);
 
 		//hour labels update
-		fadeIn(me.label_year.transition(), calendar.duration)
+		Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration)
 		    .attr("x", calculLabelYearPosX ) 
 		    .attr("y", calculLabelYearPosY ) 
 		    .text(year_label_format);
 
 		//hour labels exit
-		fadeOut(me.label_year.exit().transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
 
 		return calculBBox();
 	}
@@ -364,13 +315,9 @@ Calendar.renderer.month = function(){
 	/******************************************************/
 	me.clean = function(){
 		var calendar = this;	
-		me.months_path
-		    .data([])
-		    .exit()
-			// .transition().duration(calendar.duration).attr("fill-opacity", 0)
-			.remove();
-		fadeOut(me.labels_months.transition(), calendar.duration);
-		fadeOut(me.label_year.transition(), calendar.duration);
+		calendar.monthPathExit();
+		Calendar.animation.fadeOut(me.labels_months.transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
 	}
 
 	return me;

@@ -1,5 +1,3 @@
-
-
 /*
  * Generic parser used to manipulate list of timestamped data
  */

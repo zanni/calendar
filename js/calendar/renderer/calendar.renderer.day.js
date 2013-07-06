@@ -1,7 +1,3 @@
-if(!Calendar.renderer){
-	Calendar.renderer = {};
-}
-
 /*********************************************************/
 //
 // Calendar.renderer.week
@@ -25,24 +21,6 @@ Calendar.renderer.day = function(){
 	// renderer unic id
 	/******************************************************/
 	me.rendererId = "day";
-
-	/******************************************************/
-	// animation utils
-	/******************************************************/
-	// fade in animation
-	var fadeIn = function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 1)	
-	}
-
-	// fade out animation
-	var fadeOut = function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 0)
-			.remove();	
-	}
 
 	/******************************************************/
 	// DRAW implementation
@@ -179,16 +157,11 @@ Calendar.renderer.day = function(){
 				)
 		
 		// tiles enter		
-		tiles.enter()
-			.insert("rect")
-				.classed(calendar.tileClass, true)
+		calendar.tilesEnter(tiles)
 				.attr("x", calculTilePosX)
 	    		.attr("y", calculTilePosY)
 			    .attr("width", cell_size+"px")
-		    	.attr("height", cell_size+"px")
-			    .attr("stroke-width", "2px")
-				.attr("fill", "#fff")
-				.attr("fill-opacity", 0)
+		    	.attr("height", cell_size+"px");
 			     
 
 		tiles
@@ -205,9 +178,7 @@ Calendar.renderer.day = function(){
 		    .attr("fill", colorize);
 			    
 		// tiles exit
-		tiles.exit().transition().duration(calendar.duration)
-		.attr("fill-opacity", 0)
-		.remove()
+		calendar.tilesExit(tiles)
 
 		/******************************************************/
 		// LABELS
@@ -228,13 +199,13 @@ Calendar.renderer.day = function(){
 		    .text(hour_label_format);
 
 		//hour labels update
-		fadeIn(me.labels_hours.transition(), calendar.duration)
+		Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration)
 		    .attr("x", calculLabelHourPosX ) 
 		    .attr("y", calculLabelHourPosY ) 
 		    .text(hour_label_format);
 
 		//hour labels exit
-		fadeOut(me.labels_hours.exit().transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.labels_hours.exit().transition(), calendar.duration);
 		
 		return calculBBox();
 
@@ -245,7 +216,7 @@ Calendar.renderer.day = function(){
 	/******************************************************/
 	me.clean = function(){
 		var calendar = this;
-		fadeOut(me.labels_hours.transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.labels_hours.transition(), calendar.duration);
 	}
 
 	return me;

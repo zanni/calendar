@@ -9,13 +9,63 @@
 	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="js/d3/d3.min.js"></script>
 	<script type="text/javascript" src="js/colorbrewer/colorbrewer.js"></script>
+
 	<script type="text/javascript" src="js/calendar/calendar.js"></script>
 	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.day.js"></script>
 	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.week.js"></script>
 	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.year.js"></script>
 	<script type="text/javascript" src="js/calendar/renderer/calendar.renderer.month.js"></script>
+	
+	
+
 	<script type="text/javascript" src="js/calendar/calendar.data.js"></script>
 		<script>
+		/* ************************** */
+		/* 
+			fill displayed select with possible data to displayed
+		*/
+		function createColorSelector(data, selected, inversed){
+			var color = d3.select("#color");
+			var color_inversed = d3.select("#color_inversed");
+			var inversed = {
+				noninversed: "Normal"
+				, inversed: "Inverse"
+			}
+			var select = color.selectAll("option")
+				.data(d3.keys(data));
+
+			
+			select.enter().append("option")
+				.text(function(d){
+					return d
+				})
+				.attr("id", function(d){ 
+					return "color_"+d
+				})
+				.attr("value", function(d){ return d});
+			select.exit().remove();
+			
+			var select_inversed = color_inversed.selectAll("option")
+				.data(d3.keys(inversed));
+			
+			select_inversed.enter().append("option")
+				.text(function(d){ return inversed[d]; })
+				.attr("id", function(d){ return "color_inversed_"+d })
+				.attr("value", function(d){ return d});
+			
+			select_inversed.exit().remove();
+			
+			$("#color").css("display", "inline");
+			$("#color_inversed").css("display", "inline");
+			
+			color.select("#color_"+selected).attr("selected", true);	
+			if(inversed){
+				color_inversed.select("#color_inversed_inversed").attr("selected", true);	
+			}
+			else{
+				color_inversed.select("#color_inversed_noninversed").attr("selected", true);
+			}
+		}
 		/* ************************** */
 		/* 
 			fill weeks select with week data
@@ -66,7 +116,7 @@
 		/* 
 			fill weeks select with week data
 		*/
-		function createMonthSelector(){
+		function createMonthSelector(selected){
 			var year = new Date().getFullYear()
 			var data = d3.time.months(
 				new Date(year, 0, 1)
@@ -84,7 +134,7 @@
 			
 			$("#months").css("display", "inline");
 			
-			// months.select("#months_"+selected).attr("selected", true);	
+			months.select("#months_"+selected).attr("selected", true);	
 		}
 		/* ************************** */
 		/* 
@@ -132,13 +182,22 @@
 			
 			themes.select("#theme_"+selected).attr("selected", true);	
 		}
+
+		var formatTimeStampUrl = function (time){
+				var str = time.getFullYear();
+				str += "-";
+				str +=time.getMonth() + 1;
+				str += "-";
+				str += time.getDate();
+				return str;
+			}
+
 		
 
 		$.ready = function(){
 
 
 			d3.json('mokup/rte.json', function(json) {
-				console.log(json)
 				/* 
 					RTE DATA MAPPING
 				*/
@@ -148,13 +207,21 @@
 				var rte_parser = Calendar.data.create(rteTimeCallback);
 				rte_data = rte_parser(rte_data);
 
-				var rte_datagrab_callback = function(){
-					var me = this;
-					d3.json('mokup/rte.json', function(json) {
-						console.log(json)
-						me.draw(json.mixenergies.list);
-					});
-				}
+				// var rte_datagrab_callback = function(){
+				// 	var me = this;
+
+				// 	var url = getRTEURl();
+				// 	$.ajax({
+				// 		url : url;
+				// 		, dataType : 'jsonp'
+				// 	});
+				// 		console.log(json)
+				// 		var args = [];
+				// 		args.splice(0, 0, json.mixenergies.list);
+				// 		for(var i=0; i< arguments.length;i++) args.push(arguments[i])
+				// 		this.draw.apply(this, args);
+				// 	});
+				// }
 				rte_datagrab_callback = function(){
 					// d3.json('mokup/rte.json', function(json) {
 					// 	console.log(json)
@@ -181,6 +248,9 @@
 				/* 
 					DEFINE INITIAL VIEW
 				*/
+				var selectedColorScheme = 'RdYlGn';
+				var selectedColorSchemeInverse = true;
+				var selectedBuckets = 9;
 				var selected_year = d3.max(d3.keys(rte_data));
 				var selected_week = d3.max(d3.keys(rte_data[selected_year]));
 				var selected_month = 5
@@ -191,9 +261,14 @@
 				/* 
 					INJECT DATA INTO SELECTORS 
 				*/
+				createColorSelector(
+					colorbrewer
+					, selectedColorScheme
+					, selectedColorSchemeInverse
+				);
 				createYearSelector(rte_data, selected_year);
 				createWeekSelector(rte_data, selected_week);
-				createMonthSelector();
+				createMonthSelector(selected_month);
 				createDaySelector();
 				createThemeSelector(themes, selected_theme);
 
@@ -201,23 +276,22 @@
 				/* 
 					CALENDAR INITIALIZATION 
 				*/
-				var calendar = Calendar.init( {
+				var calendar = new Calendar( {
 					name: "Co2 produit par kWh consommé (g)"
-					, period : selected_theme
-					, buckets : 9
-					, colorScheme : 'RdYlGn'
-					, colorSchemeInverse : true
+					, renderer : new Calendar.renderer.year()
+					, buckets : selectedBuckets
+					, colorScheme : selectedColorScheme
+					, colorSchemeInverse : selectedColorSchemeInverse
 					, retreiveDataCallback : rte_datagrab_callback
 					, retreiveCalcsCallback : rte_bounds_closure
 					, retreiveValueCallback : rte_closure
 					, width : $("#container").width()
-					, height: 800
-						
+					, height: 800		
 				});
 
 				
 
-				function switchTheme(){
+				function refresh(switch_renderer){
 					var years = $.map( $('#years option:selected'),
                       			function(e) { return $(e).val(); } );
 
@@ -225,6 +299,8 @@
                       			function(e) { return $(e).val(); } );
 					switch($("#themes").attr("value")){
 						case 'day':
+							if(switch_renderer)
+								calendar.renderer = new Calendar.renderer.day();
 							calendar.createTiles(
 								d3.max(years)
 								, $("#weeks").attr("value")
@@ -232,19 +308,24 @@
 							);
 							break;
 						case 'week':
+							if(switch_renderer)
+								calendar.renderer = new Calendar.renderer.week();
 							calendar.createTiles(
 								d3.max(years)
 								, $("#weeks").attr("value")
 							);
 							break;
 						case 'month':
-							
+							if(switch_renderer)
+								calendar.renderer = new Calendar.renderer.month();
 							calendar.createTiles(
 								d3.max(years)
 								, months
 							);
 							break;
 						case 'year':
+							if(switch_renderer)
+								calendar.current_renderer = new Calendar.renderer.year();
 							calendar.createTiles(
 								years
 							);
@@ -254,16 +335,23 @@
 					}
 				}
 
-				switchTheme();
+				refresh();
 
 				$("#themes").change(function(e){
-					calendar.period = $("#themes").attr("value");
-					switchTheme();
+					refresh(true);
 				});
 
-				$("#weeks, #years, #months, #days, #color, #color_inversed").change(function(e){
-					console.log($("#months").attr("value"))
-					switchTheme();
+				$("#color, #color_inversed").change(function(e){
+					calendar.colorScheme = $("#color").attr("value");
+					console.log($("#color_inversed").attr("value"))
+					calendar.colorSchemeInverse = ($("#color_inversed").attr("value") == "inversed")? true : false;
+					console.log(calendar.colorSchemeInverse )
+					calendar.createLegend();
+					refresh();
+				});
+
+				$("#weeks, #years, #months, #days").change(function(e){
+					refresh();
 				});
 		
 			});
@@ -291,7 +379,8 @@
 			<select id="months" multiple class="input-small" style="display: none"></select>
 			<select id="weeks" class="input-medium" style="display: none"></select>
 			<select id="days" class="input-medium" style="display: none"></select>
-			
+			<select id="color" class="input-small" style="display: none"></select>
+			<select id="color_inversed" class="input-small" style="display: none"></select>
 		</div>
 		
 		<div id="vis"></div>

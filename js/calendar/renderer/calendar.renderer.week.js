@@ -1,7 +1,3 @@
-if(!Calendar.renderer){
-	Calendar.renderer = {};
-}
-
 /*********************************************************/
 //
 // Calendar.renderer.week
@@ -26,24 +22,6 @@ Calendar.renderer.week = function(){
 	// renderer unic id
 	/******************************************************/
 	me.rendererId = "week";
-
-	/******************************************************/
-	// animation utils
-	/******************************************************/
-	// fade in animation
-	var fadeIn = function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 1)	
-	}
-
-	// fade out animation
-	var fadeOut = function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 0)
-			.remove();	
-	}
 
 	/******************************************************/
 	// DRAW implementation
@@ -170,16 +148,11 @@ Calendar.renderer.week = function(){
 				)
 		
 		// tiles enter		
-		tiles.enter()
-			.insert("rect")
-				.classed(calendar.tileClass, true)
+		calendar.tilesEnter(tiles)
 				.attr("x", calculTilePosX)
 	    		.attr("y", calculTilePosY)
 			    .attr("width", cell_size+"px")
 		    	.attr("height", cell_size+"px")
-			    .attr("stroke-width", "2px")
-				.attr("fill", "#fff")
-				.attr("fill-opacity", 0)
 			     
 
 		tiles
@@ -196,9 +169,7 @@ Calendar.renderer.week = function(){
 		    .attr("fill", colorize);
 			    
 		// tiles exit
-		tiles.exit().transition().duration(calendar.duration)
-		.attr("fill-opacity", 0)
-		.remove()
+		calendar.tilesExit(tiles);
 
 		/******************************************************/
 		// LABELS
@@ -217,11 +188,11 @@ Calendar.renderer.week = function(){
 		    .text(day_label_format);
 
 		//day labels update
-		fadeIn(me.labels_days.transition(), calendar.duration)
+		Calendar.animation.fadeIn(me.labels_days.transition(), calendar.duration)
 			.text(day_label_format);
 	
 		//day labels exit
-		fadeOut(me.labels_days.exit().transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.labels_days.exit().transition(), calendar.duration);
 
 		//hours labels
 		me.labels_hours = svg.selectAll("."+hour_label_class)
@@ -236,13 +207,13 @@ Calendar.renderer.week = function(){
 		    .text(hour_label_format);
 
 		//hour labels update
-		fadeIn(me.labels_hours.transition(), calendar.duration)
+		Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration)
 		    .attr("x", calculLabelHourPosX ) 
 		    .attr("y", calculLabelHourPosY ) 
 		    .text(hour_label_format);
 
 		//hour labels exit
-		fadeOut(me.labels_hours.exit().transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.labels_hours.exit().transition(), calendar.duration);
 
 		return calculBBox();
 	}
@@ -252,8 +223,8 @@ Calendar.renderer.week = function(){
 	/******************************************************/
 	me.clean = function(){
 		var calendar = this;
-		fadeOut(me.labels_days.transition(), calendar.duration);
-		fadeOut(me.labels_hours.transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.labels_days.transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.labels_hours.transition(), calendar.duration);
 	}
 
 	return me;
