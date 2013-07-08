@@ -84,7 +84,8 @@ Calendar.data = {
 				// get through the tree using variable arguments
 				for(var i in args) period = period[args[i]];
 				//start recurrence 
-				return recurr(period, 0);
+				var val = recurr(period, 0);
+				return val;
 			}
 			catch(err){
 				return null;
@@ -143,6 +144,15 @@ Calendar.data = {
 			catch(err){
 				return null;
 			}
+		}
+	}
+	, retreiveBoundsPercentCallbackClosure : function(){
+		return function(){
+			return {
+					'min': 0
+					, 'max': 100
+				};
+			
 		}
 	}
 }

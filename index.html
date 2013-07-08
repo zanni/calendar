@@ -70,6 +70,28 @@
 		/* 
 			fill weeks select with week data
 		*/
+		function createDisplaySelector(data, selected){
+			var displays = d3.select("#displays");
+
+			var select = displays.selectAll("option")
+				.data(data);
+
+			select.enter().append("option")
+				.text(function(d){
+					return d;
+				})
+				.attr("id", function(d){ return "displays_"+d})
+				.attr("value", function(d){ return d});
+			select.exit().remove();
+			
+			$("#displays").css("display", "inline");
+			
+			displays.select("#displays_"+selected).attr("selected", true);	
+		}
+		/* ************************** */
+		/* 
+			fill weeks select with week data
+		*/
 		function createYearSelector(data, selected){
 			var years = d3.select("#years");
 
@@ -201,9 +223,151 @@
 			*/
 			
 			// var rte_data = json.mixenergies.list;
-			var rteCo2Callback = function(d){ return d.tauxDeCo2; };
+			var rteCo2Callback = function(d){  return d.tauxDeCo2; };
+			var rteConsommationCallback = function(d){ return d.conso; };
+			var rteNucleairePercentCallback = function(d){
+				var conso = 
+				((d.autres) ? d.autres : 0)
+				+ ((d.charbon) ? d.charbon : 0)
+				// + ((d.echCommAllemagne) ? d.echCommAllemagne : 0)
+				// + ((d.echCommAngleterre) ? d.echCommAngleterre : 0)
+				// + ((d.echCommBelgique) ? d.echCommBelgique : 0)
+				// + ((d.echCommEspagne) ? d.echCommEspagne : 0)
+				// + ((d.echCommItalie) ? d.echCommItalie : 0)
+				// + ((d.echCommSuisse) ? d.echCommSuisse : 0)
+				// + ((d.echPhysiques) ? d.echPhysiques : 0)
+				+ ((d.eolien) ? d.eolien : 0)
+				+ ((d.fioul) ? d.fioul : 0)
+				+ ((d.gaz) ? d.gaz : 0)
+				+ ((d.hydraulique) ? d.hydraulique : 0)
+				+ ((d.nucleaire) ? d.nucleaire : 0)
+				+ ((d.pompage) ? d.pompage : 0)
+				+ ((d.solaire) ? d.solaire : 0)
+
+				return (d.nucleaire && conso) ? d.nucleaire * 100 / conso : null; 
+			};
+			var rteNRJRenPercentCallback = function(d){
+				var conso = 
+				((d.autres) ? d.autres : 0)
+				+ ((d.charbon) ? d.charbon : 0)
+				// + ((d.echCommAllemagne) ? d.echCommAllemagne : 0)
+				// + ((d.echCommAngleterre) ? d.echCommAngleterre : 0)
+				// + ((d.echCommBelgique) ? d.echCommBelgique : 0)
+				// + ((d.echCommEspagne) ? d.echCommEspagne : 0)
+				// + ((d.echCommItalie) ? d.echCommItalie : 0)
+				// + ((d.echCommSuisse) ? d.echCommSuisse : 0)
+				// + ((d.echPhysiques) ? d.echPhysiques : 0)
+				+ ((d.eolien) ? d.eolien : 0)
+				+ ((d.fioul) ? d.fioul : 0)
+				+ ((d.gaz) ? d.gaz : 0)
+				+ ((d.hydraulique) ? d.hydraulique : 0)
+				+ ((d.nucleaire) ? d.nucleaire : 0)
+				+ ((d.pompage) ? d.pompage : 0)
+				+ ((d.solaire) ? d.solaire : 0)
+
+				var nrj = 
+
+				((d.eolien) ? d.eolien : 0)
+				+ ((d.hydraulique) ? d.hydraulique : 0)
+				+ ((d.pompage) ? d.pompage : 0)
+				+ ((d.solaire) ? d.solaire : 0)
+
+				return (nrj && conso) ? nrj * 100 / conso : null; 
+			};
+			
+			var rteFossilePercentCallback = function(d){
+				var conso = 
+				((d.autres) ? d.autres : 0)
+				+ ((d.charbon) ? d.charbon : 0)
+				// + ((d.echCommAllemagne) ? d.echCommAllemagne : 0)
+				// + ((d.echCommAngleterre) ? d.echCommAngleterre : 0)
+				// + ((d.echCommBelgique) ? d.echCommBelgique : 0)
+				// + ((d.echCommEspagne) ? d.echCommEspagne : 0)
+				// + ((d.echCommItalie) ? d.echCommItalie : 0)
+				// + ((d.echCommSuisse) ? d.echCommSuisse : 0)
+				// + ((d.echPhysiques) ? d.echPhysiques : 0)
+				+ ((d.eolien) ? d.eolien : 0)
+				+ ((d.fioul) ? d.fioul : 0)
+				+ ((d.gaz) ? d.gaz : 0)
+				+ ((d.hydraulique) ? d.hydraulique : 0)
+				+ ((d.nucleaire) ? d.nucleaire : 0)
+				+ ((d.pompage) ? d.pompage : 0)
+				+ ((d.solaire) ? d.solaire : 0)
+
+				var nrj = 
+				+ ((d.charbon) ? d.charbon : 0)
+				+ ((d.fioul) ? d.fioul : 0)
+				+ ((d.gaz) ? d.gaz : 0)
+				// + ((d.nucleaire) ? d.nucleaire : 0)
+
+				return (nrj && conso) ? nrj * 100 / conso : null; 
+			};
+
 			var rteTimeCallback = function(el){ return new Date(el.date); }
 			var rte_parser = Calendar.data.create(rteTimeCallback);
+			var possible_displays = {
+				co2 : {
+					name : "Co2 produit par kWh consomme (g)"
+					, rte_closure : Calendar.data.retreiveValueCallbackClosure(
+						rteCo2Callback
+						, d3.mean
+					)
+					, rte_bounds_closure : Calendar.data.retreiveBoundsCallbackClosure(
+						rteTimeCallback
+						, rteCo2Callback
+						, d3.mean
+					)
+				}
+				, conso : {
+					name : "Consommation (MWh)"
+					, rte_closure : Calendar.data.retreiveValueCallbackClosure(
+						rteConsommationCallback
+						, d3.mean
+					)
+					, rte_bounds_closure : Calendar.data.retreiveBoundsCallbackClosure(
+						rteTimeCallback
+						, rteConsommationCallback
+						, d3.mean
+					)
+				}
+				, nucleaire : {
+					name : "Pourcentage de nucleaire"
+					, rte_closure : Calendar.data.retreiveValueCallbackClosure(
+						rteNucleairePercentCallback
+						, d3.mean
+					)
+					, rte_bounds_closure : Calendar.data.retreiveBoundsCallbackClosure(
+						rteTimeCallback
+						, rteNucleairePercentCallback
+						, d3.mean
+					)
+				}
+				, nrj_ren : {
+					name : "Pourcentage de energie renouvelable"
+					, rte_closure : Calendar.data.retreiveValueCallbackClosure(
+						rteNRJRenPercentCallback
+						, d3.mean
+					)
+					, rte_bounds_closure : Calendar.data.retreiveBoundsCallbackClosure(
+						rteTimeCallback
+						, rteNRJRenPercentCallback
+						, d3.mean
+					)
+				}
+				, fossile : {
+					name : "Pourcentage de energie renouvelable"
+					, rte_closure : Calendar.data.retreiveValueCallbackClosure(
+						rteFossilePercentCallback
+						, d3.mean
+					)
+					, rte_bounds_closure : Calendar.data.retreiveBoundsCallbackClosure(
+						rteTimeCallback
+						, rteFossilePercentCallback
+						, d3.mean
+					)
+				}
+			}
+			
 			// rte_data = rte_parser(rte_data);
 			// console.log(rte_data)
 			// var rte_datagrab_callback = function(){
@@ -243,6 +407,7 @@
 				d3.json("mokup/rte.json", function(json){
 					var args = [];
 					var data =  rte_parser(json.mixenergies.list);
+					console.log(data)
 					args.splice(0, 0, data);
 					for(var i=0; i< arguments_call.length;i++) args.push(arguments_call[i])
 					me.draw.apply(me, args);
@@ -250,16 +415,8 @@
 			}
 			
 
-			var rte_closure = Calendar.data.retreiveValueCallbackClosure(
-				rteCo2Callback
-				, d3.mean
-			);
+			
 
-			var rte_bounds_closure = Calendar.data.retreiveBoundsCallbackClosure(
-				rteTimeCallback
-				, rteCo2Callback
-				, d3.mean
-			);
 
 			/* ************************** */
 			/* 
@@ -271,11 +428,13 @@
 			var selected_year = 2013
 			var selected_week = 22
 			var selected_month = 5
+			var selected_display = "co2";
 			var themes = ["day", "week", "month", "year"];
+			var displays = ["co2", "conso", "nucleaire", "nrj_ren", "fossile"];
 			var selected_theme = "year";
 			var years = [2011, 2012, 2013];
 			var weeks = [21,22,23];
-			
+			[]
 
 			/* ************************** */
 			/* 
@@ -291,7 +450,9 @@
 			createMonthSelector(selected_month);
 			createDaySelector();
 			createThemeSelector(themes, selected_theme);
+			createDisplaySelector(displays, selected_display);
 
+			console.log(possible_displays[selected_display])
 			/* ************************** */
 			/* 
 				CALENDAR INITIALIZATION 
@@ -303,8 +464,8 @@
 				, colorScheme : selectedColorScheme
 				, colorSchemeInverse : selectedColorSchemeInverse
 				, retreiveDataCallback : rte_datagrab_callback
-				, retreiveCalcsCallback : rte_bounds_closure
-				, retreiveValueCallback : rte_closure
+				, retreiveCalcsCallback : possible_displays[selected_display].rte_bounds_closure
+				, retreiveValueCallback : possible_displays[selected_display].rte_closure
 				, width : $("#container").width()
 				, height: 800		
 			});
@@ -363,14 +524,21 @@
 
 			$("#color, #color_inversed").change(function(e){
 				calendar.colorScheme = $("#color").attr("value");
-				console.log($("#color_inversed").attr("value"))
 				calendar.colorSchemeInverse = ($("#color_inversed").attr("value") == "inversed")? true : false;
-				console.log(calendar.colorSchemeInverse )
 				calendar.createLegend();
 				refresh();
 			});
 
 			$("#weeks, #years, #months, #days").change(function(e){
+				refresh();
+			});
+
+			$("#displays").change(function(e){
+				var selected_display = $("#displays").attr("value");
+				console.log(selected_display)
+				calendar.name = possible_displays[selected_display].name; 
+				calendar.retreiveCalcsCallback = possible_displays[selected_display].rte_bounds_closure
+				calendar.retreiveValueCallback = possible_displays[selected_display].rte_closure
 				refresh();
 			});
 		
@@ -380,7 +548,7 @@
 	<div id="container">
 		<div id="header">
 			<div id="period">
-					<h1>CO2 Produit par kWh consomm&eacute;</h1>
+					<h1 id="title"></h1>
 					<br>
 					<h2>P&eacute;riode &eacute;tudi&eacute;e: <p class="start"></p> - </p><p class="end"></p></h2>
 				</div>		
@@ -394,6 +562,7 @@
 			</div>
 		</div>
 		<div id="selectors" >
+			<select id="displays" class="input-medium" style="display: none"></select>
 			<select id="themes" class="input-medium" style="display: none"></select>
 			<select id="years" multiple class="input-small" style="display: none"></select>
 			<select id="months" multiple class="input-small" style="display: none"></select>

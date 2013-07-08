@@ -100,8 +100,7 @@ Calendar.renderer.year = function(){
 				data_year_label.push(new Date(year[i], 1, 1));
 				data_month = data_month.concat(getPeriod(year[i], d3.time.months));
 			}
-			if(!me.cache_bounds[year]){
-				for(var d in data_year){
+			for(var d in data_year){
 					var bound = calendar.retreiveCalcsCallback(data, data_year[d].getFullYear(), week(data_year[d]), day(data_year[d]))
 					if(bound) bounds.push(bound);	
 				}
@@ -124,11 +123,6 @@ Calendar.renderer.year = function(){
 					, 'median': d3.round(d3.median(median), 2)
 					, 'start': new Date(first_year, 0, 1)
 				};
-				me.cache_bounds[year] = bounds;
-			}
-			else{
-				bounds = me.cache_bounds[year];
-			}			
 		}
 		else{
 			first_year = year;

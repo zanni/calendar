@@ -51,6 +51,8 @@ var Calendar = function(spec){
 	me.upBound = spec.upBound || 80;
 	me.downBound = spec.downBound || 20;
 
+	me.name = spec.name || "";
+
 	var range = [];
 	for (var i = 0; i < me.buckets; i++) {
 		range.push(i);
@@ -90,6 +92,7 @@ var _createTiles = function () {
 	// self reference 
 	var me = this;
 
+
 	var args = arguments;
 
 	data = [];
@@ -102,8 +105,9 @@ var _createTiles = function () {
 		me.current_renderer = me.renderer;
 
 	}
-		
-
+	
+	console.log(me.name)
+	$("#title").text(me.name);
 
 	var bbox = me.current_renderer.draw.apply(this, arguments);
 
