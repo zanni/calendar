@@ -1,0 +1,16 @@
+{
+  "name": "calendarjs",
+  "version": "0.0.1",
+  "description": "d3 calendar view API",
+  "author": {
+    "name": "Bertrand Zanni"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zanni/calendar.git"
+  },
+  "devDependencies": {
+    "smash": "~0.0.8",
+    "uglify-js": "2.3.6"
+  }
+}
