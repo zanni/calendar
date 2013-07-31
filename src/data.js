@@ -62,21 +62,23 @@ Calendar.data = {
 	*/
 	 ,retreiveValueCallbackClosure: function(specializedFunc, aggregatFunc, filterFunc){
 		var recurr = function(array, i){
+			
 			var logs = [];
-				if(specializedFunc(array) != null){
-					return specializedFunc(array);
+			var value = specializedFunc(array);
+			if(value != null && value != undefined && !isNaN(value)){
+				return value;
+			}
+			else{
+				for(var i in array){
+
+					logs.push(recurr(array[i]));
 				}
-				else{
-					for(var i in array){
-						logs.push(recurr(array[i]));
-					}
-					var val = aggregatFunc(logs);
-					return val;
-				}
+				var val = aggregatFunc(logs);
+				return val;
+			}
 		}
 		return function(){
 			try{	
-				// console.log(arguments)
 				var args = [];
 				// get root 
 				var period = arguments[0];
@@ -85,6 +87,9 @@ Calendar.data = {
 				for(var i in args) period = period[args[i]];
 				//start recurrence 
 				var val = recurr(period, 0);
+
+				
+
 				return val;
 			}
 			catch(err){

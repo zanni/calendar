@@ -26,8 +26,11 @@ var Calendar = function(spec){
 	//retreive data according to your createTiles call
 	me.retreiveDataCallback = spec.retreiveDataCallback;
 
-	// retreive 
+	// retreive value
 	me.retreiveValueCallback = spec.retreiveValueCallback;
+
+	// synchronous data loading
+	me.data = spec.data;
 
 	// color scheme
 	me.colorScheme = spec.colorScheme 
@@ -154,14 +157,20 @@ Calendar.prototype.createTiles = function(){
 	var me = this;
 	if(me.retreiveDataCallback != null 
 		&& typeof me.retreiveDataCallback  == "function" ){
+		// asynchronous data loading
 		// if there is a data retreiving callback, 
 		// we save createTiles arguments in order to 
 		// inject it into _createTiles
 		me._tempargs = arguments;
 		me.retreiveDataCallback.apply(me, arguments)
 	}
-	else{
-		_createTiles.apply(me, arguments);
+	else if(me.data){
+		// synchronous data loading
+		me._tempargs = arguments;
+		var args = [];
+		args.push(me.data);
+		for(var i=0;i<arguments.length;i++) args.push(arguments[i]);
+		_createTiles.apply(me, args);
 	}
 	
 }

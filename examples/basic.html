@@ -1,0 +1,87 @@
+<html>
+<head>
+	<title>Basic example</title>
+	<link rel="stylesheet" href="css/calendar.css"></link>
+</head>
+<body>
+	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="js/d3/d3.min.js"></script>
+	<script type="text/javascript" src="js/colorbrewer/colorbrewer.js"></script>
+
+	<script type="text/javascript" src="../src/calendar.js"></script>
+	<script type="text/javascript" src="../src/data.js"></script>
+	<script type="text/javascript" src="../src/renderer/day.js"></script>
+	<script type="text/javascript" src="../src/renderer/week.js"></script>
+	<script type="text/javascript" src="../src/renderer/month.js"></script>
+	<script type="text/javascript" src="../src/renderer/year.js"></script>
+
+	<script>
+
+		$.ready = function(){
+			// Create time series specialization callbacks
+			var timeCallback = function(d){ return new Date(d.date); };
+			var dataCallback = function(d){ return d.tauxDeCo2;  };
+
+			// Create time serie parser
+			var parser = Calendar.data.create(timeCallback);
+
+			// synchronous data loading
+			d3.json("mokup/rte.json", function(raw){
+				// parse raw data
+				data = parser(raw.mixenergies.list);
+
+				var min = d3.min(raw.mixenergies.list, dataCallback);
+				var max = d3.max(raw.mixenergies.list, dataCallback);
+
+				// Create valueCallback
+				var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.sum);
+
+				var calendar = new Calendar( {
+					name : "Basic example"
+					, data : data
+					, renderer : new Calendar.renderer.year()
+					, retreiveValueCallback : valueCallback
+					, upBound : max
+					, downBound : min
+					, width : $("#container").width()
+					, height: 800		
+				});
+
+				calendar.createTiles(2013);
+
+				setTimeout(function(){
+					calendar.renderer = new Calendar.renderer.month();
+					calendar.createTiles(2013, [4,5,6]);
+				},2000);
+
+				setTimeout(function(){
+					calendar.renderer = new Calendar.renderer.week();
+					calendar.createTiles(2013, 23);
+				},4000);
+				setTimeout(function(){
+					calendar.renderer = new Calendar.renderer.week();
+					calendar.createTiles(2013, 22);
+				},6000);
+				setTimeout(function(){
+					calendar.renderer = new Calendar.renderer.day();
+					calendar.createTiles(2013, 22, 0);
+				},6000);
+			})
+		}
+	</script>
+	<div id="container">
+		<div id="header">
+			<h1 id="title"></h1>	
+			<div id="legend">
+				<div>
+					<ul>
+					</ul>
+					<p class="more"></p>
+					<p class="less"></p>
+				</div>
+			</div>
+		</div>
+		<div id="vis"></div>
+	</div>
+</body>
+</html>
