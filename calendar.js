@@ -1,3 +1,52 @@
+var EventManager = {
+    trigger: function(ev, args) {
+        if (!!this.listeners[ev]) {
+            for (var i = 0; i < this.listeners[ev].length; i++) {
+                this.listeners[ev][i].apply(window, [ args ]);
+            }
+        }
+    },
+    on: function(ev, fn) {
+        EventManager.enable.call(this, ev);
+        if (!this.listeners[ev]) {
+            this.listeners[ev] = [];
+        }
+        if (fn instanceof Function) {
+            this.listeners[ev].push(fn);
+        }
+    },
+    remove: function(ev, fn) {
+        if (!!this.listeners[ev] && this.listeners[ev].length > 0) {
+            if (!!fn) {
+                var fns = [];
+                for (var i = 0; i < this.listeners[ev].length; i++) {
+                    if (fn != this.listeners[ev][i]) {
+                        fns.push(this.listeners[ev][i]);
+                    }
+                }
+                this.listeners[ev] = fns;
+            } else {
+                this.listeners[ev] = [];
+            }
+        }
+    },
+    enable: function() {
+        var self = this;
+        if (!self.listeners) {
+            self.listeners = {};
+        }
+        self.trigger = function(ev, args) {
+            EventManager.trigger.call(self, ev, args);
+        };
+        self.on = function(ev, fn) {
+            EventManager.on.call(self, ev, fn);
+        };
+        self.remove = function(ev, fn) {
+            EventManager.remove.call(self, ev, fn);
+        };
+    }
+};
+
 if (!("map" in Array.prototype)) {
     Array.prototype.map = function(mapper, that) {
         var other = new Array(this.length);
@@ -8,11 +57,15 @@ if (!("map" in Array.prototype)) {
 
 var Calendar = function(spec) {
     var me = this;
+    me.eventManager = {};
+    EventManager.enable.call(me.eventManager);
     me.height = spec.height || 600;
     me.width = spec.width || 800;
     me.margin = spec.margin;
+    me.retreiveDataClosure = spec.retreiveDataClosure;
     me.retreiveDataCallback = spec.retreiveDataCallback;
     me.retreiveValueCallback = spec.retreiveValueCallback;
+    me.data = spec.data;
     me.colorScheme = spec.colorScheme || [ "#d73027", "#f46d43", "#fdae61", "#fee08b", "#ffffbf", "#d9ef8b", "#a6d96a", "#66bd63", "#1a9850" ];
     me.noDataColor = spec.noDataColor || "#eee";
     me.buckets = me.colorScheme.length;
@@ -63,8 +116,12 @@ Calendar.prototype.createTiles = function() {
     if (me.retreiveDataCallback != null && typeof me.retreiveDataCallback == "function") {
         me._tempargs = arguments;
         me.retreiveDataCallback.apply(me, arguments);
-    } else {
-        _createTiles.apply(me, arguments);
+    } else if (me.data) {
+        me._tempargs = arguments;
+        var args = [];
+        args.push(me.data);
+        for (var i = 0; i < arguments.length; i++) args.push(arguments[i]);
+        _createTiles.apply(me, args);
     }
 };
 
@@ -118,7 +175,13 @@ Calendar.prototype.setBucket = function(bounds) {
 };
 
 Calendar.prototype.tilesEnter = function(tiles) {
-    return tiles.enter().insert("rect").classed(this.tileClass, true).attr("stroke-width", "2px").attr("fill", "#fff").attr("fill-opacity", 0);
+    var me = this;
+    return tiles.enter().insert("rect").on("mouseover", function(d, i) {}).on("mouseout", function(d, i) {}).on("click", function(d, i) {
+        me.eventManager.trigger("tile:click", {
+            time: d,
+            value: d3.select(this).attr("data")
+        });
+    }).classed(this.tileClass, true).attr("stroke-width", "2px").attr("fill", "#fff").attr("fill-opacity", 0);
 };
 
 Calendar.prototype.tilesUpdate = function() {};
@@ -178,8 +241,17 @@ Calendar.animation = {
     }
 };
 
-Calendar.renderer.day = function() {
+Calendar.renderer.day = function(spec) {
     var me = this;
+    if (!spec) spec = {};
+    me.cell_size = 36;
+    me.space_between_tiles = spec.space_between_tiles || 2;
+    me.space_between_row = spec.space_between_row || 15;
+    me.tiles_left_decal = spec.tiles_left_decal || 30;
+    me.label_fill = spec.label_fill || "darkgray";
+    me.label_fontsize = spec.label_fontsize || "12px";
+    me.hour_label_class = spec.hour_label_class || "day_hour_label";
+    me.hour_label_format = spec.hour_label_format || d3.time.format("%Hh");
     me.labels_hours;
     var _bounds = function(year, week, day) {
         var mondays = d3.time.mondays(new Date(year, 0, 1), new Date(year + 1, 0, 1));
@@ -211,51 +283,45 @@ Calendar.renderer.day = function() {
             var val = calendar.retreiveValueCallback(data, year, week, day == 0 ? 6 : day - 1, d.getHours());
             return calendar.getColor(val);
         };
-        var cell_size = 36;
-        var space_between_tiles = 2;
-        var space_between_row = 15;
-        var tiles_left_decal = 30;
-        var label_fill = "darkgray";
-        var label_fontsize = "12px";
-        var hour_label_class = "day_hour_label";
-        var hour_label_format = d3.time.format("%Hh");
         var quarter = function(d) {
             return Math.floor(d.getMinutes() / 15);
         };
         var initLabel = function(transform) {
-            return transform.append("text").classed(hour_label_class, true).attr("fill", label_fill).attr("font-size", label_fontsize);
+            return transform.append("text").classed(me.hour_label_class, true).attr("fill", me.label_fill).attr("font-size", me.label_fontsize);
         };
         var calculTilePosX = function(d, i) {
-            return Math.floor(d.getHours() / 6) * 4 * (space_between_row + cell_size + space_between_tiles) + quarter(d) * (cell_size + space_between_tiles) + tiles_left_decal;
+            return Math.floor(d.getHours() / 6) * 4 * (me.space_between_row + me.cell_size + me.space_between_tiles) + quarter(d) * (me.cell_size + me.space_between_tiles) + me.tiles_left_decal;
         };
         var calculTilePosY = function(d, i) {
-            return d.getHours() % 6 * (cell_size + space_between_tiles);
+            return d.getHours() % 6 * (me.cell_size + me.space_between_tiles);
         };
         var calculLabelHourPosX = function(d, i) {
-            return Math.floor(d.getHours() / 6) * 4 * (space_between_row + cell_size + space_between_tiles) + quarter(d) * (cell_size + space_between_tiles);
+            return Math.floor(d.getHours() / 6) * 4 * (me.space_between_row + me.cell_size + me.space_between_tiles) + quarter(d) * (me.cell_size + me.space_between_tiles);
         };
         var calculLabelHourPosY = function(d, i) {
-            return i % 6 * (cell_size + space_between_tiles) + 20;
+            return i % 6 * (me.cell_size + me.space_between_tiles) + 20;
         };
         var calculBBox = function() {
             return {
-                width: 16 * (space_between_row + cell_size + space_between_tiles) + 3 * space_between_row + tiles_left_decal,
-                height: 6 * (cell_size + space_between_tiles)
+                width: 16 * (me.space_between_row + me.cell_size + me.space_between_tiles) + 3 * me.space_between_row + me.tiles_left_decal,
+                height: 6 * (me.cell_size + me.space_between_tiles)
             };
         };
         var day_time = 24 * 60 * 60 * 1e3;
         var week_time = 7 * day_time;
         var svg = calendar.svg;
-        var tiles = svg.selectAll("." + calendar.tileClass).data(getPeriod(start, day_time, d3.time.minutes, 15));
-        calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", cell_size + "px").attr("height", cell_size + "px");
+        var tiles = svg.selectAll("." + calendar.tileClass).data(getPeriod(start, day_time, d3.time.minutes, 15), function(d, i) {
+            return i;
+        });
+        calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px");
         tiles.transition().delay(function(d) {
             return quarter(d) * Math.random() * 50 + d.getHours() % 6 * Math.random() * 50 / calendar.duration;
-        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", cell_size + "px").attr("height", cell_size + "px").attr("fill", colorize);
+        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px").attr("fill", colorize);
         calendar.tilesExit(tiles);
         var labels_hours_transition = function(attr) {};
-        me.labels_hours = svg.selectAll("." + hour_label_class).data(getPeriod(start, day_time, d3.time.hours));
-        initLabel(me.labels_hours.enter()).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(hour_label_format);
-        Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(hour_label_format);
+        me.labels_hours = svg.selectAll("." + me.hour_label_class).data(getPeriod(start, day_time, d3.time.hours));
+        initLabel(me.labels_hours.enter()).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(me.hour_label_format);
+        Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(me.hour_label_format);
         Calendar.animation.fadeOut(me.labels_hours.exit().transition(), calendar.duration);
         return calculBBox();
     };
@@ -269,17 +335,28 @@ Calendar.renderer.day = function() {
     return me;
 };
 
-Calendar.renderer.week = function() {
+Calendar.renderer.week = function(spec) {
     var me = this;
+    if (!spec) spec = {};
+    me.cell_size = spec.cell_size || 36;
+    me.space_between_tiles = spec.space_between_tiles || 2;
+    me.tiles_left_decal = spec.tiles_left_decal || 85;
+    me.day_label_top_decal = spec.day_label_top_decal || 30;
+    me.tile_top_decal = spec.tile_top_decal || 10;
+    me.hour_label_top_decal = spec.hour_label_top_decal || 20;
+    me.hour_label_left_decal = spec.hour_label_left_decal || 5;
+    me.label_fill = spec.label_fill || "darkgray";
+    me.label_fontsize = spec.label_fontsize || "14px";
+    me.day_label_class = spec.day_label_class || "day_label";
+    me.hour_label_class = spec.hour_label_class || "hour_label";
+    me._day_label_format = spec._day_label_format || d3.time.format("%a %d %b");
     me.labels_days;
     me.labels_hours;
     var _bounds = function(year, week) {
         var mondays = d3.time.mondays(new Date(year, 0, 1), new Date(year + 1, 0, 1));
-        console.debug(week);
         if (mondays && mondays[week]) {
             var firstday = mondays[week];
             firstday.setTime(firstday.getTime() - 7 * 24 * 60 * 60 * 1e3);
-            console.debug(firstday);
             var lastday = new Date();
             lastday.setTime(firstday.getTime() + 7 * 24 * 60 * 60 * 1e3);
             return {
@@ -301,54 +378,44 @@ Calendar.renderer.week = function() {
         var getPeriod = function(start, period, callback) {
             return callback(start, new Date().setTime(start.getTime() + period));
         };
-        var colorize = function(d) {
-            var val = calendar.retreiveValueCallback(grab_data, year, week, calendar.time.getDay(d), d.getHours());
+        var getValue = function(d) {
+            return calendar.retreiveValueCallback(grab_data, year, week, calendar.time.getDay(d), d.getHours());
+        };
+        var colorize = function(val) {
             return calendar.getColor(val);
         };
-        var cell_size = 36;
-        var space_between_tiles = 2;
-        var tiles_left_decal = 85;
-        var day_label_top_decal = 30;
-        var tile_top_decal = 10;
-        var hour_label_top_decal = 20;
-        var hour_label_left_decal = 5;
-        var label_fill = "darkgray";
-        var label_fontsize = "14px";
-        var day_label_class = "day_label";
-        var hour_label_class = "hour_label";
-        var _day_label_format = d3.time.format("%a %d %b");
         var day_label_format = function(d, i) {
-            return i % 2 == 0 ? _day_label_format(d) : "";
+            return i % 2 == 0 ? me._day_label_format(d) : "";
         };
         var _hour_label_format = d3.time.format("%Hh");
         var hour_label_format = function(d, i) {
             return i % 2 == 0 ? _hour_label_format(d) : "";
         };
         var initLabel = function(transform, klass) {
-            return transform.append("text").classed(klass, true).attr("fill", label_fill).attr("font-size", label_fontsize);
+            return transform.append("text").classed(klass, true).attr("fill", me.label_fill).attr("font-size", me.label_fontsize);
         };
         var calculTilePosX = function(d, i) {
-            return tiles_left_decal + d.getHours() * (cell_size + space_between_tiles);
+            return me.tiles_left_decal + d.getHours() * (me.cell_size + me.space_between_tiles);
         };
         var calculTilePosY = function(d, i) {
-            return calendar.time.getDay(d) * (cell_size + space_between_tiles) + hour_label_top_decal + tile_top_decal;
+            return calendar.time.getDay(d) * (me.cell_size + me.space_between_tiles) + me.hour_label_top_decal + me.tile_top_decal;
         };
         var calculLabelDayPosX = function(d, i) {
             return 0;
         };
         var calculLabelDayPosY = function(d, i) {
-            return day_label_top_decal + i * (cell_size + space_between_tiles) + hour_label_top_decal;
+            return me.day_label_top_decal + i * (me.cell_size + me.space_between_tiles) + me.hour_label_top_decal;
         };
         var calculLabelHourPosX = function(d, i) {
-            return tiles_left_decal + d.getHours() * (cell_size + space_between_tiles) + hour_label_left_decal;
+            return me.tiles_left_decal + d.getHours() * (me.cell_size + me.space_between_tiles) + me.hour_label_left_decal;
         };
         var calculLabelHourPosY = function(d, i) {
-            return hour_label_top_decal;
+            return me.hour_label_top_decal;
         };
         var calculBBox = function() {
             return {
-                width: tiles_left_decal + 24 * (cell_size + space_between_tiles),
-                height: 7 * (cell_size + space_between_tiles) + hour_label_top_decal
+                width: me.tiles_left_decal + 24 * (me.cell_size + me.space_between_tiles),
+                height: 7 * (me.cell_size + me.space_between_tiles) + me.hour_label_top_decal
             };
         };
         var day_time = 24 * 60 * 60 * 1e3;
@@ -357,19 +424,23 @@ Calendar.renderer.week = function() {
         var tiles = svg.selectAll("." + calendar.tileClass).data(getPeriod(start, week_time, d3.time.hours), function(d, i) {
             return i;
         });
-        calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", cell_size + "px").attr("height", cell_size + "px");
+        calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px");
         tiles.transition().delay(function(d) {
             return d.getHours() * 20 + calendar.time.getDay(d) * 20 + Math.random() * 50 / calendar.duration;
-        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", cell_size + "px").attr("height", cell_size + "px").attr("fill", colorize);
+        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px").attr("value", getValue).attr("fill", function(d) {
+            var val = getValue(d);
+            this.setAttributeNS("http://www.example.com/d3.calendar", "data", val);
+            return colorize(val);
+        });
         calendar.tilesExit(tiles);
-        me.labels_days = svg.selectAll("." + day_label_class).data(getPeriod(start, week_time, d3.time.days), function(d, i) {
+        me.labels_days = svg.selectAll("." + me.day_label_class).data(getPeriod(start, week_time, d3.time.days), function(d, i) {
             return i;
         });
-        initLabel(me.labels_days.enter(), day_label_class).attr("x", calculLabelDayPosX).attr("y", calculLabelDayPosY).text(day_label_format);
+        initLabel(me.labels_days.enter(), me.day_label_class).attr("x", calculLabelDayPosX).attr("y", calculLabelDayPosY).text(day_label_format);
         Calendar.animation.fadeIn(me.labels_days.transition(), calendar.duration).text(day_label_format);
         Calendar.animation.fadeOut(me.labels_days.exit().transition(), calendar.duration);
-        me.labels_hours = svg.selectAll("." + hour_label_class).data(getPeriod(start, day_time, d3.time.hours));
-        initLabel(me.labels_hours.enter(), hour_label_class).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(hour_label_format);
+        me.labels_hours = svg.selectAll("." + me.hour_label_class).data(getPeriod(start, day_time, d3.time.hours));
+        initLabel(me.labels_hours.enter(), me.hour_label_class).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(hour_label_format);
         Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(hour_label_format);
         Calendar.animation.fadeOut(me.labels_hours.exit().transition(), calendar.duration);
         return calculBBox();
@@ -385,8 +456,23 @@ Calendar.renderer.week = function() {
     return me;
 };
 
-Calendar.renderer.month = function() {
+Calendar.renderer.month = function(spec) {
     var me = this;
+    if (!spec) spec = {};
+    me.cell_size = spec.cell_size || 36;
+    me.margin = spec.margin || 20;
+    me.space_between_tiles = spec.space_between_tiles || 2;
+    me.space_between_months = spec.space_between_months || me.cell_size;
+    me.month_label_left_decal = spec.month_label_left_decal || 80;
+    me.year_label_top_decal = spec.year_label_top_decal || 146;
+    me.tiles_top_decal = spec.tiles_top_decal || 15;
+    me.tiles_left_decal = spec.tiles_left_decal || 20;
+    me.label_fill = spec.label_fill || "darkgray";
+    me.label_fontsize = spec.label_fontsize || "14px";
+    me.month_label_class = spec.month_label_class || "month_label";
+    me.month_label_format = spec.month_label_format || d3.time.format("%B");
+    me.year_label_class = spec.year_label_class || "year_label";
+    me.year_label_format = spec.year_label_format || d3.time.format("%Y");
     me.labels_months;
     me.label_year;
     me.draw = function(grab_data, year, month) {
@@ -430,40 +516,26 @@ Calendar.renderer.month = function() {
             prev_week = calendar.time.getWeek(data[d]);
             weeks[calendar.time.getWeek(data[d])] = current_week_index;
         }
-        var cell_size = 36;
-        var margin = 20;
-        var space_between_tiles = 2;
-        var space_between_months = cell_size;
-        var month_label_left_decal = 80;
-        var year_label_top_decal = 146;
-        var tiles_top_decal = 15;
-        var tiles_left_decal = 20;
-        var label_fill = "darkgray";
-        var label_fontsize = "14px";
-        var month_label_class = "month_label";
-        var month_label_format = d3.time.format("%B");
-        var year_label_class = "year_label";
-        var year_label_format = d3.time.format("%Y");
         var initLabel = function(transform, klass) {
-            return transform.append("text").classed(klass, true).attr("fill", label_fill).attr("font-size", label_fontsize);
+            return transform.append("text").classed(klass, true).attr("fill", me.label_fill).attr("font-size", me.label_fontsize);
         };
         var calculTilePosX = function(d, i) {
-            return margin + tiles_left_decal + weeks[calendar.time.getWeek(d)] * (cell_size + space_between_tiles);
+            return me.margin + me.tiles_left_decal + weeks[calendar.time.getWeek(d)] * (me.cell_size + me.space_between_tiles);
         };
         var calculTilePosY = function(d, i) {
-            return margin + tiles_top_decal + calendar.time.getDay(d) * (cell_size + space_between_tiles);
+            return me.margin + me.tiles_top_decal + calendar.time.getDay(d) * (me.cell_size + me.space_between_tiles);
         };
         var calculLabelMonthPosX = function(d, i) {
-            return margin + month_label_left_decal + weeks[calendar.time.getWeek(d)] * (cell_size + space_between_tiles);
+            return me.margin + me.month_label_left_decal + weeks[calendar.time.getWeek(d)] * (me.cell_size + me.space_between_tiles);
         };
         var calculLabelMonthPosY = function(d, i) {
-            return margin;
+            return me.margin;
         };
         var calculLabelYearPosX = function(d, i) {
-            return -year_label_top_decal;
+            return -me.year_label_top_decal;
         };
         var calculLabelYearPosY = function(d, i) {
-            return margin;
+            return me.margin;
         };
         var calculBBox = function() {
             var j = 0;
@@ -471,33 +543,35 @@ Calendar.renderer.month = function() {
                 j++;
             });
             return {
-                width: tiles_left_decal + j * (cell_size + space_between_tiles) + delcalages * cell_size + 25,
-                height: tiles_top_decal + 7 * (cell_size + space_between_tiles)
+                width: me.tiles_left_decal + j * (me.cell_size + me.space_between_tiles) + delcalages * me.cell_size + 25,
+                height: me.tiles_top_decal + 7 * (me.cell_size + me.space_between_tiles)
             };
         };
         function monthPath(t0) {
-            var cell = cell_size + space_between_tiles;
-            var decaled_cell = cell_size + space_between_tiles;
+            var cell = me.cell_size + me.space_between_tiles;
+            var decaled_cell = me.cell_size + me.space_between_tiles;
             var t1 = new Date(t0.getFullYear(), t0.getMonth() + 1, 0), d0 = +calendar.time.getDay(t0), w0 = +weeks[calendar.time.getWeek(t0)], d1 = +calendar.time.getDay(t1), w1 = +weeks[calendar.time.getWeek(t1)];
-            return "M" + ((w0 + 1) * decaled_cell + tiles_left_decal + margin) + "," + (margin + d0 * cell + tiles_top_decal) + "H" + (w0 * decaled_cell + tiles_left_decal + margin) + "V" + (margin + 7 * cell + tiles_top_decal) + "H" + (w1 * decaled_cell + tiles_left_decal + margin) + "V" + (margin + (d1 + 1) * cell + tiles_top_decal) + "H" + ((w1 + 1) * decaled_cell + tiles_left_decal + margin) + "V" + (tiles_top_decal + margin) + "H" + ((w0 + 1) * decaled_cell + tiles_left_decal + margin) + "Z";
+            return "M" + ((w0 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "," + (me.margin + d0 * cell + me.tiles_top_decal) + "H" + (w0 * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.margin + 7 * cell + me.tiles_top_decal) + "H" + (w1 * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.margin + (d1 + 1) * cell + me.tiles_top_decal) + "H" + ((w1 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.tiles_top_decal + me.margin) + "H" + ((w0 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "Z";
         }
         var day_time = 24 * 60 * 60 * 1e3;
         var week_time = 7 * day_time;
         var svg = calendar.svg;
-        var tiles = svg.selectAll("." + calendar.tileClass).data(data);
-        calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", cell_size + "px").attr("height", cell_size + "px");
+        calendar.monthPathEnter(data_month, monthPath);
+        var tiles = svg.selectAll("." + calendar.tileClass).data(data, function(d, i) {
+            return i;
+        });
+        calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px");
         tiles.transition().delay(function(d) {
             return calendar.time.getWeek(d) * 20 + calendar.time.getDay(d) * 20 + Math.random() * 50 / calendar.duration;
-        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", cell_size + "px").attr("height", cell_size + "px").attr("fill", colorize);
+        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px").attr("fill", colorize);
         calendar.tilesExit(tiles);
-        calendar.monthPathEnter(data_month, monthPath);
-        me.labels_months = svg.selectAll("." + month_label_class).data(data_month);
-        initLabel(me.labels_months.enter(), month_label_class).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).text(month_label_format);
-        Calendar.animation.fadeIn(me.labels_months.transition(), calendar.duration).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).text(month_label_format);
+        me.labels_months = svg.selectAll("." + me.month_label_class).data(data_month);
+        initLabel(me.labels_months.enter(), me.month_label_class).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).text(me.month_label_format);
+        Calendar.animation.fadeIn(me.labels_months.transition(), calendar.duration).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).text(me.month_label_format);
         me.labels_months.exit().remove();
-        me.label_year = svg.selectAll("." + year_label_class).data(getPeriod(0, d3.time.years));
-        initLabel(me.label_year.enter(), year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).style("text-anchor", "middle").text(year_label_format);
-        Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration).attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).text(year_label_format);
+        me.label_year = svg.selectAll("." + me.year_label_class).data(getPeriod(0, d3.time.years));
+        initLabel(me.label_year.enter(), me.year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).style("text-anchor", "middle").text(me.year_label_format);
+        Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration).attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).text(me.year_label_format);
         Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
         return calculBBox();
     };
@@ -530,8 +604,23 @@ Calendar.renderer.month = function() {
     return me;
 };
 
-Calendar.renderer.year = function() {
+Calendar.renderer.year = function(spec) {
     var me = this;
+    if (!spec) spec = {};
+    me.cell_size = spec.cell_size || 36;
+    me.margin = spec.margin || 20;
+    me.space_between_tiles = spec.space_between_tiles || 2;
+    me.space_between_years = spec.space_between_years || me.cell_size * 2;
+    me.month_label_left_decal = spec.month_label_left_decal || 80;
+    me.year_label_top_decal = spec.year_label_top_decal || 146;
+    me.tiles_top_decal = spec.tiles_top_decal || 15;
+    me.tiles_left_decal = spec.tiles_left_decal || 20;
+    me.label_fill = spec.label_fill || "darkgray";
+    me.label_fontsize = spec.label_fontsize || "22px";
+    me.month_label_class = spec.month_label_class || "month_label";
+    me.month_label_format = spec.month_label_format || d3.time.format("%B");
+    me.year_label_class = spec.year_label_class || "year_label";
+    me.year_label_format = spec.year_label_format || d3.time.format("%Y");
     me.labels_months;
     me.label_year;
     me.cache_bounds = {};
@@ -540,8 +629,10 @@ Calendar.renderer.year = function() {
         var getPeriod = function(y, period) {
             return period(new Date(parseInt(y), 0, 1), new Date(parseInt(y) + 1, 0, 1));
         };
-        var colorize = function(d, i, u) {
-            var val = calendar.retreiveValueCallback(data, d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d));
+        var getValue = function(d, i, u) {
+            return calendar.retreiveValueCallback(data, d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d));
+        };
+        var colorize = function(val) {
             return calendar.getColor(val);
         };
         var data_year;
@@ -571,60 +662,52 @@ Calendar.renderer.year = function() {
             data_year_label = [ new Date(year, 0, 1) ];
             data_month = getPeriod(year, d3.time.months);
         }
-        var cell_size = 36;
-        var margin = 20;
-        var space_between_tiles = 2;
-        var space_between_years = cell_size * 2;
-        var month_label_left_decal = 80;
-        var year_label_top_decal = 146;
-        var tiles_top_decal = 15;
-        var tiles_left_decal = 20;
-        var label_fill = "darkgray";
-        var label_fontsize = "22px";
-        var month_label_class = "month_label";
-        var month_label_format = d3.time.format("%B");
-        var year_label_class = "year_label";
-        var year_label_format = d3.time.format("%Y");
-        var year_height = 7 * cell_size + margin + tiles_top_decal + space_between_years;
+        var year_height = 7 * me.cell_size + me.margin + me.tiles_top_decal + me.space_between_years;
         var initLabel = function(transform, klass) {
-            return transform.append("text").classed(klass, true).attr("fill", label_fill).attr("font-size", label_fontsize);
+            return transform.append("text").classed(klass, true).attr("fill", me.label_fill).attr("font-size", me.label_fontsize);
         };
         var calculTilePosX = function(d, i) {
-            return calendar.time.getWeek(d) * (cell_size + space_between_tiles) + margin + tiles_left_decal;
+            return calendar.time.getWeek(d) * (me.cell_size + me.space_between_tiles) + me.margin + me.tiles_left_decal;
         };
         var calculTilePosY = function(d, i) {
-            return year_height * year_index[d.getFullYear()] + margin + tiles_top_decal + calendar.time.getDay(d) * (cell_size + space_between_tiles);
+            return year_height * year_index[d.getFullYear()] + me.margin + me.tiles_top_decal + calendar.time.getDay(d) * (me.cell_size + me.space_between_tiles);
         };
         var calculLabelYearPosX = function(d, i) {
-            return -year_label_top_decal - year_height * year_index[d.getFullYear()];
+            return -me.year_label_top_decal - year_height * year_index[d.getFullYear()];
         };
         var calculLabelYearPosY = function(d, i) {
-            return +margin;
+            return +me.margin;
         };
         var calculBBox = function() {
             var j = 0;
             return {
-                width: 53 * (cell_size + space_between_tiles) + tiles_left_decal + margin + 2 * cell_size,
-                height: margin + tiles_top_decal + 7 * (cell_size + space_between_tiles)
+                width: 53 * (me.cell_size + me.space_between_tiles) + me.tiles_left_decal + me.margin + 2 * me.cell_size,
+                height: me.margin + me.tiles_top_decal + 7 * (me.cell_size + me.space_between_tiles)
             };
         };
         function monthPath(t0) {
             var decal = year_height * year_index[t0.getFullYear()];
-            var cell = cell_size + space_between_tiles;
-            var decaled_cell = cell_size + space_between_tiles;
+            var cell = me.cell_size + me.space_between_tiles;
+            var decaled_cell = me.cell_size + me.space_between_tiles;
             var t1 = new Date(t0.getFullYear(), t0.getMonth() + 1, 0), d0 = +calendar.time.getDay(t0), w0 = +calendar.time.getWeek(t0), d1 = +calendar.time.getDay(t1), w1 = +calendar.time.getWeek(t1);
-            return "M" + ((w0 + 1) * decaled_cell + tiles_left_decal + margin) + "," + (margin + d0 * cell + tiles_top_decal + decal) + "H" + (w0 * decaled_cell + tiles_left_decal + margin) + "V" + (margin + 7 * cell + tiles_top_decal + decal) + "H" + (w1 * decaled_cell + tiles_left_decal + margin) + "V" + (margin + (d1 + 1) * cell + tiles_top_decal + decal) + "H" + ((w1 + 1) * decaled_cell + tiles_left_decal + margin) + "V" + (tiles_top_decal + margin + decal) + "H" + ((w0 + 1) * decaled_cell + tiles_left_decal + margin) + "Z";
+            return "M" + ((w0 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "," + (me.margin + d0 * cell + me.tiles_top_decal + decal) + "H" + (w0 * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.margin + 7 * cell + me.tiles_top_decal + decal) + "H" + (w1 * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.margin + (d1 + 1) * cell + me.tiles_top_decal + decal) + "H" + ((w1 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.tiles_top_decal + me.margin + decal) + "H" + ((w0 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "Z";
         }
-        var tiles = calendar.svg.selectAll("." + calendar.tileClass).data(data_year);
-        calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", cell_size + "px").attr("height", cell_size + "px");
+        calendar.monthPathEnter(data_month, monthPath);
+        var tiles = calendar.svg.selectAll("." + calendar.tileClass).data(data_year, function(d, i) {
+            return i;
+        });
+        calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px");
         tiles.transition().delay(function(d) {
             return calendar.time.getWeek(d) * 20 + calendar.time.getDay(d) * 20 + Math.random() * 50 / calendar.duration;
-        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", cell_size + "px").attr("height", cell_size + "px").attr("fill", colorize);
+        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px").attr("fill", function(d) {
+            var val = getValue(d);
+            this.setAttributeNS("http://www.example.com/d3.calendar", "data", val);
+            return colorize(val);
+        });
         calendar.tilesExit(tiles);
-        calendar.monthPathEnter(data_month, monthPath);
-        me.label_year = calendar.svg.selectAll("." + year_label_class).data(data_year_label);
-        initLabel(me.label_year.enter(), year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).style("text-anchor", "middle").text(year_label_format);
-        Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration).attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).text(year_label_format);
+        me.label_year = calendar.svg.selectAll("." + me.year_label_class).data(data_year_label);
+        initLabel(me.label_year.enter(), me.year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).style("text-anchor", "middle").text(me.year_label_format);
+        Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration).attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).text(me.year_label_format);
         Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
         return calculBBox();
     };
@@ -652,6 +735,32 @@ Calendar.renderer.year = function() {
                 end: new Date(year + 1, 0, 1)
             };
         }
+    };
+    return me;
+};
+
+Calendar.renderer.drillthrough = function(spec) {
+    var me = this;
+    if (!spec) spec = {};
+    me.possible_display = spec.possible_display;
+    me.current_renderer = spec.current_renderer || new Calendar.renderer.year();
+    me.draw = function() {
+        var calendar = this;
+        var args = arguments;
+        calendar.eventManager.on("tile:click", function(d) {
+            calendar.renderer = new Calendar.renderer.week();
+            calendar.retreiveDataCallback = calendar.retreiveDataClosure("hour");
+            calendar.createTiles(d.time.getFullYear(), calendar.time.getWeek(d.time));
+        });
+        return me.current_renderer.draw.apply(calendar, arguments);
+    };
+    me.clean = function() {
+        var calendar = this;
+        return me.current_renderer.clean.apply(calendar, arguments);
+    };
+    me.bounds = function(year, week, day) {
+        var calendar = this;
+        return me.current_renderer.bounds.apply(calendar, arguments);
     };
     return me;
 };
@@ -695,8 +804,9 @@ Calendar.data = {
     retreiveValueCallbackClosure: function(specializedFunc, aggregatFunc, filterFunc) {
         var recurr = function(array, i) {
             var logs = [];
-            if (specializedFunc(array) != null) {
-                return specializedFunc(array);
+            var value = specializedFunc(array);
+            if (value != null && value != undefined && !isNaN(value)) {
+                return value;
             } else {
                 for (var i in array) {
                     logs.push(recurr(array[i]));

@@ -9,10 +9,21 @@
 //			calendar.getColor(val);
 //
 /**********************************************************/
-Calendar.renderer.day = function(){
+Calendar.renderer.day = function(spec){
 
 	// renderer self ref
 	var me = this;
+
+	// theming
+	if(!spec) spec={};
+	me.cell_size = 36;
+	me.space_between_tiles = spec.space_between_tiles || 2;
+	me.space_between_row = spec.space_between_row || 15;
+	me.tiles_left_decal = spec.tiles_left_decal || 30;
+	me.label_fill = spec.label_fill || "darkgray";
+	me.label_fontsize = spec.label_fontsize || "12px";
+	me.hour_label_class = spec.hour_label_class || "day_hour_label";
+	me.hour_label_format = spec.hour_label_format || d3.time.format("%Hh");
 
 	// store labels in order to clean
 	me.labels_hours;
@@ -83,59 +94,52 @@ Calendar.renderer.day = function(){
 		/******************************************************/
 		// tiles / labels initialization helpers
 		/******************************************************/
-		var cell_size = 36;
-		var space_between_tiles = 2;
-		var space_between_row = 15;
-		var tiles_left_decal = 30;
-		var label_fill = "darkgray";
-		var label_fontsize = "12px";
-		var hour_label_class = "day_hour_label";
-		var hour_label_format = d3.time.format("%Hh");
+		
 		var quarter = function(d){
 			return Math.floor(d.getMinutes() / 15);
 		}
 
 		var initLabel = function(transform){
 			return transform.append("text")
-						.classed(hour_label_class, true)
-						.attr("fill", label_fill)
-						.attr("font-size", label_fontsize);
+						.classed(me.hour_label_class, true)
+						.attr("fill", me.label_fill)
+						.attr("font-size", me.label_fontsize);
 		}
 		// calcul X for hour / day chart
 		var calculTilePosX = function(d,i){
-			// return tiles_left_decal + d.getHours() * (cell_size + space_between_tiles)
+			// return me.tiles_left_decal + d.getHours() * (cell_size + me.space_between_tiles)
 			return (Math.floor(d.getHours()/6) * 4 
-						* ( space_between_row + cell_size + space_between_tiles) 
+						* ( me.space_between_row + me.cell_size + me.space_between_tiles) 
 					+ quarter(d)
-						* ( cell_size + space_between_tiles )) + tiles_left_decal;
+						* ( me.cell_size + me.space_between_tiles )) + me.tiles_left_decal;
 		}
 
 		var calculTilePosY = function(d,i){
-			return ((d.getHours() %6))* ( cell_size + space_between_tiles ) ;
+			return ((d.getHours() %6))* ( me.cell_size + me.space_between_tiles ) ;
 		}
 
 		// calcul X for hour / day chart
 		var calculLabelHourPosX = function(d,i){
 			// return 0;
 			return (Math.floor(d.getHours()/6) * 4 
-						* ( space_between_row+ cell_size + space_between_tiles) 
+						* ( me.space_between_row+ me.cell_size + me.space_between_tiles) 
 					+ quarter(d)
-						* ( cell_size + space_between_tiles));
+						* ( me.cell_size + me.space_between_tiles));
 		}
 
 		// calcul Y for hour / day chart
 		var calculLabelHourPosY = function(d,i){
-			return ((i%6))* ( cell_size + space_between_tiles) + 20 ;
+			return ((i%6))* ( me.cell_size + me.space_between_tiles) + 20 ;
 		}
 
 		var calculBBox = function(){
 			return {
 				// mouai ...
 				width : 
-						16 * (  space_between_row+cell_size + space_between_tiles) 
-					+ 3	*  space_between_row+tiles_left_decal
+						16 * (  me.space_between_row+me.cell_size + me.space_between_tiles) 
+					+ 3	*  me.space_between_row+me.tiles_left_decal
 						
-				, height : 6 * ( cell_size + space_between_tiles )
+				, height : 6 * ( me.cell_size + me.space_between_tiles )
 			}
 		}
 		/******************************************************/
@@ -157,14 +161,15 @@ Calendar.renderer.day = function(){
 				.data(
 					// get each hour in a week
 					getPeriod(start, day_time, d3.time.minutes, 15)
+					, function(d,i){ return i;} 
 				)
 		
 		// tiles enter		
 		calendar.tilesEnter(tiles)
 				.attr("x", calculTilePosX)
 	    		.attr("y", calculTilePosY)
-			    .attr("width", cell_size+"px")
-		    	.attr("height", cell_size+"px");
+			    .attr("width", me.cell_size+"px")
+		    	.attr("height", me.cell_size+"px");
 			     
 
 		tiles
@@ -176,8 +181,8 @@ Calendar.renderer.day = function(){
 		    .attr("x", calculTilePosX)
 	    	.attr("y", calculTilePosY)
 		    .attr("fill-opacity", 1)
-		    .attr("width", cell_size+"px")
-		    .attr("height", cell_size+"px")
+		    .attr("width", me.cell_size+"px")
+		    .attr("height", me.cell_size+"px")
 		    .attr("fill", colorize);
 			    
 		// tiles exit
@@ -190,7 +195,7 @@ Calendar.renderer.day = function(){
 
 		}
 		//hours labels
-		me.labels_hours = svg.selectAll("."+hour_label_class)
+		me.labels_hours = svg.selectAll("."+me.hour_label_class)
 				.data(
 					// get each hour in a day
 					getPeriod(start, day_time, d3.time.hours)
@@ -199,13 +204,13 @@ Calendar.renderer.day = function(){
 		initLabel(me.labels_hours.enter())
 			.attr("x", calculLabelHourPosX ) 
 		    .attr("y", calculLabelHourPosY ) 
-		    .text(hour_label_format);
+		    .text(me.hour_label_format);
 
 		//hour labels update
 		Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration)
 		    .attr("x", calculLabelHourPosX ) 
 		    .attr("y", calculLabelHourPosY ) 
-		    .text(hour_label_format);
+		    .text(me.hour_label_format);
 
 		//hour labels exit
 		Calendar.animation.fadeOut(me.labels_hours.exit().transition(), calendar.duration);

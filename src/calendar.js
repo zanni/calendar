@@ -19,9 +19,17 @@ var Calendar = function(spec){
 	// self ref
 	var me = this;
 
+	// event manager
+	me.eventManager = {};
+	EventManager.enable.call(me.eventManager);
+
+
 	me.height = spec.height || 600;
 	me.width = spec.width || 800;
 	me.margin = spec.margin
+
+	//retreive data according to your createTiles call
+	me.retreiveDataClosure = spec.retreiveDataClosure;
 
 	//retreive data according to your createTiles call
 	me.retreiveDataCallback = spec.retreiveDataCallback;
@@ -77,7 +85,6 @@ var Calendar = function(spec){
 
 	me.createLegend();		
 
-	// return me;
 }
 
 /******************************************************/
@@ -252,13 +259,26 @@ Calendar.prototype.setBucket = function(bounds){
 /******************************************************/
 // ENTER
 Calendar.prototype.tilesEnter = function(tiles) {
+	var me = this;
 	return tiles.enter()
 				.insert("rect")
-					.classed(this.tileClass, true)
-					.attr("stroke-width", "2px")
-					.attr("fill", "#fff")
-					.attr("fill-opacity", 0);
-		     
+				.on("mouseover", function (d, i) {
+			     	// me.eventManager.trigger("tile:mouseover", d);
+			    })
+			    .on("mouseout", function (d, i) {
+			    	// me.eventManager.trigger("tile:mouseout", d);
+			    })
+			    .on("click", function (d, i) {
+			    	me.eventManager.trigger("tile:click", {
+			    		time:d
+			    		, value: d3.select(this).attr("data")
+			    	});
+			    })
+				.classed(this.tileClass, true)
+				.attr("stroke-width", "2px")
+				.attr("fill", "#fff")
+				.attr("fill-opacity", 0)
+				;	     
 }
 
 // UPDATE

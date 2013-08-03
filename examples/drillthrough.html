@@ -1,0 +1,140 @@
+<html>
+<head>
+	<title>RTE example</title>
+	<link rel="stylesheet" href="css/calendar.css"></link>
+</head>
+<body>
+	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="js/d3/d3.min.js"></script>
+	<script type="text/javascript" src="js/colorbrewer/colorbrewer.js"></script>
+
+	<!-- PROD -->
+	<script type="text/javascript" src="../calendar.min.js"></script> 
+
+	<!-- DEV -->
+	<!--  <script type="text/javascript" src="../src/event.js"></script>
+	<script type="text/javascript" src="../src/calendar.js"></script>
+	<script type="text/javascript" src="../src/data.js"></script>
+	<script type="text/javascript" src="../src/renderer/day.js"></script>
+	<script type="text/javascript" src="../src/renderer/week.js"></script>
+	<script type="text/javascript" src="../src/renderer/month.js"></script>
+	<script type="text/javascript" src="../src/renderer/year.js"></script>
+	<script type="text/javascript" src="../src/renderer/drillthrough.js"></script>
+	-->
+
+	<script type="text/javascript" src="js/rte/rte.ws.js"></script>
+	<script type="text/javascript" src="js/rte/rte.calendar.js"></script>
+
+	<script>
+
+		/* ************************** */
+		/* 
+			fill weeks select with week data
+		*/
+		function createDisplaySelector(data, selected){
+			var displays = d3.select("#displays");
+
+			var select = displays.selectAll("option")
+				.data(data);
+
+			select.enter().append("option")
+				.text(function(d){
+					return d;
+				})
+				.attr("id", function(d){ return "displays_"+d})
+				.attr("value", function(d){ return d});
+			select.exit().remove();
+			
+			$("#displays").css("display", "inline");
+			
+			displays.select("#displays_"+selected).attr("selected", true);	
+		}
+
+
+		$.ready = function(){
+			
+			var rte_ws = new RteWS({
+				url : "192.168.1.102:8080"
+			});
+
+			var possible_displays = new RteCalendar({
+				rte_ws : rte_ws
+			});
+
+
+
+			var selected_display = "taux_co2";
+			var displays = ["taux_co2", "consommation", "taux_co2_consommation", "nucleaire", "nrj_ren", "fossile", "all"];
+		
+
+			createDisplaySelector(displays, selected_display);
+
+			var display = possible_displays[selected_display];
+			var agg = "day";
+
+			/* ************************** */
+			/* 
+				CALENDAR INITIALIZATION 
+			*/
+			var calendar = new Calendar( {
+				name: "Co2 produit par kWh consommé (g)"
+				, renderer : new Calendar.renderer.drillthrough()
+				// , buckets : display.buckets
+				, colorScheme : display.colorScheme
+				// , colorSchemeInverse : display.colorSchemeInverse
+				, retreiveDataClosure : display.rte_datagrab_closure
+				, retreiveDataCallback : display.rte_datagrab_closure(agg, display.fields)
+				, retreiveValueCallback : display.rte_closure
+				, width : $("#container").width()
+				, height: 800		
+			});
+
+			calendar.createTiles(2013);
+
+			$("#displays").change(function(e){
+				var selected_display = $("#displays").attr("value");
+
+				var display = possible_displays[selected_display];
+				calendar.name = display.name;
+				calendar.colorScheme = display.colorScheme;
+				calendar.colorSchemeInverse = display.colorSchemeInverse;
+				calendar.retreiveValueCallback = display.rte_closure;
+				calendar.retreiveDataClosure = display.rte_datagrab_closure;
+				calendar.retreiveDataCallback = display.rte_datagrab_closure(agg);
+				
+
+				calendar.createTiles(2013);
+			});
+
+		
+		}
+	</script>
+	<div id="container">
+		<div id="header">
+			<h1 id="title"></h1>	
+			<div id="legend">
+				<div>
+					<ul>
+					</ul>
+					<p class="more"></p>
+					<p class="less"></p>
+				</div>
+			</div>
+		</div>
+		<div id="selectors" >
+			<select id="displays" class="input-medium" style="display: none"></select>
+			<select id="themes" class="input-medium" style="display: none"></select>
+			<select id="years" multiple class="input-small" style="display: none"></select>
+			<select id="months" multiple class="input-small" style="display: none"></select>
+			<select id="weeks" class="input-medium" style="display: none"></select>
+			<select id="days" class="input-medium" style="display: none"></select>
+			<select id="color" class="input-small" style="display: none"></select>
+			<select id="color_inversed" class="input-small" style="display: none"></select>
+		</div>
+		
+		<div id="vis"></div>
+		
+		
+	</div>
+</body>
+</html>
