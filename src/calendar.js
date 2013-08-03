@@ -263,10 +263,16 @@ Calendar.prototype.tilesEnter = function(tiles) {
 	return tiles.enter()
 				.insert("rect")
 				.on("mouseover", function (d, i) {
-			     	// me.eventManager.trigger("tile:mouseover", d);
+			     	me.eventManager.trigger("tile:mouseover", {
+			    		time:d
+			    		, value: d3.select(this).attr("data")
+			    	});
 			    })
 			    .on("mouseout", function (d, i) {
-			    	// me.eventManager.trigger("tile:mouseout", d);
+			    	me.eventManager.trigger("tile:mouseout", {
+			    		time:d
+			    		, value: d3.select(this).attr("data")
+			    	});
 			    })
 			    .on("click", function (d, i) {
 			    	me.eventManager.trigger("tile:click", {
