@@ -118,7 +118,8 @@ Calendar.renderer.month = function(spec){
 
 		// calcul X for hour / day chart
 		var calculLabelMonthPosX = function(d,i){
-			return me.margin+me.month_label_left_decal + (weeks[calendar.time.getWeek(d)]) * (me.cell_size + me.space_between_tiles);
+			return me.margin+me.month_label_left_decal 
+			+ (calendar.time.getMonth(d)-1) * (me.cell_size );
 		}
 
 		// calcul Y for hour / day chart
@@ -174,7 +175,7 @@ Calendar.renderer.month = function(spec){
 		// MONTH PATH
 		/******************************************************/
 		calendar.monthPathEnter(data_month,monthPath );
-		
+
 		/******************************************************/
 		// TILES
 		/******************************************************/
@@ -189,7 +190,7 @@ Calendar.renderer.month = function(spec){
 			    .attr("width",me.cell_size+"px")
 		    	.attr("height",me.cell_size+"px")
 
-		tiles
+		calendar.tilesUpdate(tiles)
 			.transition()
 			// .duration(calendar.duration)
 			.delay(function(d){

@@ -172,7 +172,7 @@ Calendar.renderer.day = function(spec){
 		    	.attr("height", me.cell_size+"px");
 			     
 
-		tiles
+		calendar.tilesUpdate(tiles)
 			.transition()
 			// .duration(calendar.duration)
 			.delay(function(d){

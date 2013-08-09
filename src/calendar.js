@@ -23,7 +23,7 @@ var Calendar = function(spec){
 	me.eventManager = {};
 	EventManager.enable.call(me.eventManager);
 
-
+	// layout
 	me.height = spec.height || 600;
 	me.width = spec.width || 800;
 	me.margin = spec.margin
@@ -48,7 +48,10 @@ var Calendar = function(spec){
 	me.buckets = me.colorScheme.length;
 
 	// Dom balise settings
+	// tiles visulatization id
 	me.visId = spec.visId || '#vis';
+	// decorator layer id
+	me.decoratorId = spec.decoratorId || '#decorator';
 	me.legendId = spec.legendId || '#legend';
 	me.tileClass = spec.tileClass || 'tile';
 	me.monthPathClass = spec.monthPathClass || 'month_path';
@@ -64,36 +67,44 @@ var Calendar = function(spec){
 
 	me.name = spec.name || "";
 
+	// legend
+	me.drawLegend = spec.drawLegend || true;
+
 	var range = [];
 	for (var i = 0; i < me.buckets; i++) {
 		range.push(i);
 	}	
 	// var bucket = d3.scale.quantize().domain([calcs.min, calcs.max]).range(range)
-	me.bucket = d3.scale.quantize().domain([20, 80]).range(range)
+	me.bucket = d3.scale.quantize().domain([20, 80]).range(range);
 
-	
-	
-	
-	
+	me.decorators = [];
+
+	/******************************************************/
+	// TILES SVG NODE CREATION
+	/******************************************************/
 	me.svg = d3.select(me.visId)
 			.append('svg:svg')
-
 			.attr("width", me.width)
 			.attr("height", me.height)
 			.append('svg:g')
 			.attr("transform", "translate(" + 0 + "," + 0+ ")");
 
-	me.createLegend();		
+	
+	var legend = new Calendar.decorator.legend();
+	me.decorators.push(legend);
+
+
+	// me.createLegend();		
 
 }
 
 /******************************************************/
 // PRIVATE _ CREATE TILES
 // This private method is intended to manage renderer
-// switch
+// switch (clean previous renderer by calling clean method)
 // it also resize drawing to screen size depending on
 // renderer.draw(...) return object.
-// if renderer return an object like bbox = { width: ..., height: ...}
+// if renderer draw method return an object like bbox = { width: ..., height: ...}
 // drawing will be resize in order to fit bbox
 // in calendar.width / calendar.height
 /******************************************************/
@@ -102,26 +113,43 @@ var _createTiles = function () {
 	// self reference 
 	var me = this;
 
-
-	var args = arguments;
-
 	data = [];
 	label = [];
+
+	/******************************************************/
+	// DECORATORS
+	/******************************************************/
+	for(var i in me.decorators){
+		if(me.decorators[i] && typeof me.decorators[i].draw == 'function'){
+			me.decorators[i].draw.apply(me);
+		}
+	}
+
+	// if renderer != current_renderer that's mean that renderer 
+	// have been swiched 
 	if(me.current_renderer 
 		&& me.current_renderer.clean
 		&& me.renderer != me.current_renderer){
 
+		// clean previous renderer and relink current_renderer ref
 		me.current_renderer.clean.apply(me, arguments);
 		me.current_renderer = me.renderer;
 
 	}
 	
+	// update chart title
 	$("#title").text(me.name);
 
+	// delegate drawing to the current renderer
 	var bbox = me.current_renderer.draw.apply(me, arguments);
 
-
-
+	// At this point, renderering have been called but the drawing 
+	// may not have been done yet because of animation latency
+	// That's why we can't simply get calendar bbox by calling to getBbox()
+	// on svg node
+	// renderer developper MUST return it's own computed bbox in order to 
+	// automaticaly adjust his drawing on screen calendar size
+	// expected object SHOULD be { width:... , height: ... }
 	if(bbox && bbox.width){
 		// adjust width
 		// scale down
@@ -156,8 +184,9 @@ var _createTiles = function () {
 // with : me.current_renderer.draw.apply(this, arguments);
 // for example, if current renderer is Calendar.renderer.year()
 // as long as this renderer can be called with renderer.draw(2012)
-// you should refresh the screen with something like :
+// you should refresh the screen with :
 // calendar.createTiles(2012)
+// 
 /******************************************************/
 Calendar.prototype.createTiles = function(){
 	// self reference 
@@ -261,8 +290,20 @@ Calendar.prototype.setBucket = function(bounds){
 Calendar.prototype.tilesEnter = function(tiles) {
 	var me = this;
 	return tiles.enter()
-				.insert("rect")
-				.on("mouseover", function (d, i) {
+				.append("rect")
+				.classed(this.tileClass, true)
+				.attr("stroke-width", "2px")
+				.attr("fill", "#fff")
+				.attr("fill-opacity", 0)
+				.attr("z-index", 10);
+				
+				
+}
+
+// UPDATE
+Calendar.prototype.tilesUpdate = function(tiles) { 
+	var me = this;
+	return tiles.on("mouseover", function (d, i) {
 			     	me.eventManager.trigger("tile:mouseover", {
 			    		time:d
 			    		, value: d3.select(this).attr("data")
@@ -280,15 +321,8 @@ Calendar.prototype.tilesEnter = function(tiles) {
 			    		, value: d3.select(this).attr("data")
 			    	});
 			    })
-				.classed(this.tileClass, true)
-				.attr("stroke-width", "2px")
-				.attr("fill", "#fff")
-				.attr("fill-opacity", 0)
-				;	     
+			    .attr("cursor", "pointer");
 }
-
-// UPDATE
-Calendar.prototype.tilesUpdate = function() { }
 
 // EXIT
 Calendar.prototype.tilesExit = function(tiles) {
@@ -307,16 +341,22 @@ Calendar.prototype.monthPathEnter = function(data_month, monthPath) {
 	    .data(data_month, function(d,i){return i;})
 
 	paths.enter()
-		.append("path")
+		.insert("path")
 	    .classed(this.monthPathClass, true)
 	    .attr("stroke-width", "2px")
 	    .attr("stroke", "#FFF")
 	    .attr("fill-opacity", 0)
 	    .attr("stroke-opacity", 1)
+	    .attr("z-index", 0)
+	    .attr("fill-opacity", 0)
+
 	    .attr("d", monthPath)
+
+
 
 	paths.transition().duration(this.duration).attr("stroke", "#000")
 		.attr("stroke", "#000")
+		.attr("stroke-opacity", 1)
 	    .attr("d", monthPath)
 
 	paths.exit().remove()
@@ -326,18 +366,20 @@ Calendar.prototype.monthPathEnter = function(data_month, monthPath) {
 // EXIT
 Calendar.prototype.monthPathExit = function(data_month, monthPath) {
 	this.svg.selectAll("."+this.monthPathClass)
-				.data([])
-				.exit()
+				.attr("stroke-opacity", 0)
 				// .transition().duration(this.duration).attr("fill-opacity", 0)
-				.remove();
+				// .remove();
 }
 
 /******************************************************/
 // TIME HELPERS
 /******************************************************/
 Calendar.prototype.time = {};
+// TODO permits to specify which day is the first day of week
 Calendar.prototype.time.getDay = function(d){
 	var day = d.getDay();
+	// rolling getDay to set monday as first day
+	// mouai ..
 	return ( day == 0) ? 6 : day - 1;
 }
 
@@ -368,6 +410,11 @@ Calendar.prototype.getColor = function(val){
 // RENDERER NAMESPACE
 /******************************************************/
 Calendar.renderer = {};
+
+/******************************************************/
+// DECORATOR NAMESPACE
+/******************************************************/
+Calendar.decorator = {};
 
 /******************************************************/
 // ANIMATION UTILS

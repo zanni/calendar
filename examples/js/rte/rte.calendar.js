@@ -26,7 +26,7 @@ var RteCalendar = function(spec){
 		var computeBounds = Calendar.data.bounds(specializedFunc);
 
 		// Then I want the callback to be specialized with URL 
-		// attributes (aggregation method and expected fields)
+		// attributes (aggregation method)
 		// Those definition change depending on user event and are not related 
 		// with data specialization
 		return function(agg){

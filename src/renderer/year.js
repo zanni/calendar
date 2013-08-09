@@ -22,6 +22,8 @@ Calendar.renderer.year = function(spec){
 	me.space_between_years = spec.space_between_years || me.cell_size*2;
 	me.month_label_left_decal = spec.month_label_left_decal || 80;
 	me.year_label_top_decal = spec.year_label_top_decal || 146;
+	me.week_label_left_decal = spec.week_label_left_decal || 20;
+	me.week_label_top_decal = spec.week_label_top_decal || 20;
 	me.tiles_top_decal = spec.tiles_top_decal || 15;
 	me.tiles_left_decal = spec.tiles_left_decal || 20;
 	me.label_fill = spec.label_fill || "darkgray";
@@ -29,11 +31,13 @@ Calendar.renderer.year = function(spec){
 	me.month_label_class = spec.month_label_class || "month_label";
 	me.month_label_format = spec.month_label_format || d3.time.format("%B");
 	me.year_label_class = spec.year_label_class || "year_label";
+	me.week_label_class = spec.week_label_class || "week_label";
 	me.year_label_format = spec.year_label_format || d3.time.format("%Y");
 
 	// store labels in order to clean
 	me.labels_months;
 	me.label_year;
+	me.label_weeks;
 
 	// cache bounds
 	me.cache_bounds = {};
@@ -77,12 +81,14 @@ Calendar.renderer.year = function(spec){
 		var data_year;
 		var data_year_label;
 		var data_month;
+		var data_week_label
 		var first_year;
 		var year_index = [];
 		if(year instanceof Array){
 			data_year = [];
 			data_year_label = [];
 			data_month = [];
+			data_week_label = [];
 			year.sort(function(a,b){ return a - b});
 			
 			var j = 0;
@@ -92,6 +98,8 @@ Calendar.renderer.year = function(spec){
 				data_year = data_year.concat(getPeriod(year[i], d3.time.days))
 				data_year_label.push(new Date(year[i], 1, 1));
 				data_month = data_month.concat(getPeriod(year[i], d3.time.months));
+				data_week_label = data_week_label.concat(getPeriod(year[i], d3.time.weeks));
+
 			}
 		}
 		else{
@@ -100,6 +108,7 @@ Calendar.renderer.year = function(spec){
 			data_year = getPeriod(year, d3.time.days);
 			data_year_label = [new Date(year, 0, 1)];
 			data_month = getPeriod(year, d3.time.months);
+			data_week_label = getPeriod(year, d3.time.weeks);
 		}
 
 		/******************************************************/
@@ -121,8 +130,20 @@ Calendar.renderer.year = function(spec){
 		}
 
 		var calculTilePosY = function(d,i){
+
 			return year_height * year_index[d.getFullYear()] //( d.getFullYear() - first_year ) 
 				+ me.margin+me.tiles_top_decal +calendar.time.getDay(d) * (me.cell_size + me.space_between_tiles);
+		}
+
+		// calcul X for hour / day chart
+		var calculLabelMonthPosX = function(d,i){
+			
+			return me.margin+me.month_label_left_decal + (calendar.time.getWeek(d)) * (me.cell_size + me.space_between_tiles);
+		}
+
+		// calcul Y for hour / day chart
+		var calculLabelMonthPosY = function(d,i){
+			return year_height * year_index[d.getFullYear()] + me.margin;
 		}
 
 		// calcul X for hour / day chart
@@ -133,6 +154,18 @@ Calendar.renderer.year = function(spec){
 		// calcul Y for hour / day chart
 		var calculLabelYearPosY = function(d,i){
 			return +me.margin;
+		}
+
+		// calcul X for hour / day chart
+		var calculLabelWeekPosX = function(d,i){
+
+			return me.week_label_left_decal+ calendar.time.getWeek(d) * (me.cell_size+ me.space_between_tiles) + me.margin + me.tiles_left_decal; 
+		}
+
+		// calcul Y for hour / day chart
+		var calculLabelWeekPosY = function(d,i){
+			return me.week_label_top_decal+year_height * year_index[d.getFullYear()] //( d.getFullYear() - first_year ) 
+				+ me.margin+me.tiles_top_decal +7 * (me.cell_size + me.space_between_tiles);
 		}
 
 		// mouai...
@@ -180,7 +213,7 @@ Calendar.renderer.year = function(spec){
 		    	
 			     
 		// tiles update
-		tiles
+		calendar.tilesUpdate(tiles)
 			.transition()
 			// .duration(calendar.duration)
 			.delay(function(d){
@@ -194,7 +227,6 @@ Calendar.renderer.year = function(spec){
 		    .attr("fill", function(d){
 		    	var val = getValue(d);
 		    	this.setAttributeNS("http://www.example.com/d3.calendar", "data", val);
-
 		    	return colorize(val);
 		    });
 			    
@@ -205,6 +237,34 @@ Calendar.renderer.year = function(spec){
 		// LABELS
 		/******************************************************/
 		//hours labels
+		me.labels_months = calendar.svg.selectAll("."+me.month_label_class)
+				.data(data_month);
+		//hour labels enter
+		initLabel(me.labels_months.enter(), me.month_label_class)
+			.attr("x", calculLabelMonthPosX ) 
+		    .attr("y", calculLabelMonthPosY ) 
+		    .on("mouseover", function (d, i) {
+		     	calendar.eventManager.trigger("label:month:mouseover", d);
+		    })
+		    .on("mouseout", function (d, i) {
+		    	calendar.eventManager.trigger("label:month:mouseout", d);
+		    })
+		    .on("click", function (d, i) {
+		    	calendar.eventManager.trigger("label:month:click", d);
+		    })
+		    .text(me.month_label_format);
+
+		//hour labels update
+		Calendar.animation.fadeIn(me.labels_months.transition(), calendar.duration)
+		    .attr("x", calculLabelMonthPosX ) 
+		    .attr("y", calculLabelMonthPosY ) 
+		    .text(me.month_label_format);
+
+		//hour labels exit
+		me.labels_months.exit().remove();
+		// fadeOut(me.labels_months.exit().tra
+
+		//hours labels
 		me.label_year = calendar.svg.selectAll("."+me.year_label_class)
 				.data(data_year_label);
 		//hour labels enter
@@ -212,6 +272,15 @@ Calendar.renderer.year = function(spec){
 		    .attr("transform", "rotate(-90)")
 		    .attr("x", calculLabelYearPosX ) 
 		    .attr("y", calculLabelYearPosY ) 
+		    .on("mouseover", function (d, i) {
+		     	calendar.eventManager.trigger("label:year:mouseover", d);
+		    })
+		    .on("mouseout", function (d, i) {
+		    	calendar.eventManager.trigger("label:year:mouseout", d);
+		    })
+		    .on("click", function (d, i) {
+		    	calendar.eventManager.trigger("label:year:click", d);
+		    })
     		.style("text-anchor", "middle")
 		    .text(me.year_label_format);
 
@@ -223,6 +292,35 @@ Calendar.renderer.year = function(spec){
 
 		//hour labels exit
 		Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
+
+
+		//hours labels
+		me.label_weeks = calendar.svg.selectAll("."+me.week_label_class)
+				.data(data_week_label);
+		//hour labels enter
+		initLabel(me.label_weeks.enter(), me.week_label_class)
+		    .attr("x", calculLabelWeekPosX ) 
+		    .attr("y", calculLabelWeekPosY ) 
+		    .on("mouseover", function (d, i) {
+		     	calendar.eventManager.trigger("label:week:mouseover", d);
+		    })
+		    .on("mouseout", function (d, i) {
+		    	calendar.eventManager.trigger("label:week:mouseout", d);
+		    })
+		    .on("click", function (d, i) {
+		    	calendar.eventManager.trigger("label:week:click", d);
+		    })
+    		.style("text-anchor", "middle")
+		    .text(calendar.time.getWeek);
+
+		//hour labels update
+		Calendar.animation.fadeIn(me.label_weeks.transition(), calendar.duration)
+		    .attr("x", calculLabelWeekPosX ) 
+		    .attr("y", calculLabelWeekPosY ) 
+		    .text(calendar.time.getWeek);
+
+		//hour labels exit
+		Calendar.animation.fadeOut(me.label_weeks.exit().transition(), calendar.duration);
 
 		
 		return calculBBox();
@@ -236,6 +334,8 @@ Calendar.renderer.year = function(spec){
 		var calendar = this;	
 		calendar.monthPathExit();
 		Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.labels_months.transition(), calendar.duration);
+		Calendar.animation.fadeOut(me.label_weeks.transition(), calendar.duration);
 	}
 
 	/******************************************************/

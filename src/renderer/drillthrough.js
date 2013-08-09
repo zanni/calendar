@@ -19,6 +19,11 @@ Calendar.renderer.drillthrough = function(spec){
 	me.possible_display = spec.possible_display;
 	me.current_renderer = spec.current_renderer || new Calendar.renderer.year();
 
+	var horodator = new Calendar.decorator.previous();
+	
+	me.previous = [];
+	me.current_display = null;
+
 
 	/******************************************************/
 	// DRAW implementation
@@ -30,11 +35,82 @@ Calendar.renderer.drillthrough = function(spec){
 		// setting when calling draw func with apply
 		/******************************************************/
 		var calendar = this;
+
+		var displayCalendar = function(display){
+			
+			
+			
+			me.current_display = display;
+			calendar.renderer = display.renderer;
+			calendar.retreiveDataCallback = display.retreiveDataCallback;
+			calendar.createTiles.apply(calendar, display.arguments);
+		}
+
+		
+		var args = [];
+		for(var i = 1; i<arguments.length;i++) {
+			args.push(arguments[i]);
+		}
+		var display = {
+			renderer: me.current_renderer
+			, retreiveDataCallback: calendar.retreiveDataClosure("day")
+			, arguments: args
+		};
+		me.current_display = display;
+
 		var args = arguments
 		calendar.eventManager.on("tile:click", function(d){
-			calendar.renderer = new Calendar.renderer.week();
-			calendar.retreiveDataCallback = calendar.retreiveDataClosure("hour");
-			calendar.createTiles(d.time.getFullYear(), calendar.time.getWeek(d.time))
+			if(me.previous.length == 0 ){
+				horodator.draw.apply(calendar);
+			}
+			me.previous.push(me.current_display);
+			var display = {
+				renderer: new Calendar.renderer.day()
+				, retreiveDataCallback: calendar.retreiveDataClosure("hour")
+				, arguments: [d.time.getFullYear(), calendar.time.getWeek(d.time), calendar.time.getDay(d.time)]
+				
+			};
+			displayCalendar(display);
+		});
+
+		calendar.eventManager.on("label:month:click", function(d){
+			if(me.previous.length == 0 ){
+				horodator.draw.apply(calendar);
+			}
+			me.previous.push(me.current_display);
+			var display = {
+				renderer: new Calendar.renderer.month()
+				, retreiveDataCallback: calendar.retreiveDataClosure("day")
+				, arguments: [d.getFullYear(), calendar.time.getMonth(d)-1]
+			};
+
+			displayCalendar(display);
+		});
+
+		calendar.eventManager.on("label:week:click", function(d){
+			if(me.previous.length == 0 ){
+				horodator.draw.apply(calendar);
+			}
+			me.previous.push(me.current_display);
+			var display = {
+				renderer: new Calendar.renderer.week()
+				, retreiveDataCallback: calendar.retreiveDataClosure("hour")
+				, arguments: [d.getFullYear(), calendar.time.getWeek(d)]
+			};
+			displayCalendar(display);
+		});
+
+
+		calendar.eventManager.on("horodator:click", function(d){
+			var display = me.previous.pop();
+
+			if(!display) { 
+				return;
+			}
+			if(me.previous.length == 0 ){
+				horodator.clean.apply(calendar);
+			}
+			displayCalendar(display);
 		});
 
 		return me.current_renderer.draw.apply(calendar, arguments);
