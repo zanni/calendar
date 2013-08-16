@@ -92,8 +92,10 @@ var Calendar = function(spec){
 	
 	me.legend = new Calendar.decorator.legend();
 	me.horodator = new Calendar.decorator.horodator();
+	me.hovered = new Calendar.decorator.hovered();
 	me.decorators.push(me.legend);
 	me.decorators.push(me.horodator);
+	me.decorators.push(me.hovered);
 }
 
 /******************************************************/
@@ -309,7 +311,7 @@ Calendar.prototype.tilesEnter = function(tiles) {
 Calendar.prototype.tilesUpdate = function(tiles) { 
 	var me = this;
 	return tiles.on("mouseover", function (d, i) {
-			     	me.eventManager.trigger("tile:mouseover", {
+			     	me.eventManager.trigger("tile:mouseenter", {
 			    		time:d
 			    		, value: d3.select(this).attr("data")
 			    	});
