@@ -90,12 +90,10 @@ var Calendar = function(spec){
 			.attr("transform", "translate(" + 0 + "," + 0+ ")");
 
 	
-	var legend = new Calendar.decorator.legend();
-	me.decorators.push(legend);
-
-
-	// me.createLegend();		
-
+	me.legend = new Calendar.decorator.legend();
+	me.horodator = new Calendar.decorator.horodator();
+	me.decorators.push(me.legend);
+	me.decorators.push(me.horodator);
 }
 
 /******************************************************/
@@ -239,16 +237,16 @@ Calendar.prototype.draw = function(data){
 /******************************************************/
 // CALENDAR PROTOTYPE CREATE LEGEND
 /******************************************************/
-Calendar.prototype.createLegend = function() {
-	var me = this;
-	var html = "";
-	for (var i = 0; i < me.buckets; i++) {
+// Calendar.prototype.createLegend = function() {
+// 	var me = this;
+// 	var html = "";
+// 	for (var i = 0; i < me.buckets; i++) {
 		
-		html += "<li style='background:"+ me.colorScheme[i] +"'></li>";
-	}
-	d3.select('#legend ul').html(html);
-	me.setLegend();
-}
+// 		html += "<li style='background:"+ me.colorScheme[i] +"'></li>";
+// 	}
+// 	d3.select('#legend ul').html(html);
+// 	me.setLegend();
+// }
 	
 /******************************************************/
 // CALENDAR PROTOTYPE SET LEGEND
@@ -257,13 +255,20 @@ Calendar.prototype.setLegend = function(bounds) {
 		var check = function(a){ return (a) ? a : ""; }
 		var me = this;
 		if(bounds){
-			d3.select('#legend .less').text(check(bounds.min));
-			d3.select('#legend .more').text(check(bounds.max));
+			me.legend.refresh(check(bounds.min),check(bounds.max));
 		}
 		else{
-			d3.select('#legend .less').text(me.downBound);
-			d3.select('#legend .more').text(me.upBound);
+			me.legend.refresh(check(me.downBound),check(me.upBound));
 		}
+	}
+
+/******************************************************/
+// CALENDAR PROTOTYPE SET HORODATOR
+/******************************************************/
+Calendar.prototype.setHorodator = function(start, end) {
+		var check = function(a){ return (a) ? a : ""; }
+		var me = this;
+		me.horodator.refresh(check(start),check(end));
 	}
 
 /******************************************************/

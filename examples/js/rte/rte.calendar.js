@@ -36,19 +36,22 @@ var RteCalendar = function(spec){
 			return function(){
 				var me = this;
 				// RTE WS JSONP REQUEST FACILITY
-				var request = rte_ws.jsonp(agg, fields, function(json){
+				var request = rte_ws.jsonp(agg, fields, function(json, start, end){
 					// compute bounds with previously intialized method
 					var bounds = computeBounds(json);
 					// refresh Buckets and Legend
 					me.setBucket(bounds);
-					me.createLegend();
-					me.setLegend(bounds);
+					
 					// draw calendar view
 					me.draw(rte_parser(json));
+
+					me.setLegend(bounds);
+					me.setHorodator(start, end);
 				});
 				if(me.renderer.bounds){
 					var bounds = me.renderer.bounds.apply(me, arguments);
 					// var bounds = me.renderer.bounds( arguments);
+					me.setHorodator(bounds.start, bounds.end);
 					request(bounds.start, bounds.end);
 				}
 			}

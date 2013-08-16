@@ -1,6 +1,8 @@
 Calendar.decorator.legend = function(){
 	var me = this;
 
+	
+
 	var drawn = false;
 	/******************************************************/
 	// DRAW implementation
@@ -15,8 +17,8 @@ Calendar.decorator.legend = function(){
 		if(!drawn) drawn = true;
 		else return;
 		
-
-		var node = d3.select(calendar.decoratorId)
+		me.node = d3.select(calendar.decoratorId);
+		me.node = me.node
 			.append('div')
 			.attr("id", calendar.legendId)
 				.style('color', "#777")
@@ -32,7 +34,7 @@ Calendar.decorator.legend = function(){
 				.style('opacity', '0')
 				// .append('div');
 
-		var colors = node.append('ul')
+		var colors = me.node.append('ul')
 					.style('list-style-type', "none")
 					.style('overflow', 'hidden')
 					.style('margin-left', '-25px')
@@ -49,7 +51,7 @@ Calendar.decorator.legend = function(){
 
 		// node = node.append('div')
 
-		node.append('span').classed('less', true)
+		me.less = me.node.append('span').classed('less', true)
 				// .style('margin-top', '3px')
 				// .style('margin-left', '10px')
 				.style("float", 'left')
@@ -58,7 +60,7 @@ Calendar.decorator.legend = function(){
 				// .style('top', 0)
 				.text(calendar.downBound);
 
-		node.append('span').classed('more', true)
+		me.more = me.node.append('span').classed('more', true)
 				// .style('margin-top', '3px')
 				.style("float", 'right')
 				.style("margin-right", '15px')
@@ -67,8 +69,13 @@ Calendar.decorator.legend = function(){
 				// .style('right', '10px')
 				.text(calendar.upBound);
 
-		node.transition().duration(calendar.duration).style('opacity', 1)
+		me.node.transition().duration(calendar.duration).style('opacity', 1)
 
+	}
+
+	me.refresh = function(down, up){
+		me.less.text(down);
+		me.more.text(up);	
 	}
 
 

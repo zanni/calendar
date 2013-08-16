@@ -26,7 +26,7 @@ var RteWS = function(spec) {
 				url : getRTEURl( start, end)
 				, dataType : 'jsonp'
 				, success : function(json){
-					success(json);
+					success(json, start, end);
 				}
 			});
 		}

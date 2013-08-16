@@ -19,7 +19,7 @@ Calendar.renderer.drillthrough = function(spec){
 	me.possible_display = spec.possible_display;
 	me.current_renderer = spec.current_renderer || new Calendar.renderer.year();
 
-	var horodator = new Calendar.decorator.previous();
+	var previous_btn = new Calendar.decorator.previous();
 	
 	me.previous = [];
 	me.current_display = null;
@@ -61,7 +61,7 @@ Calendar.renderer.drillthrough = function(spec){
 		var args = arguments
 		calendar.eventManager.on("tile:click", function(d){
 			if(me.previous.length == 0 ){
-				horodator.draw.apply(calendar);
+				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
 			var display = {
@@ -75,7 +75,7 @@ Calendar.renderer.drillthrough = function(spec){
 
 		calendar.eventManager.on("label:month:click", function(d){
 			if(me.previous.length == 0 ){
-				horodator.draw.apply(calendar);
+				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
 			var display = {
@@ -89,7 +89,7 @@ Calendar.renderer.drillthrough = function(spec){
 
 		calendar.eventManager.on("label:week:click", function(d){
 			if(me.previous.length == 0 ){
-				horodator.draw.apply(calendar);
+				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
 			var display = {
@@ -101,14 +101,14 @@ Calendar.renderer.drillthrough = function(spec){
 		});
 
 
-		calendar.eventManager.on("horodator:click", function(d){
+		calendar.eventManager.on("previous:click", function(d){
 			var display = me.previous.pop();
 
 			if(!display) { 
 				return;
 			}
 			if(me.previous.length == 0 ){
-				horodator.clean.apply(calendar);
+				previous_btn.clean.apply(calendar);
 			}
 			displayCalendar(display);
 		});
