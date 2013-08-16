@@ -11,12 +11,16 @@ Calendar.decorator.hovered = function(){
 		var calendar = this;
 
 		calendar.eventManager.on("tile:mouseenter", function(d){
+			me.decorator.style("display","block");
 			me.refresh(d.time+" - "+d.value);
+		})
+		calendar.eventManager.on("tile:mouseout", function(d){
+			// me.decorator.style("display","none");
 		})
 		if(!drawn) drawn = true;
 		else return;
 
-		me.node = d3.select(calendar.decoratorId)
+		me.decorator = d3.select(calendar.decoratorId)
 			.style('cursor','pointer')
 			.append('div')
 			.attr("id", me.id)
@@ -30,12 +34,12 @@ Calendar.decorator.hovered = function(){
 				.style('height', '50px')
 				.style('float', 'right')
 				.style('margin', '10px 30px')
+				.style("display","none");
 
-		me.node = me.node.append('p')
+		me.node = me.decorator.append('p')
 				.style('font-size', '14px')
 				.style('margin-left', '10px')
 				.style('margin-right', '10px')
-				.text("mouai c cool")
 	}
 
 	me.refresh = function(value){

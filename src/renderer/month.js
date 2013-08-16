@@ -27,6 +27,7 @@ Calendar.renderer.month = function(spec){
 	me.label_fill = spec.label_fill || "darkgray";
 	me.label_fontsize =  spec.label_fontsize || "14px";
 	me.month_label_class = spec.month_label_class || "month_label";
+	me.week_label_class = spec.week_label_class || "week_label";
 	me.month_label_format = spec.month_label_format || d3.time.format("%B");
 	me.year_label_class = spec.year_label_class || "year_label";
 	me.year_label_format = spec.year_label_format || d3.time.format("%Y");
@@ -34,6 +35,7 @@ Calendar.renderer.month = function(spec){
 	// store labels in order to clean
 	me.labels_months;
 	me.label_year;
+	me.label_weeks;
 
 	/******************************************************/
 	// DRAW implementation
@@ -85,6 +87,7 @@ Calendar.renderer.month = function(spec){
 		var current_week_index = 0;
 		var prev_week;
 		var weeks = [];
+		var weeks_label = [];
 		for(var d in data){
 			if(prev_week < calendar.time.getWeek(data[d])){
 				current_week_index++;
@@ -95,6 +98,7 @@ Calendar.renderer.month = function(spec){
 			}
 			prev_week = calendar.time.getWeek(data[d]);
 			weeks[calendar.time.getWeek(data[d])] = current_week_index;
+			weeks_label.push(data[d]);
 		}
 
 		/******************************************************/
@@ -117,11 +121,7 @@ Calendar.renderer.month = function(spec){
 		}
 
 		// calcul X for hour / day chart
-		// var calculLabelMonthPosX = function(d,i){
-		// 	return me.margin+me.month_label_left_decal 
-		// 	+ (calendar.time.getMonth(d)-1) * (me.cell_size );
-		// }
-	var calculLabelMonthPosX = function(d,i){
+		var calculLabelMonthPosX = function(d,i){
 			
 			return me.margin+me.month_label_left_decal + (weeks[calendar.time.getWeek(d)]) * (me.cell_size + me.space_between_tiles);
 		}
@@ -139,6 +139,18 @@ Calendar.renderer.month = function(spec){
 		// calcul Y for hour / day chart
 		var calculLabelYearPosY = function(d,i){
 			return me.margin;
+		}
+
+		// calcul X for hour / day chart
+		var calculLabelWeekPosX = function(d,i){
+
+			return  20 + me.margin+me.tiles_left_decal + (weeks[calendar.time.getWeek(d)]) * (me.cell_size + me.space_between_tiles);
+		}
+
+		// calcul Y for hour / day chart
+		var calculLabelWeekPosY = function(d,i){
+
+			return me.margin+me.tiles_top_decal + 8* (me.cell_size + me.space_between_tiles);
 		}
 
 		var calculBBox = function(){
@@ -217,7 +229,7 @@ Calendar.renderer.month = function(spec){
 		/******************************************************/
 		//hours labels
 		me.labels_months = svg.selectAll("."+me.month_label_class)
-				.data(data_month);
+				.data(data_month, function(d,i){return i;});
 		//hour labels enter
 		initLabel(me.labels_months.enter(), me.month_label_class)
 			.attr("x", calculLabelMonthPosX ) 
@@ -236,7 +248,7 @@ Calendar.renderer.month = function(spec){
 		
 		//hours labels
 		me.label_year = svg.selectAll("."+me.year_label_class)
-				.data(getPeriod(0, d3.time.years));
+				.data(getPeriod(0, d3.time.years), function(d,i){return i;});
 		//hour labels enter
 		initLabel(me.label_year.enter(), me.year_label_class)
 		    .attr("transform", "rotate(-90)")
@@ -254,6 +266,37 @@ Calendar.renderer.month = function(spec){
 		//hour labels exit
 		Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
 
+		//hours labels
+		console.log(weeks_label);
+		me.label_weeks = calendar.svg.selectAll("."+me.week_label_class)
+				.data(weeks_label, function(d,i){return i;});
+
+
+		//hour labels enter
+		initLabel(me.label_weeks.enter(), me.week_label_class)
+		    .attr("x", calculLabelWeekPosX ) 
+		    .attr("y", calculLabelWeekPosY ) 
+		    .on("mouseover", function (d, i) {
+		     	calendar.eventManager.trigger("label:week:mouseover", d);
+		    })
+		    .on("mouseout", function (d, i) {
+		    	calendar.eventManager.trigger("label:week:mouseout", d);
+		    })
+		    .on("click", function (d, i) {
+		    	calendar.eventManager.trigger("label:week:click", d);
+		    })
+    		.style("text-anchor", "middle")
+		    .text(calendar.time.getWeek);
+
+		//hour labels update
+		Calendar.animation.fadeIn(me.label_weeks.transition(), calendar.duration)
+		    .attr("x", calculLabelWeekPosX ) 
+		    .attr("y", calculLabelWeekPosY ) 
+		    .text(calendar.time.getWeek);
+
+		//hour labels exit
+		Calendar.animation.fadeOut(me.label_weeks.exit().transition(), calendar.duration);
+
 		return calculBBox();
 	}
 
@@ -267,6 +310,8 @@ Calendar.renderer.month = function(spec){
 		Calendar.animation.fadeOut(me.labels_months.transition(), calendar.duration);
 		if(me.label_year)
 			Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
+
+		Calendar.animation.fadeOut(me.label_weeks.transition(), calendar.duration);
 	}
 
 	/******************************************************/

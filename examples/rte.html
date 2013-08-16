@@ -13,8 +13,13 @@
 
 	<!-- DEV -->
 	<script type="text/javascript" src="../src/event.js"></script>
+
 	<script type="text/javascript" src="../src/calendar.js"></script>
 	<script type="text/javascript" src="../src/data.js"></script>
+	<script type="text/javascript" src="../src/decorator/legend.js"></script>
+	<script type="text/javascript" src="../src/decorator/horodator.js"></script>
+	<script type="text/javascript" src="../src/decorator/hovered.js"></script>
+	<script type="text/javascript" src="../src/decorator/drillthrough_previous.js"></script>
 	<script type="text/javascript" src="../src/renderer/day.js"></script>
 	<script type="text/javascript" src="../src/renderer/week.js"></script>
 	<script type="text/javascript" src="../src/renderer/month.js"></script>
@@ -211,7 +216,7 @@
 
 		$.ready = function(){
 			var rte_ws = new RteWS({
-				url : "192.168.1.102:8080"
+				url : "192.168.1.101:8080"
 			});
 
 			var possible_displays = new RteCalendar({

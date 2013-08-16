@@ -14,6 +14,8 @@ Calendar.decorator.legend = function(){
 		// setting when calling draw func with apply
 		/******************************************************/
 		var calendar = this;
+		// yep ...
+		me.calendar = calendar;
 		if(!drawn) drawn = true;
 		else return;
 		
@@ -34,20 +36,30 @@ Calendar.decorator.legend = function(){
 				.style('opacity', '0')
 				// .append('div');
 
-		var colors = me.node.append('ul')
+		me.colors = me.node.append('ul')
 					.style('list-style-type', "none")
 					.style('overflow', 'hidden')
 					.style('margin-left', '-25px')
 					.style('margin-bottom', 5)
 
 
-		for (var i = 0; i < calendar.buckets; i++) {
-			colors.append('li')
-					.style('background', calendar.colorScheme[i])
+		// for (var i = 0; i < calendar.buckets; i++) {
+		// 	me.colors.append('li')
+		// 			.style('background', calendar.colorScheme[i])
+		// 			.style('float','left')
+		// 			.style('width','14px')
+		// 			.style('height','14px')
+		// }
+
+		me.colors_data = me.colors.selectAll('li').data(calendar.colorScheme, function(d, i){return i;})
+					.enter()
+					.append('li')
+					.style('background', function(d){
+						return d;
+					})
 					.style('float','left')
 					.style('width','14px')
 					.style('height','14px')
-		}
 
 		// node = node.append('div')
 
@@ -76,6 +88,15 @@ Calendar.decorator.legend = function(){
 	me.refresh = function(down, up){
 		me.less.text(down);
 		me.more.text(up);	
+		// yep yep ...
+		// me.colors.selectAll('li')
+		// 	.data(me.calendar.colorScheme, function(d, i){return i;})
+		// 	.style('background', function(d){
+		// 				return d;
+		// 			})
+		// 			.style('float','left')
+		// 			.style('width','14px')
+		// 			.style('height','14px')
 	}
 
 

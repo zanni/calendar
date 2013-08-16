@@ -223,6 +223,7 @@ Calendar.renderer.week = function(spec){
 				.data(
 					// get each hour in a day
 					getPeriod(start, day_time, d3.time.hours)
+					, function(d,i){return i;}
 				);
 		//hour labels enter
 		initLabel(me.labels_hours.enter(), me.hour_label_class)

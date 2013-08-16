@@ -51,7 +51,6 @@ var RteCalendar = function(spec){
 				if(me.renderer.bounds){
 					var bounds = me.renderer.bounds.apply(me, arguments);
 					// var bounds = me.renderer.bounds( arguments);
-					me.setHorodator(bounds.start, bounds.end);
 					request(bounds.start, bounds.end);
 				}
 			}

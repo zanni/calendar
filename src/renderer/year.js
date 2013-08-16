@@ -114,8 +114,6 @@ Calendar.renderer.year = function(spec){
 		/******************************************************/
 		// tiles / labels initialization helpers
 		/******************************************************/
-		
-
 		var year_height = 7 * me.cell_size + me.margin+me.tiles_top_decal +me.space_between_years;
 		
 		var initLabel = function(transform, klass){
@@ -238,7 +236,7 @@ Calendar.renderer.year = function(spec){
 		/******************************************************/
 		//hours labels
 		me.labels_months = calendar.svg.selectAll("."+me.month_label_class)
-				.data(data_month);
+				.data(data_month, function(d,i){return i;});
 		//hour labels enter
 		initLabel(me.labels_months.enter(), me.month_label_class)
 			.attr("x", calculLabelMonthPosX ) 
@@ -266,7 +264,7 @@ Calendar.renderer.year = function(spec){
 
 		//hours labels
 		me.label_year = calendar.svg.selectAll("."+me.year_label_class)
-				.data(data_year_label);
+				.data(data_year_label, function(d,i){return i;});
 		//hour labels enter
 		initLabel(me.label_year.enter(), me.year_label_class)
 		    .attr("transform", "rotate(-90)")
@@ -296,7 +294,7 @@ Calendar.renderer.year = function(spec){
 
 		//hours labels
 		me.label_weeks = calendar.svg.selectAll("."+me.week_label_class)
-				.data(data_week_label);
+				.data(data_week_label, function(d,i){return i;});
 		//hour labels enter
 		initLabel(me.label_weeks.enter(), me.week_label_class)
 		    .attr("x", calculLabelWeekPosX ) 
