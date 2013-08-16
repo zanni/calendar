@@ -117,9 +117,13 @@ Calendar.renderer.month = function(spec){
 		}
 
 		// calcul X for hour / day chart
-		var calculLabelMonthPosX = function(d,i){
-			return me.margin+me.month_label_left_decal 
-			+ (calendar.time.getMonth(d)-1) * (me.cell_size );
+		// var calculLabelMonthPosX = function(d,i){
+		// 	return me.margin+me.month_label_left_decal 
+		// 	+ (calendar.time.getMonth(d)-1) * (me.cell_size );
+		// }
+	var calculLabelMonthPosX = function(d,i){
+			
+			return me.margin+me.month_label_left_decal + (weeks[calendar.time.getWeek(d)]) * (me.cell_size + me.space_between_tiles);
 		}
 
 		// calcul Y for hour / day chart
