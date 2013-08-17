@@ -26,8 +26,10 @@ Calendar.renderer.year = function(spec){
 	me.week_label_top_decal = spec.week_label_top_decal || 20;
 	me.tiles_top_decal = spec.tiles_top_decal || 15;
 	me.tiles_left_decal = spec.tiles_left_decal || 20;
+
 	me.label_fill = spec.label_fill || "darkgray";
 	me.label_fontsize = spec.label_fontsize || "22px";
+	
 	me.month_label_class = spec.month_label_class || "month_label";
 	me.month_label_format = spec.month_label_format || d3.time.format("%B");
 	me.year_label_class = spec.year_label_class || "year_label";
@@ -116,12 +118,7 @@ Calendar.renderer.year = function(spec){
 		/******************************************************/
 		var year_height = 7 * me.cell_size + me.margin+me.tiles_top_decal +me.space_between_years;
 		
-		var initLabel = function(transform, klass){
-			return transform.append("text")
-						.classed(klass, true)
-						.attr("fill", me.label_fill)
-						.attr("font-size", me.label_fontsize);
-		}
+		
 		// calcul X for hour / day chart
 		var calculTilePosX = function(d,i){
 			return calendar.time.getWeek(d) * (me.cell_size+ me.space_between_tiles) + me.margin + me.tiles_left_decal; 
@@ -238,7 +235,7 @@ Calendar.renderer.year = function(spec){
 		me.labels_months = calendar.svg.selectAll("."+me.month_label_class)
 				.data(data_month, function(d,i){return i;});
 		//hour labels enter
-		initLabel(me.labels_months.enter(), me.month_label_class)
+		calendar.labelEnter(me, me.labels_months.enter(), me.month_label_class)
 			.attr("x", calculLabelMonthPosX ) 
 		    .attr("y", calculLabelMonthPosY ) 
 		    .on("mouseover", function (d, i) {
@@ -266,7 +263,7 @@ Calendar.renderer.year = function(spec){
 		me.label_year = calendar.svg.selectAll("."+me.year_label_class)
 				.data(data_year_label, function(d,i){return i;});
 		//hour labels enter
-		initLabel(me.label_year.enter(), me.year_label_class)
+		calendar.labelEnter(me, me.label_year.enter(), me.year_label_class)
 		    .attr("transform", "rotate(-90)")
 		    .attr("x", calculLabelYearPosX ) 
 		    .attr("y", calculLabelYearPosY ) 
@@ -296,7 +293,7 @@ Calendar.renderer.year = function(spec){
 		me.label_weeks = calendar.svg.selectAll("."+me.week_label_class)
 				.data(data_week_label, function(d,i){return i;});
 		//hour labels enter
-		initLabel(me.label_weeks.enter(), me.week_label_class)
+		calendar.labelEnter(me, me.label_weeks.enter(), me.week_label_class)
 		    .attr("x", calculLabelWeekPosX ) 
 		    .attr("y", calculLabelWeekPosY ) 
 		    .on("mouseover", function (d, i) {

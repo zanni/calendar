@@ -1,6 +1,9 @@
 var RteWS = function(spec) {
 	var me = this;
 	me.url = spec.url || 'localhost:8080';
+
+	me.cache = {};
+
 	var formatTimeStampUrl = function (time){
 		var str = time.getFullYear();
 		str += "-";
@@ -21,11 +24,16 @@ var RteWS = function(spec) {
 			return url;
 		}
 		return function(start, end){
-			var me = this;
+			var key = agg+"-"+fields+"-"+start.getTime()+"-"+end.getTime();
+			if(me.cache[key]){
+				success(me.cache[key], start, end);
+				return;
+			}
 			$.ajax({
 				url : getRTEURl( start, end)
 				, dataType : 'jsonp'
 				, success : function(json){
+					me.cache[key] = json;
 					success(json, start, end);
 				}
 			});

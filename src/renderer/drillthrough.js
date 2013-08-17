@@ -87,6 +87,20 @@ Calendar.renderer.drillthrough = function(spec){
 			displayCalendar(display);
 		});
 
+		calendar.eventManager.on("label:year:click", function(d){
+			if(me.previous.length == 0 ){
+				previous_btn.draw.apply(calendar);
+			}
+			me.previous.push(me.current_display);
+			var display = {
+				renderer: new Calendar.renderer.year()
+				, retreiveDataCallback: calendar.retreiveDataClosure("day")
+				, arguments: [d.getFullYear()]
+			};
+
+			displayCalendar(display);
+		});
+
 		calendar.eventManager.on("label:week:click", function(d){
 			if(me.previous.length == 0 ){
 				previous_btn.draw.apply(calendar);
@@ -96,6 +110,19 @@ Calendar.renderer.drillthrough = function(spec){
 				renderer: new Calendar.renderer.week()
 				, retreiveDataCallback: calendar.retreiveDataClosure("hour")
 				, arguments: [d.getFullYear(), calendar.time.getWeek(d)]
+			};
+			displayCalendar(display);
+		});
+
+		calendar.eventManager.on("label:day:click", function(d){
+			if(me.previous.length == 0 ){
+				previous_btn.draw.apply(calendar);
+			}
+			me.previous.push(me.current_display);
+			var display = {
+				renderer: new Calendar.renderer.day()
+				, retreiveDataCallback: calendar.retreiveDataClosure("hour")
+				, arguments: [d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d)]
 			};
 			displayCalendar(display);
 		});

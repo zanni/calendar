@@ -1,7 +1,7 @@
 <html>
 <head>
-	<title>RTE example</title>
-	<!-- <link rel="stylesheet" href="css/calendar.css"></link> -->
+	<title>Calendar drillthrough renderer example</title>
+	<link rel="stylesheet" href="css/calendar.css"></link>
 </head>
 <body>
 	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
@@ -55,6 +55,28 @@
 			
 			displays.select("#displays_"+selected).attr("selected", true);	
 		}
+		/* ************************** */
+		/* 
+			fill weeks select with week data
+		*/
+		function createYearSelector(data, selected){
+			var years = d3.select("#years");
+
+			var select = years.selectAll("option")
+				.data(data);
+
+			select.enter().append("option")
+				.text(function(d){
+					return d;
+				})
+				.attr("id", function(d){ return "years_"+d})
+				.attr("value", function(d){ return d});
+			select.exit().remove();
+			
+			$("#years").css("display", "inline");
+			
+			years.select("#years_"+selected).attr("selected", true);	
+		}
 
 
 		$.ready = function(){
@@ -74,9 +96,13 @@
 		
 
 			createDisplaySelector(displays, selected_display);
+			
 
 			var display = possible_displays[selected_display];
 			var agg = "day";
+			var selected_year = 2011;
+			var years = [2011, 2012, 2013];
+			createYearSelector(years, selected_year);
 
 			/* ************************** */
 			/* 
@@ -95,10 +121,12 @@
 				, height: 800		
 			});
 
-			calendar.createTiles(2013);
+			calendar.createTiles(selected_year);
 
 			$("#displays").change(function(e){
 				var selected_display = $("#displays").attr("value");
+				var years = $.map( $('#years option:selected'),
+                  			function(e) { return parseInt($(e).val()) } );
 
 				var display = possible_displays[selected_display];
 				calendar.name = display.name;
@@ -109,27 +137,20 @@
 				calendar.retreiveDataCallback = display.rte_datagrab_closure(agg);
 				
 
-				calendar.createTiles(2013);
+				calendar.createTiles(years);
 			});
-
+			$("#years").change(function(e){
+				var years = $.map( $('#years option:selected'),
+                  			function(e) { return parseInt($(e).val()) } );
+				calendar.createTiles(years);
+			});
 		
 		}
 	</script>
 	<div id="container">
-		<!-- <div id="header">
-			<h1 id="title"></h1>	
-			<div id="legend">
-				<div>
-					<ul>
-					</ul>
-					<p class="more"></p>
-					<p class="less"></p>
-				</div>
-			</div>
-		</div> -->
-		
 		<div id="selectors" >
 			<select id="displays" class="input-medium" style="display: none"></select>
+			<select id="years" multiple class="input-small" style="display: none"></select>
 		</div>
 		<div id="decorator"></div>
 		<div id="vis"></div>

@@ -104,13 +104,6 @@ Calendar.renderer.month = function(spec){
 		/******************************************************/
 		// tiles / labels initialization helpers
 		/******************************************************/
-		
-		var initLabel = function(transform, klass){
-			return transform.append("text")
-						.classed(klass, true)
-						.attr("fill", me.label_fill)
-						.attr("font-size", me.label_fontsize);
-		}
 		// calcul X for hour / day chart
 		var calculTilePosX = function(d,i){
 			return me.margin+me.tiles_left_decal + (weeks[calendar.time.getWeek(d)]) * (me.cell_size + me.space_between_tiles);
@@ -231,7 +224,7 @@ Calendar.renderer.month = function(spec){
 		me.labels_months = svg.selectAll("."+me.month_label_class)
 				.data(data_month, function(d,i){return i;});
 		//hour labels enter
-		initLabel(me.labels_months.enter(), me.month_label_class)
+		calendar.labelEnter(me, me.labels_months.enter(), me.month_label_class)
 			.attr("x", calculLabelMonthPosX ) 
 		    .attr("y", calculLabelMonthPosY ) 
 		    .text(me.month_label_format);
@@ -250,7 +243,7 @@ Calendar.renderer.month = function(spec){
 		me.label_year = svg.selectAll("."+me.year_label_class)
 				.data(getPeriod(0, d3.time.years), function(d,i){return i;});
 		//hour labels enter
-		initLabel(me.label_year.enter(), me.year_label_class)
+		calendar.labelEnter(me, me.label_year.enter(), me.year_label_class)
 		    .attr("transform", "rotate(-90)")
 		    .attr("x", calculLabelYearPosX ) 
 		    .attr("y", calculLabelYearPosY ) 
@@ -267,13 +260,12 @@ Calendar.renderer.month = function(spec){
 		Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
 
 		//hours labels
-		console.log(weeks_label);
 		me.label_weeks = calendar.svg.selectAll("."+me.week_label_class)
 				.data(weeks_label, function(d,i){return i;});
 
 
 		//hour labels enter
-		initLabel(me.label_weeks.enter(), me.week_label_class)
+		calendar.labelEnter(me, me.label_weeks.enter(), me.week_label_class)
 		    .attr("x", calculLabelWeekPosX ) 
 		    .attr("y", calculLabelWeekPosY ) 
 		    .on("mouseover", function (d, i) {

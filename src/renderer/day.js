@@ -99,12 +99,6 @@ Calendar.renderer.day = function(spec){
 			return Math.floor(d.getMinutes() / 15);
 		}
 
-		var initLabel = function(transform){
-			return transform.append("text")
-						.classed(me.hour_label_class, true)
-						.attr("fill", me.label_fill)
-						.attr("font-size", me.label_fontsize);
-		}
 		// calcul X for hour / day chart
 		var calculTilePosX = function(d,i){
 			// return me.tiles_left_decal + d.getHours() * (cell_size + me.space_between_tiles)
@@ -201,7 +195,7 @@ Calendar.renderer.day = function(spec){
 					getPeriod(start, day_time, d3.time.hours)
 				);
 		//hour labels enter
-		initLabel(me.labels_hours.enter())
+		calendar.labelEnter(me, me.labels_hours.enter(),me.hour_label_class )
 			.attr("x", calculLabelHourPosX ) 
 		    .attr("y", calculLabelHourPosY ) 
 		    .text(me.hour_label_format);

@@ -103,12 +103,6 @@ Calendar.renderer.week = function(spec){
 			return (i % 2 == 0) ? _hour_label_format(d) : "";
 		}
 
-		var initLabel = function(transform, klass){
-			return transform.append("text")
-						.classed(klass, true)
-						.attr("fill", me.label_fill)
-						.attr("font-size", me.label_fontsize);
-		}
 		// calcul X for hour / day chart
 		var calculTilePosX = function(d,i){
 			return me.tiles_left_decal + d.getHours() * (me.cell_size + me.space_between_tiles)
@@ -206,9 +200,18 @@ Calendar.renderer.week = function(spec){
 					, function(d,i){ return i}
 				);
 		//day labels enter
-		initLabel(me.labels_days.enter(), me.day_label_class)
+		calendar.labelEnter(me, me.labels_days.enter(), me.day_label_class)
 			.attr("x", calculLabelDayPosX ) 
 		    .attr("y", calculLabelDayPosY ) 
+		    .on("mouseover", function (d, i) {
+		     	calendar.eventManager.trigger("label:day:mouseover", d);
+		    })
+		    .on("mouseout", function (d, i) {
+		    	calendar.eventManager.trigger("label:day:mouseout", d);
+		    })
+		    .on("click", function (d, i) {
+		    	calendar.eventManager.trigger("label:day:click", d);
+		    })
 		    .text(day_label_format);
 
 		//day labels update
@@ -226,7 +229,7 @@ Calendar.renderer.week = function(spec){
 					, function(d,i){return i;}
 				);
 		//hour labels enter
-		initLabel(me.labels_hours.enter(), me.hour_label_class)
+		calendar.labelEnter(me, me.labels_hours.enter(), me.hour_label_class)
 			.attr("x", calculLabelHourPosX ) 
 		    .attr("y", calculLabelHourPosY ) 
 		    .text(hour_label_format);

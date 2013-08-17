@@ -40,12 +40,15 @@ var Calendar = function(spec){
 	// synchronous data loading
 	me.data = spec.data;
 
+	// THEME
 	// color scheme
 	me.colorScheme = spec.colorScheme 
 		|| ["#d73027","#f46d43","#fdae61","#fee08b","#ffffbf","#d9ef8b","#a6d96a","#66bd63","#1a9850"];
 
 	me.noDataColor = spec.noDataColor || "#eee";
 	me.buckets = me.colorScheme.length;
+	me.label_fill = spec.label_fill || "darkgray";
+	me.label_fontsize = spec.label_fontsize || "22px";
 
 	// Dom balise settings
 	// tiles visulatization id
@@ -67,6 +70,8 @@ var Calendar = function(spec){
 
 	me.name = spec.name || "";
 
+	// interactivity
+	me.interactive = spec.interactive || true;
 	// legend
 	me.drawLegend = spec.drawLegend || true;
 
@@ -310,7 +315,8 @@ Calendar.prototype.tilesEnter = function(tiles) {
 // UPDATE
 Calendar.prototype.tilesUpdate = function(tiles) { 
 	var me = this;
-	return tiles.on("mouseover", function (d, i) {
+	if(me.interactive){
+		return tiles.on("mouseover", function (d, i) {
 			     	me.eventManager.trigger("tile:mouseenter", {
 			    		time:d
 			    		, value: d3.select(this).attr("data")
@@ -329,6 +335,9 @@ Calendar.prototype.tilesUpdate = function(tiles) {
 			    	});
 			    })
 			    .attr("cursor", "pointer");
+	}
+	return tiles;
+	
 }
 
 // EXIT
@@ -377,6 +386,17 @@ Calendar.prototype.monthPathExit = function(data_month, monthPath) {
 				// .transition().duration(this.duration).attr("fill-opacity", 0)
 				// .remove();
 }
+
+/******************************************************/
+// LABEL UTILS 
+/******************************************************/
+// ENTER
+Calendar.prototype.labelEnter = function(renderer, transform, klass){
+			return transform.append("text")
+						.classed(klass, true)
+						.attr("fill", renderer.label_fill)
+						.attr("font-size", renderer.label_fontsize);
+		}
 
 /******************************************************/
 // TIME HELPERS
