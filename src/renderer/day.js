@@ -16,7 +16,8 @@ Calendar.renderer.day = function(spec){
 
 	// theming
 	if(!spec) spec={};
-	me.cell_size = 36;
+	me.margin = spec.margin || 20;
+	me.cell_size = spec.cell_size || 36;
 	me.space_between_tiles = spec.space_between_tiles || 2;
 	me.space_between_row = spec.space_between_row || 15;
 	me.tiles_left_decal = spec.tiles_left_decal || 30;
@@ -30,12 +31,13 @@ Calendar.renderer.day = function(spec){
 
 
 	var _bounds = function(year, week, day){
-		var mondays = d3.time.mondays(new Date(year, 0, 1), new Date(year+1, 0,1));
+		var mondays = Calendar.data.firstDayOfWeek(new Date(year, 0, 0), new Date(year+1, 0,7));
 		if(mondays && mondays[parseInt(week)]){
 			var firstday = mondays[week];
-			firstday.setTime(firstday.getTime() + (parseInt(day)-7) * 24*60*60*1000);
+			firstday.setTime(firstday.getTime() + (parseInt(day)) * 24*60*60*1000 - 7* 24*60*60*1000);
 			var end = new Date();
 			end.setTime(firstday.getTime() +24*60*60*1000);
+			console.log(firstday)
 			return {
 				start : firstday
 				, end : end
@@ -46,6 +48,7 @@ Calendar.renderer.day = function(spec){
 	// DRAW implementation
 	/******************************************************/
 	me.draw = function(data, year, week, day){
+		console.log(arguments)
 
 		/******************************************************/
 		// self ref is supposed to be set with generic calendar
@@ -77,15 +80,19 @@ Calendar.renderer.day = function(spec){
 			);
 		}
 
-		// color tiles depending on val
-		var colorize = function(d){
-			var day = d.getDay();
-			var val = calendar.retreiveValueCallback(data
-				, year
-				, week
-				, ( day == 0) ? 6 : day - 1
-				, d.getHours()
+
+		var getValue = function(d, i, u){
+			return calendar.retreiveValueCallback(data
+				, Calendar.data.getYear(d)
+				, Calendar.data.getWeek(d)
+				, Calendar.data.getDay(d)
+				, Calendar.data.getHours(d)
+				, Calendar.data.getQuarter(d)
 			);
+		}
+
+		// color tiles depending on val
+		var colorize = function(val){
 			return calendar.getColor(val);
 		}
 
@@ -109,7 +116,7 @@ Calendar.renderer.day = function(spec){
 		}
 
 		var calculTilePosY = function(d,i){
-			return ((d.getHours() %6))* ( me.cell_size + me.space_between_tiles ) ;
+			return me.margin+((d.getHours() %6))* ( me.cell_size + me.space_between_tiles ) ;
 		}
 
 		// calcul X for hour / day chart
@@ -123,7 +130,7 @@ Calendar.renderer.day = function(spec){
 
 		// calcul Y for hour / day chart
 		var calculLabelHourPosY = function(d,i){
-			return ((i%6))* ( me.cell_size + me.space_between_tiles) + 20 ;
+			return me.margin+((i%6))* ( me.cell_size + me.space_between_tiles) + 20 ;
 		}
 
 		var calculBBox = function(){
@@ -177,7 +184,11 @@ Calendar.renderer.day = function(spec){
 		    .attr("fill-opacity", 1)
 		    .attr("width", me.cell_size+"px")
 		    .attr("height", me.cell_size+"px")
-		    .attr("fill", colorize);
+		    .attr("fill", function(d){
+		    	var val = getValue(d);
+		    	this.setAttributeNS("http://www.example.com/d3.calendar", "data", val);
+		    	return colorize(val);
+		    });
 			    
 		// tiles exit
 		calendar.tilesExit(tiles)

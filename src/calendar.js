@@ -54,8 +54,8 @@ var Calendar = function(spec){
 	// tiles visulatization id
 	me.visId = spec.visId || '#vis';
 	// decorator layer id
-	me.decoratorId = spec.decoratorId || '#decorator';
-	me.legendId = spec.legendId || '#legend';
+	me.decoratorId = spec.decoratorId || '#decorator_top';
+	me.decoratorBottomId = spec.decoratorBottomId || '#decorator_bottom';
 	me.tileClass = spec.tileClass || 'tile';
 	me.monthPathClass = spec.monthPathClass || 'month_path';
 	// type of calendar displayed
@@ -63,7 +63,8 @@ var Calendar = function(spec){
 	me.current_renderer = me.renderer;
 
 	// animation duration
-	me.duration = spec.duration || 800;
+	me.duration = spec.duration  || 800;
+	if(spec.duration ==0) me.duration = 0;
 
 	me.upBound = spec.upBound || 80;
 	me.downBound = spec.downBound || 20;
@@ -71,9 +72,12 @@ var Calendar = function(spec){
 	me.name = spec.name || "";
 
 	// interactivity
-	me.interactive = spec.interactive || true;
+	me.interactive = (typeof spec.interactive  == "boolean") ? spec.interactive : true;
 	// legend
-	me.drawLegend = spec.drawLegend || true;
+	me.drawLegend = (typeof spec.drawLegend  == "boolean") ? spec.drawLegend : true;
+	me.drawHorodator = (typeof spec.drawHorodator  == "boolean") ? spec.drawHorodator : true;
+	me.drawHovered = (typeof spec.drawHovered  == "boolean") ? spec.drawHovered : true;
+	me.drawTitle = (typeof spec.drawTitle  == "boolean") ? spec.drawTitle : true;
 
 	var range = [];
 	for (var i = 0; i < me.buckets; i++) {
@@ -95,12 +99,34 @@ var Calendar = function(spec){
 			.attr("transform", "translate(" + 0 + "," + 0+ ")");
 
 	
-	me.legend = new Calendar.decorator.legend();
-	me.horodator = new Calendar.decorator.horodator();
-	me.hovered = new Calendar.decorator.hovered();
-	me.decorators.push(me.legend);
-	me.decorators.push(me.horodator);
-	me.decorators.push(me.hovered);
+	
+	
+	
+	if(me.drawLegend){
+		me.legend = new Calendar.decorator.legend();
+		me.decorators.push(me.legend);
+	}
+		
+	if(me.drawHorodator){
+		me.horodator = new Calendar.decorator.horodator();
+		me.decorators.push(me.horodator);
+	}
+		
+	if(me.drawHovered){
+		me.hovered = new Calendar.decorator.hovered({
+			float: 'left'
+			, position: 'bottom'
+		});
+		me.decorators.push(me.hovered);
+	}
+	if(me.drawTitle){
+		me.title = new Calendar.decorator.title({
+			float: 'left'
+			, position: 'top'
+		});
+		me.decorators.push(me.title);
+	}
+		
 }
 
 /******************************************************/
@@ -141,9 +167,6 @@ var _createTiles = function () {
 		me.current_renderer = me.renderer;
 
 	}
-	
-	// update chart title
-	$("#title").text(me.name);
 
 	// delegate drawing to the current renderer
 	var bbox = me.current_renderer.draw.apply(me, arguments);
@@ -158,7 +181,7 @@ var _createTiles = function () {
 	if(bbox && bbox.width){
 		// adjust width
 		// scale down
-		var scale,decal = 0
+		var scale = decal = decal_h = 0
 		if(bbox.width > me.width){
 			scale = me.width / bbox.width ;
 		}
@@ -166,11 +189,12 @@ var _createTiles = function () {
 		else{
 			scale = 1;
 			decal = (me.width - bbox.width) / 2;
+			// decal_h = (me.height - bbox.height) / 2;
 		}
 		me.svg
 		.transition()
 		.duration(me.duration)
-		.attr("transform", "translate(" + decal + "," + 0 + ")"+"scale("+scale+")");
+		.attr("transform", "translate(" + decal + "," + decal_h + ")"+"scale("+scale+")");
 	}
 }
 
@@ -194,6 +218,7 @@ var _createTiles = function () {
 // 
 /******************************************************/
 Calendar.prototype.createTiles = function(){
+
 	// self reference 
 	var me = this;
 	if(me.retreiveDataCallback != null 
@@ -213,7 +238,9 @@ Calendar.prototype.createTiles = function(){
 		for(var i=0;i<arguments.length;i++) args.push(arguments[i]);
 		_createTiles.apply(me, args);
 	}
-	
+	else{
+		_createTiles.apply(me, arguments);
+	}
 }
 /******************************************************/
 // CALENDAR PROTOTYPE DRAW 
@@ -226,6 +253,7 @@ Calendar.prototype.createTiles = function(){
 /******************************************************/
 Calendar.prototype.draw = function(data){
 	var me = this;
+	me.data = data;
 	// if local args have been memorized,
 	// we concat grabbed data with those args and give
 	// them to _createTiles
@@ -241,20 +269,6 @@ Calendar.prototype.draw = function(data){
 	
 }
 
-/******************************************************/
-// CALENDAR PROTOTYPE CREATE LEGEND
-/******************************************************/
-// Calendar.prototype.createLegend = function() {
-// 	var me = this;
-// 	var html = "";
-// 	for (var i = 0; i < me.buckets; i++) {
-		
-// 		html += "<li style='background:"+ me.colorScheme[i] +"'></li>";
-// 	}
-// 	d3.select('#legend ul').html(html);
-// 	me.setLegend();
-// }
-	
 /******************************************************/
 // CALENDAR PROTOTYPE SET LEGEND
 /******************************************************/
@@ -301,15 +315,12 @@ Calendar.prototype.setBucket = function(bounds){
 // ENTER
 Calendar.prototype.tilesEnter = function(tiles) {
 	var me = this;
+
 	return tiles.enter()
 				.append("rect")
 				.classed(this.tileClass, true)
 				.attr("stroke-width", "2px")
-				.attr("fill", "#fff")
-				.attr("fill-opacity", 0)
-				.attr("z-index", 10);
-				
-				
+				.attr("fill-opacity", 0)				
 }
 
 // UPDATE
@@ -354,7 +365,7 @@ Calendar.prototype.tilesExit = function(tiles) {
 // ENTER
 Calendar.prototype.monthPathEnter = function(data_month, monthPath) {
 	var paths = this.svg.selectAll("."+this.monthPathClass)
-	    .data(data_month, function(d,i){return i;})
+	    .data(data_month, function(d,i){return d.getFullYear()+"-"+d.getMonth();})
 
 	paths.enter()
 		.insert("path")
@@ -392,11 +403,41 @@ Calendar.prototype.monthPathExit = function(data_month, monthPath) {
 /******************************************************/
 // ENTER
 Calendar.prototype.labelEnter = function(renderer, transform, klass){
-			return transform.append("text")
-						.classed(klass, true)
-						.attr("fill", renderer.label_fill)
-						.attr("font-size", renderer.label_fontsize);
-		}
+	return transform.append("text")
+				.classed(klass, true)
+				.attr("fill", renderer.label_fill)
+				.attr("font-size", renderer.label_fontsize);
+}
+
+/******************************************************/
+// DECORATOR UTILS 
+/******************************************************/
+// ENTER
+Calendar.prototype.decoratorEnter = function(id, float, position){
+	var me = this;
+	return d3.select(position && (position == "bottom") ? me.decoratorBottomId : me.decoratorId)
+			.style('cursor','pointer')
+			.append('div')
+			.attr("id", id)
+				.style('color', "#777")
+				.style('border', '1px solid #f0f0f0')
+				.style('background', '#f3f3f3')
+				.style('font-size', '11px')
+				.style('-moz-border-radius', '3px')
+				.style('border-radius', '3px')
+				// .style('width', '1px')
+				.style('height', '40px')
+
+				.style('float', ((float) ? float : 'right'))
+				.style('margin-left', '10px')
+}
+Calendar.prototype.decoratorTextEnter = function(decorator){
+	var me = this;
+	return decorator.append('p')
+				.style('font-size', '14px')
+				.style("margin-right", '15px')
+				.style("margin-left", '15px')
+}
 
 /******************************************************/
 // TIME HELPERS
@@ -404,10 +445,7 @@ Calendar.prototype.labelEnter = function(renderer, transform, klass){
 Calendar.prototype.time = {};
 // TODO permits to specify which day is the first day of week
 Calendar.prototype.time.getDay = function(d){
-	var day = d.getDay();
-	// rolling getDay to set monday as first day
-	// mouai ..
-	return ( day == 0) ? 6 : day - 1;
+	return Calendar.data.getDay(d);
 }
 
 Calendar.prototype.time.getMonth = function(d){
@@ -416,8 +454,7 @@ Calendar.prototype.time.getMonth = function(d){
 }
 
 Calendar.prototype.time.getWeek = function(d){
-	var format = d3.time.format("%W");
-	return parseInt(format(d));
+	return Calendar.data.getWeek(d);
 }
 
 /******************************************************/

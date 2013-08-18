@@ -51,7 +51,10 @@ var RteCalendar = function(spec){
 				if(me.renderer.bounds){
 					var bounds = me.renderer.bounds.apply(me, arguments);
 					// var bounds = me.renderer.bounds( arguments);
-					request(bounds.start, bounds.end);
+					if(bounds){
+						request(bounds.start, bounds.end);
+					}
+					
 				}
 			}
 		}
@@ -87,7 +90,7 @@ var RteCalendar = function(spec){
 				RteWS.specialization.taux_co2, "taux_co2"
 			)
 			, fields : "taux_co2"
-			, colorScheme : getColorBrewerScheme('Greens', 9, true)
+			, colorScheme : getColorBrewerScheme('Spectral', 11, true)
 		}
 		/* ************************** */
 		/* 

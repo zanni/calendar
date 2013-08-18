@@ -34,7 +34,8 @@ Calendar.renderer.week = function(spec){
 	me.labels_hours;
 
 	var _bounds = function(year, week){
-		var mondays = d3.time.mondays(new Date(year, 0, 1), new Date(year+1, 0,1));
+		var mondays = Calendar.data.firstDayOfWeek(new Date(year, 0, 1), new Date(year+1, 0,7));
+		console.log(mondays.length)
 		if(mondays && mondays[week]){
 			var firstday = mondays[week];
 			firstday.setTime(firstday.getTime() - 7*24*60*60*1000)
@@ -64,7 +65,7 @@ Calendar.renderer.week = function(spec){
 		var bounds = _bounds(year, week);
 		var start; 
 		if(bounds && bounds.start){
-			start = d3.time.monday(bounds.start);
+			start = bounds.start
 		}
 		else{
 			start = new Date(year,0,0);

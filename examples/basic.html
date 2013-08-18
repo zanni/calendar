@@ -13,12 +13,12 @@
 
 	<!-- DEV -->
 	<script type="text/javascript" src="../src/event.js"></script>
-
 	<script type="text/javascript" src="../src/calendar.js"></script>
 	<script type="text/javascript" src="../src/data.js"></script>
 	<script type="text/javascript" src="../src/decorator/legend.js"></script>
 	<script type="text/javascript" src="../src/decorator/horodator.js"></script>
 	<script type="text/javascript" src="../src/decorator/hovered.js"></script>
+	<script type="text/javascript" src="../src/decorator/title.js"></script>
 	<script type="text/javascript" src="../src/decorator/drillthrough_previous.js"></script>
 	<script type="text/javascript" src="../src/renderer/day.js"></script>
 	<script type="text/javascript" src="../src/renderer/week.js"></script>
@@ -40,19 +40,16 @@
 				// parse raw data
 				data = parser(raw.mixenergies.list);
 
-				var min = d3.min(raw.mixenergies.list, dataCallback);
-				var max = d3.max(raw.mixenergies.list, dataCallback);
-
 				// Create valueCallback
-				var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.sum);
+				var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.mean);
 
 				var calendar = new Calendar( {
 					name : "Basic example"
 					, data : data
 					, renderer : new Calendar.renderer.year()
 					, retreiveValueCallback : valueCallback
-					, upBound : max
-					, downBound : min
+					, upBound : d3.max(raw.mixenergies.list, dataCallback)
+					, downBound : d3.min(raw.mixenergies.list, dataCallback)
 					, width : $("#container").width()
 					, height: 800		
 				});

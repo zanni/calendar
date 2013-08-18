@@ -19,7 +19,10 @@ Calendar.renderer.drillthrough = function(spec){
 	me.possible_display = spec.possible_display;
 	me.current_renderer = spec.current_renderer || new Calendar.renderer.year();
 
-	var previous_btn = new Calendar.decorator.previous();
+	var previous_btn = new Calendar.decorator.previous({
+			float: 'right'
+			, position: 'bottom'
+		});
 	
 	me.previous = [];
 	me.current_display = null;
@@ -60,13 +63,14 @@ Calendar.renderer.drillthrough = function(spec){
 
 		var args = arguments
 		calendar.eventManager.on("tile:click", function(d){
+			console.log(d)
 			if(me.previous.length == 0 ){
 				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
 			var display = {
 				renderer: new Calendar.renderer.day()
-				, retreiveDataCallback: calendar.retreiveDataClosure("hour")
+				, retreiveDataCallback: calendar.retreiveDataClosure("quarter")
 				, arguments: [d.time.getFullYear(), calendar.time.getWeek(d.time), calendar.time.getDay(d.time)]
 				
 			};
@@ -121,7 +125,7 @@ Calendar.renderer.drillthrough = function(spec){
 			me.previous.push(me.current_display);
 			var display = {
 				renderer: new Calendar.renderer.day()
-				, retreiveDataCallback: calendar.retreiveDataClosure("hour")
+				, retreiveDataCallback: calendar.retreiveDataClosure("quarter")
 				, arguments: [d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d)]
 			};
 			displayCalendar(display);

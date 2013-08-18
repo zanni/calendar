@@ -13,12 +13,12 @@
 
 	<!-- DEV -->
 	<script type="text/javascript" src="../src/event.js"></script>
-
 	<script type="text/javascript" src="../src/calendar.js"></script>
 	<script type="text/javascript" src="../src/data.js"></script>
 	<script type="text/javascript" src="../src/decorator/legend.js"></script>
 	<script type="text/javascript" src="../src/decorator/horodator.js"></script>
 	<script type="text/javascript" src="../src/decorator/hovered.js"></script>
+	<script type="text/javascript" src="../src/decorator/title.js"></script>
 	<script type="text/javascript" src="../src/decorator/drillthrough_previous.js"></script>
 	<script type="text/javascript" src="../src/renderer/day.js"></script>
 	<script type="text/javascript" src="../src/renderer/week.js"></script>
@@ -101,7 +101,7 @@
 			var display = possible_displays[selected_display];
 			var agg = "day";
 			var selected_year = 2011;
-			var years = [2011, 2012, 2013];
+			var years = [2010,2011, 2012, 2013];
 			createYearSelector(years, selected_year);
 
 			/* ************************** */
@@ -109,16 +109,14 @@
 				CALENDAR INITIALIZATION 
 			*/
 			var calendar = new Calendar( {
-				name: "Co2 produit par kWh consommé (g)"
+				name: display.name
 				, renderer : new Calendar.renderer.drillthrough()
-				// , buckets : display.buckets
 				, colorScheme : display.colorScheme
-				// , colorSchemeInverse : display.colorSchemeInverse
 				, retreiveDataClosure : display.rte_datagrab_closure
 				, retreiveDataCallback : display.rte_datagrab_closure(agg)
 				, retreiveValueCallback : display.rte_closure
 				, width : $("#container").width()
-				, height: 800		
+				, height: 300		
 			});
 
 			calendar.createTiles(selected_year);
@@ -152,9 +150,9 @@
 			<select id="displays" class="input-medium" style="display: none"></select>
 			<select id="years" multiple class="input-small" style="display: none"></select>
 		</div>
-		<div id="decorator"></div>
+		<div id="decorator_top"></div>
 		<div id="vis"></div>
-		
+		<div id="decorator_bottom"></div>
 		
 	</div>
 </body>

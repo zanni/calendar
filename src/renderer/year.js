@@ -17,7 +17,7 @@ Calendar.renderer.year = function(spec){
 	//theming 
 	if(!spec) spec={};
 	me.cell_size = spec.cell_size || 36;
-	me.margin = spec.margin || 20;
+	me.margin = spec.margin || 40;
 	me.space_between_tiles = spec.space_between_tiles || 2;
 	me.space_between_years = spec.space_between_years || me.cell_size*2;
 	me.month_label_left_decal = spec.month_label_left_decal || 80;
@@ -100,8 +100,7 @@ Calendar.renderer.year = function(spec){
 				data_year = data_year.concat(getPeriod(year[i], d3.time.days))
 				data_year_label.push(new Date(year[i], 1, 1));
 				data_month = data_month.concat(getPeriod(year[i], d3.time.months));
-				data_week_label = data_week_label.concat(getPeriod(year[i], d3.time.weeks));
-
+				data_week_label = data_week_label.concat(getPeriod(year[i], Calendar.data.firstDayOfWeek));
 			}
 		}
 		else{
@@ -110,8 +109,10 @@ Calendar.renderer.year = function(spec){
 			data_year = getPeriod(year, d3.time.days);
 			data_year_label = [new Date(year, 0, 1)];
 			data_month = getPeriod(year, d3.time.months);
-			data_week_label = getPeriod(year, d3.time.weeks);
+			data_week_label = getPeriod(year, Calendar.data.firstDayOfWeek);
 		}
+
+
 
 		/******************************************************/
 		// tiles / labels initialization helpers
@@ -197,7 +198,9 @@ Calendar.renderer.year = function(spec){
 		/******************************************************/
 		//tiles select
 		var tiles = calendar.svg.selectAll("."+calendar.tileClass)
-				.data(data_year, function(d,i){ return i;} );
+				.data(data_year, function(d){
+					return Calendar.data.getYear(d)+"-"+Calendar.data.getDayOfYear(d)
+				} );
 		
 		// tiles enter		
 		calendar.tilesEnter(tiles)
@@ -233,7 +236,7 @@ Calendar.renderer.year = function(spec){
 		/******************************************************/
 		//hours labels
 		me.labels_months = calendar.svg.selectAll("."+me.month_label_class)
-				.data(data_month, function(d,i){return i;});
+				.data(data_month, function(d,i){return d.getFullYear()+"-"+d.getMonth();});
 		//hour labels enter
 		calendar.labelEnter(me, me.labels_months.enter(), me.month_label_class)
 			.attr("x", calculLabelMonthPosX ) 
@@ -291,7 +294,7 @@ Calendar.renderer.year = function(spec){
 
 		//hours labels
 		me.label_weeks = calendar.svg.selectAll("."+me.week_label_class)
-				.data(data_week_label, function(d,i){return i;});
+				.data(data_week_label, function(d,i){return d.getFullYear()+"-"+Calendar.data.getWeek(d);});
 		//hour labels enter
 		calendar.labelEnter(me, me.label_weeks.enter(), me.week_label_class)
 		    .attr("x", calculLabelWeekPosX ) 
@@ -338,18 +341,10 @@ Calendar.renderer.year = function(spec){
 	/******************************************************/
 	me.bounds = function(year){
 		if(year instanceof Array && year.length > 0){
-			if(year.length < 2){
-				return {
-					start : new Date(d3.min(year), 0, 1)
-					, end : new Date(d3.min(year) + 1, 0, 1)
-				}
-			}
-			else{
-				return {
-					start : new Date(d3.min(year), 0, 1)
-					, end : new Date(d3.max(year) + 1, 0, 1)
-				}
-			}			
+			return {
+				start : new Date(d3.min(year), 0, 1)
+				, end : new Date(d3.max(year) + 1, 0, 1)
+			}		
 		}
 		else{
 

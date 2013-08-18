@@ -17,7 +17,7 @@ Calendar.renderer.month = function(spec){
 	// theming
 	if(!spec) spec={};
 	me.cell_size = spec.cell_size || 36;
-	me.margin = spec.margin || 20;
+	me.margin = spec.margin || 40;
 	me.space_between_tiles = spec.space_between_tiles || 2;
 	me.space_between_months = spec.space_between_months || me.cell_size;
 	me.month_label_left_decal = spec.month_label_left_decal || 80;
@@ -59,11 +59,15 @@ Calendar.renderer.month = function(spec){
 			); 
 		}
 
+		var getValue = function(d, i, u){
+			return calendar.retreiveValueCallback(grab_data, year, calendar.time.getWeek(d),calendar.time.getDay(d));
+		}
+
 		// color tiles depending on val
-		var colorize = function(d){
-			var val = calendar.retreiveValueCallback(grab_data, year, calendar.time.getWeek(d),calendar.time.getDay(d));
+		var colorize = function(val){
 			return calendar.getColor(val);
 		}
+
 
 		/******************************************************/
 		var data = [];
@@ -190,7 +194,9 @@ Calendar.renderer.month = function(spec){
 		/******************************************************/
 		//tiles update
 		var tiles = svg.selectAll("."+calendar.tileClass)
-				.data(data, function(d,i){ return i;} )
+				.data(data, function(d){
+					return Calendar.data.getYear(d)+"-"+Calendar.data.getDayOfYear(d)
+				} )
 		
 		// tiles enter			
 		calendar.tilesEnter(tiles)
@@ -201,16 +207,21 @@ Calendar.renderer.month = function(spec){
 
 		calendar.tilesUpdate(tiles)
 			.transition()
-			// .duration(calendar.duration)
-			.delay(function(d){
-				return (calendar.time.getWeek(d) * 20) + (calendar.time.getDay(d) * 20) + (Math.random() * 50) / calendar.duration
-			})
+			.duration(calendar.duration)
+			// .delay(function(d){
+			// 	return (calendar.time.getWeek(d) * 20) + (calendar.time.getDay(d) * 20) + (Math.random() * 50) / calendar.duration
+			// })
 		    .attr("x", calculTilePosX)
 	    	.attr("y", calculTilePosY)
 		    .attr("fill-opacity", 1)
 		    .attr("width",me.cell_size+"px")
 		    .attr("height",me.cell_size+"px")
-		    .attr("fill", colorize);
+		    // .attr("fill", colorize);
+		    .attr("fill", function(d){
+		    	var val = getValue(d);
+		    	this.setAttributeNS("http://www.example.com/d3.calendar", "data", val);
+		    	return colorize(val);
+		    });
 			    
 		// tiles exit
 		calendar.tilesExit(tiles);
@@ -222,7 +233,7 @@ Calendar.renderer.month = function(spec){
 		/******************************************************/
 		//hours labels
 		me.labels_months = svg.selectAll("."+me.month_label_class)
-				.data(data_month, function(d,i){return i;});
+				.data(data_month, function(d,i){return Calendar.data.getDayOfYear(d);});
 		//hour labels enter
 		calendar.labelEnter(me, me.labels_months.enter(), me.month_label_class)
 			.attr("x", calculLabelMonthPosX ) 
@@ -260,8 +271,9 @@ Calendar.renderer.month = function(spec){
 		Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
 
 		//hours labels
+		console.log(weeks_label);
 		me.label_weeks = calendar.svg.selectAll("."+me.week_label_class)
-				.data(weeks_label, function(d,i){return i;});
+				.data(weeks_label, function(d,i){return d.getFullYear()+"-"+Calendar.data.getWeek(d);});
 
 
 		//hour labels enter
@@ -311,18 +323,10 @@ Calendar.renderer.month = function(spec){
 	/******************************************************/
 	me.bounds = function(year, month){
 		if(month instanceof Array && month.length > 0){
-			if(month.length < 2){
-				return {
-					start : new Date(year, d3.min(month), 1)
-					, end : new Date(year, d3.min(month) + 1, 1)
-				}
-			}
-			else{
-				return {
-					start : new Date(year, d3.min(month), 1)
-					, end : new Date(year, d3.max(month) + 1, 1)
-				}
-			}			
+			return {
+				start : new Date(year, d3.min(month), 1)
+				, end : new Date(year, d3.max(month) + 1, 1)
+			}		
 		}
 		else{
 			return {

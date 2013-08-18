@@ -1,8 +1,11 @@
-Calendar.decorator.previous = function(){
+Calendar.decorator.previous = function(spec){
 	var me = this;
 
 	me.id = "drillthrough_previous"
-
+	// theming
+	if(!spec) spec={};
+	me.float = spec.float || 'right';
+	me.position = spec.position || 'top';
 	/******************************************************/
 	// DRAW implementation
 	/******************************************************/
@@ -14,29 +17,14 @@ Calendar.decorator.previous = function(){
 		/******************************************************/
 		var calendar = this;
 
-		var node = d3.select(calendar.decoratorId)
-			.style('cursor','pointer')
-			.append('div')
-			.attr("id", me.id)
-				.style('color', "#777")
-				.style('border', '1px solid #f0f0f0')
-				.style('background', '#f3f3f3')
-				.style('font-size', '11px')
-				.style('-moz-border-radius', '3px')
-				.style('border-radius', '3px')
-				// .style('width', '1px')
-				.style('height', '50px')
-				.style('float', 'right')
-				.style('margin', '10px 30px')
-			    .on("click", function (d, i) {
-			    	calendar.eventManager.trigger("previous:click");
-			    })
-				.append('p')
-				.style('font-size', '14px')
-				.style('margin-left', '10px')
-				.style('margin-right', '10px')
+		me.decorator = calendar.decoratorEnter(me.id, me.float, me.position);
 
-				.text('reset')
+		me.decorator.on("click", function (d, i) {
+	    	calendar.eventManager.trigger("previous:click");
+	    })
+
+		me.node = calendar.decoratorTextEnter(me.decorator)
+				.text('previous')
 	}
 
 	me.clean = function(){

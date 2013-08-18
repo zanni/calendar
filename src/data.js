@@ -1,7 +1,31 @@
-/*
- * Generic parser used to manipulate list of timestamped data
- */
 Calendar.data = {
+	week_format :  d3.time.format("%W")
+	, firstDayOfWeek: d3.time.mondays
+	, _firstDayOfWeek: d3.time.monday
+	, getYear : function(d){
+		return parseInt(d.getFullYear());
+	}
+	, getDay : function(d){
+		var time = d.getTime() - Calendar.data._firstDayOfWeek(d).getTime();
+		// return parseInt(d.getDay());
+		return Math.floor(parseInt(time)/ (24*3600000));
+	}
+	, getDayOfYear : function(d){
+		var start = new Date(d.getFullYear(), 0, 0);
+		var diff = d - start;
+		var oneDay = 1000 * 60 * 60 * 24;
+		return Math.ceil(diff / oneDay);
+	}
+	, getWeek : function(d){
+		return parseInt(Calendar.data.week_format(d));
+		// return parseInt(getWeek(d)):
+	}
+	, getHours : function(d){
+		return parseInt(d.getHours());
+	}
+	, getQuarter : function(d){
+		return parseInt(Math.floor(parseInt(d.getMinutes())/15));
+	}
 	/* ************************** */
 	/*
 	 * create a generic parser, specilized with :
@@ -9,21 +33,22 @@ Calendar.data = {
 	 * 		return d.whatEverTimestampedField
 	 * }
 	 */
-	create : function(timeCallback){
+	, create : function(timeCallback){
 		return function(data){
 			var year = function(d){
-				return timeCallback(d).getFullYear();
+				return Calendar.data.getYear(timeCallback(d));
 			}
 			var day = function(d){
-				var day = timeCallback(d).getDay();
-				return ( day == 0) ? 6 : day - 1;
+				return Calendar.data.getDay(timeCallback(d));
 			}
 			var week = function(d){
-				var format = d3.time.format("%W");
-				return parseInt(format(timeCallback(d)));
+				return Calendar.data.getWeek(timeCallback(d));
 			}
 			var hour = function(d){
-				return timeCallback(d).getHours();
+				return Calendar.data.getHours(timeCallback(d));
+			}
+			var quarter = function(d){
+				return Calendar.data.getQuarter(timeCallback(d));
 			}
 
 			var nest = d3.nest();
@@ -32,9 +57,11 @@ Calendar.data = {
 				.key(week)
 				.key(day)
 				.key(hour)
+				.key(quarter);
 
+			var data = nest.map(data);
 				
-			return nest.map(data);
+			return data;
 		}
 	}
 	/* ************************** */
@@ -61,6 +88,7 @@ Calendar.data = {
 		retreive value generic callback closure
 	*/
 	 ,retreiveValueCallbackClosure: function(specializedFunc, aggregatFunc, filterFunc){
+	 	
 		var recurr = function(array, i){
 			
 			var logs = [];
@@ -73,7 +101,10 @@ Calendar.data = {
 
 					logs.push(recurr(array[i]));
 				}
-				var val = aggregatFunc(logs);
+				if(aggregatFunc && typeof aggregatFunc == "function") {
+					return aggregatFunc(logs);
+				}
+				
 				return val;
 			}
 		}
@@ -82,6 +113,7 @@ Calendar.data = {
 				var args = [];
 				// get root 
 				var period = arguments[0];
+				
 				for(var i=1; i< arguments.length;i++) args.push(arguments[i])
 				// get through the tree using variable arguments
 				for(var i in args) period = period[args[i]];

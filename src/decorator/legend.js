@@ -1,8 +1,11 @@
-Calendar.decorator.legend = function(){
+Calendar.decorator.legend = function(spec){
 	var me = this;
 
 	
-
+	// theming
+	if(!spec) spec={};
+	me.float = spec.float || 'right';
+	me.position = spec.position || 'top';
 	var drawn = false;
 	/******************************************************/
 	// DRAW implementation
@@ -19,37 +22,21 @@ Calendar.decorator.legend = function(){
 		if(!drawn) drawn = true;
 		else return;
 		
-		me.node = d3.select(calendar.decoratorId);
-		me.node = me.node
-			.append('div')
-			.attr("id", calendar.legendId)
-				.style('color', "#777")
-				.style('border', '1px solid #f0f0f0')
-				.style('background', '#f3f3f3')
-				.style('font-size', '11px')
-				.style('-moz-border-radius', '3px')
-				.style('border-radius', '3px')
-				.style('width', '155px')
-				.style('height', '50px')
-				.style('float', 'right')
-				.style('margin', '10px 30px')
-				.style('opacity', '0')
-				// .append('div');
+		me.node = calendar.decoratorEnter(me.id, me.float, me.position);
 
+		
+		me.less = me.node.append('p').classed('less', true)
+				.style("float", 'left')
+				.style('font-size', '14px')
+				.style("margin-right", '15px')
+				.style("margin-left", '15px')
+
+		var tiles_size = 14;
 		me.colors = me.node.append('ul')
-					.style('list-style-type', "none")
-					.style('overflow', 'hidden')
-					.style('margin-left', '-25px')
-					.style('margin-bottom', 5)
-
-
-		// for (var i = 0; i < calendar.buckets; i++) {
-		// 	me.colors.append('li')
-		// 			.style('background', calendar.colorScheme[i])
-		// 			.style('float','left')
-		// 			.style('width','14px')
-		// 			.style('height','14px')
-		// }
+					.style("display", "inline")
+					.style('padding-left', '0 ')
+					.style('padding-top', '4px')
+					.style("float", 'left')
 
 		me.colors_data = me.colors.selectAll('li').data(calendar.colorScheme, function(d, i){return i;})
 					.enter()
@@ -58,28 +45,14 @@ Calendar.decorator.legend = function(){
 						return d;
 					})
 					.style('float','left')
-					.style('width','14px')
-					.style('height','14px')
+					.style('width',tiles_size+'px')
+					.style('height',tiles_size+'px')
 
-		// node = node.append('div')
-
-		me.less = me.node.append('span').classed('less', true)
-				// .style('margin-top', '3px')
-				// .style('margin-left', '10px')
+		me.more = me.node.append('p').classed('more', true)
 				.style("float", 'left')
-				.style("margin-left", '15px')
-				// .style('position', 'absolute')
-				// .style('top', 0)
-				.text(calendar.downBound);
-
-		me.more = me.node.append('span').classed('more', true)
-				// .style('margin-top', '3px')
-				.style("float", 'right')
+				.style('font-size', '14px')
 				.style("margin-right", '15px')
-				// .style('position', 'absolute')
-				// .style('top', '24px')
-				// .style('right', '10px')
-				.text(calendar.upBound);
+				.style("margin-left", '15px')
 
 		me.node.transition().duration(calendar.duration).style('opacity', 1)
 

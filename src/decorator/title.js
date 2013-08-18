@@ -1,7 +1,8 @@
-Calendar.decorator.horodator = function(spec){
+Calendar.decorator.title = function(spec){
 	var me = this;
 
-	me.id = "decorator_horodator";
+	me.id = "decorator_title";
+
 	// theming
 	if(!spec) spec={};
 	me.float = spec.float || 'right';
@@ -18,14 +19,7 @@ Calendar.decorator.horodator = function(spec){
 		me.decorator = calendar.decoratorEnter(me.id, me.float, me.position);
 
 		me.node = calendar.decoratorTextEnter(me.decorator);
-	}
-
-	me.refresh = function(start, end){
-		var calendar = this;
-		// if(!me.node) me.draw.apply(calendar);
-		
-		// me.node.text(start);
-		if(me.node) me.node.text(start);
+		me.node.text(calendar.name);
 	}
 
 	me.clean = function(){
