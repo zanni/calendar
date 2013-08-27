@@ -14,7 +14,7 @@ var RteWS = function(spec) {
 	}
 	me.jsonp = function(agg, fields, success){
 		var getRTEURl = function (dateDebut, dateFin){
-			var url =  "http://"+me.url+"/RTE-WS/mixenergys/"+agg+"/"+fields+"/between/jsonp/";
+			var url =  me.url+"/mixenergys/"+agg+"/"+fields+"/between/jsonp/";
 			if(dateDebut != null){
 				url += formatTimeStampUrl(dateDebut)
 			}
@@ -32,6 +32,34 @@ var RteWS = function(spec) {
 			$.ajax({
 				url : getRTEURl( start, end)
 				, dataType : 'jsonp'
+				, success : function(json){
+					me.cache[key] = json;
+					success(json, start, end);
+				}
+			});
+		}
+	}
+
+	me.json = function(agg, fields, success){
+		var getRTEURl = function (dateDebut, dateFin){
+			var url =  "mixenergys/"+agg+"/"+fields+"/between/";
+			if(dateDebut != null){
+				url += formatTimeStampUrl(dateDebut)
+			}
+			if(dateFin != null){
+				url += "/"+ formatTimeStampUrl(dateFin)
+			}
+			return url;
+		}
+		return function(start, end){
+			var key = agg+"-"+fields+"-"+start.getTime()+"-"+end.getTime();
+			if(me.cache[key]){
+				success(me.cache[key], start, end);
+				return;
+			}
+			$.ajax({
+				url : getRTEURl( start, end)
+				, dataType : 'json'
 				, success : function(json){
 					me.cache[key] = json;
 					success(json, start, end);

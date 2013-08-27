@@ -69,18 +69,25 @@ var Calendar = function(spec) {
     me.colorScheme = spec.colorScheme || [ "#d73027", "#f46d43", "#fdae61", "#fee08b", "#ffffbf", "#d9ef8b", "#a6d96a", "#66bd63", "#1a9850" ];
     me.noDataColor = spec.noDataColor || "#eee";
     me.buckets = me.colorScheme.length;
+    me.label_fill = spec.label_fill || "darkgray";
+    me.label_fontsize = spec.label_fontsize || "22px";
     me.visId = spec.visId || "#vis";
-    me.decoratorId = spec.decoratorId || "#decorator";
-    me.legendId = spec.legendId || "#legend";
+    me.decoratorId = spec.decoratorId || "#decorator_top";
+    me.decoratorBottomId = spec.decoratorBottomId || "#decorator_bottom";
     me.tileClass = spec.tileClass || "tile";
     me.monthPathClass = spec.monthPathClass || "month_path";
     me.renderer = spec.renderer;
     me.current_renderer = me.renderer;
     me.duration = spec.duration || 800;
+    if (spec.duration == 0) me.duration = 0;
     me.upBound = spec.upBound || 80;
     me.downBound = spec.downBound || 20;
     me.name = spec.name || "";
-    me.drawLegend = spec.drawLegend || true;
+    me.interactive = typeof spec.interactive == "boolean" ? spec.interactive : true;
+    me.drawLegend = typeof spec.drawLegend == "boolean" ? spec.drawLegend : true;
+    me.drawHorodator = typeof spec.drawHorodator == "boolean" ? spec.drawHorodator : true;
+    me.drawHovered = typeof spec.drawHovered == "boolean" ? spec.drawHovered : true;
+    me.drawTitle = typeof spec.drawTitle == "boolean" ? spec.drawTitle : true;
     var range = [];
     for (var i = 0; i < me.buckets; i++) {
         range.push(i);
@@ -88,12 +95,28 @@ var Calendar = function(spec) {
     me.bucket = d3.scale.quantize().domain([ 20, 80 ]).range(range);
     me.decorators = [];
     me.svg = d3.select(me.visId).append("svg:svg").attr("width", me.width).attr("height", me.height).append("svg:g").attr("transform", "translate(" + 0 + "," + 0 + ")");
-    me.legend = new Calendar.decorator.legend();
-    me.horodator = new Calendar.decorator.horodator();
-    me.hovered = new Calendar.decorator.hovered();
-    me.decorators.push(me.legend);
-    me.decorators.push(me.horodator);
-    me.decorators.push(me.hovered);
+    if (me.drawLegend) {
+        me.legend = new Calendar.decorator.legend();
+        me.decorators.push(me.legend);
+    }
+    if (me.drawHorodator) {
+        me.horodator = new Calendar.decorator.horodator();
+        me.decorators.push(me.horodator);
+    }
+    if (me.drawHovered) {
+        me.hovered = new Calendar.decorator.hovered({
+            "float": "left",
+            position: "bottom"
+        });
+        me.decorators.push(me.hovered);
+    }
+    if (me.drawTitle) {
+        me.title = new Calendar.decorator.title({
+            "float": "left",
+            position: "top"
+        });
+        me.decorators.push(me.title);
+    }
 };
 
 var _createTiles = function() {
@@ -109,17 +132,16 @@ var _createTiles = function() {
         me.current_renderer.clean.apply(me, arguments);
         me.current_renderer = me.renderer;
     }
-    $("#title").text(me.name);
     var bbox = me.current_renderer.draw.apply(me, arguments);
     if (bbox && bbox.width) {
-        var scale, decal = 0;
+        var scale = decal = decal_h = 0;
         if (bbox.width > me.width) {
             scale = me.width / bbox.width;
         } else {
             scale = 1;
             decal = (me.width - bbox.width) / 2;
         }
-        me.svg.transition().duration(me.duration).attr("transform", "translate(" + decal + "," + 0 + ")" + "scale(" + scale + ")");
+        me.svg.transition().duration(me.duration).attr("transform", "translate(" + decal + "," + decal_h + ")" + "scale(" + scale + ")");
     }
 };
 
@@ -134,11 +156,14 @@ Calendar.prototype.createTiles = function() {
         args.push(me.data);
         for (var i = 0; i < arguments.length; i++) args.push(arguments[i]);
         _createTiles.apply(me, args);
+    } else {
+        _createTiles.apply(me, arguments);
     }
 };
 
 Calendar.prototype.draw = function(data) {
     var me = this;
+    me.data = data;
     if (me._tempargs) {
         var args = [];
         args.splice(0, 0, data);
@@ -184,27 +209,30 @@ Calendar.prototype.setBucket = function(bounds) {
 
 Calendar.prototype.tilesEnter = function(tiles) {
     var me = this;
-    return tiles.enter().append("rect").classed(this.tileClass, true).attr("stroke-width", "2px").attr("fill", "#fff").attr("fill-opacity", 0).attr("z-index", 10);
+    return tiles.enter().append("rect").classed(this.tileClass, true).attr("stroke-width", "2px").attr("fill-opacity", 0);
 };
 
 Calendar.prototype.tilesUpdate = function(tiles) {
     var me = this;
-    return tiles.on("mouseover", function(d, i) {
-        me.eventManager.trigger("tile:mouseenter", {
-            time: d,
-            value: d3.select(this).attr("data")
-        });
-    }).on("mouseout", function(d, i) {
-        me.eventManager.trigger("tile:mouseout", {
-            time: d,
-            value: d3.select(this).attr("data")
-        });
-    }).on("click", function(d, i) {
-        me.eventManager.trigger("tile:click", {
-            time: d,
-            value: d3.select(this).attr("data")
-        });
-    }).attr("cursor", "pointer");
+    if (me.interactive) {
+        return tiles.on("mouseover", function(d, i) {
+            me.eventManager.trigger("tile:mouseenter", {
+                time: d,
+                value: d3.select(this).attr("data")
+            });
+        }).on("mouseout", function(d, i) {
+            me.eventManager.trigger("tile:mouseout", {
+                time: d,
+                value: d3.select(this).attr("data")
+            });
+        }).on("click", function(d, i) {
+            me.eventManager.trigger("tile:click", {
+                time: d,
+                value: d3.select(this).attr("data")
+            });
+        }).attr("cursor", "pointer");
+    }
+    return tiles;
 };
 
 Calendar.prototype.tilesExit = function(tiles) {
@@ -213,7 +241,7 @@ Calendar.prototype.tilesExit = function(tiles) {
 
 Calendar.prototype.monthPathEnter = function(data_month, monthPath) {
     var paths = this.svg.selectAll("." + this.monthPathClass).data(data_month, function(d, i) {
-        return i;
+        return d.getFullYear() + "-" + d.getMonth();
     });
     paths.enter().insert("path").classed(this.monthPathClass, true).attr("stroke-width", "2px").attr("stroke", "#FFF").attr("fill-opacity", 0).attr("stroke-opacity", 1).attr("z-index", 0).attr("fill-opacity", 0).attr("d", monthPath);
     paths.transition().duration(this.duration).attr("stroke", "#000").attr("stroke", "#000").attr("stroke-opacity", 1).attr("d", monthPath);
@@ -225,11 +253,24 @@ Calendar.prototype.monthPathExit = function(data_month, monthPath) {
     this.svg.selectAll("." + this.monthPathClass).attr("stroke-opacity", 0);
 };
 
+Calendar.prototype.labelEnter = function(renderer, transform, klass) {
+    return transform.append("text").classed(klass, true).attr("fill", renderer.label_fill).attr("font-size", renderer.label_fontsize);
+};
+
+Calendar.prototype.decoratorEnter = function(id, float, position) {
+    var me = this;
+    return d3.select(position && position == "bottom" ? me.decoratorBottomId : me.decoratorId).style("cursor", "pointer").append("div").attr("id", id).style("color", "#777").style("border", "1px solid #f0f0f0").style("background", "#f3f3f3").style("font-size", "11px").style("-moz-border-radius", "3px").style("border-radius", "3px").style("height", "40px").style("float", float ? float : "right").style("margin-left", "10px");
+};
+
+Calendar.prototype.decoratorTextEnter = function(decorator) {
+    var me = this;
+    return decorator.append("p").style("font-size", "14px").style("margin-right", "15px").style("margin-left", "15px");
+};
+
 Calendar.prototype.time = {};
 
 Calendar.prototype.time.getDay = function(d) {
-    var day = d.getDay();
-    return day == 0 ? 6 : day - 1;
+    return Calendar.data.getDay(d);
 };
 
 Calendar.prototype.time.getMonth = function(d) {
@@ -238,8 +279,7 @@ Calendar.prototype.time.getMonth = function(d) {
 };
 
 Calendar.prototype.time.getWeek = function(d) {
-    var format = d3.time.format("%W");
-    return parseInt(format(d));
+    return Calendar.data.getWeek(d);
 };
 
 Calendar.prototype.getColor = function(val) {
@@ -267,7 +307,8 @@ Calendar.animation = {
 Calendar.renderer.day = function(spec) {
     var me = this;
     if (!spec) spec = {};
-    me.cell_size = 36;
+    me.margin = spec.margin || 20;
+    me.cell_size = spec.cell_size || 36;
     me.space_between_tiles = spec.space_between_tiles || 2;
     me.space_between_row = spec.space_between_row || 15;
     me.tiles_left_decal = spec.tiles_left_decal || 30;
@@ -277,12 +318,13 @@ Calendar.renderer.day = function(spec) {
     me.hour_label_format = spec.hour_label_format || d3.time.format("%Hh");
     me.labels_hours;
     var _bounds = function(year, week, day) {
-        var mondays = d3.time.mondays(new Date(year, 0, 1), new Date(year + 1, 0, 1));
+        var mondays = Calendar.data.firstDayOfWeek(new Date(year, 0, 0), new Date(year + 1, 0, 7));
         if (mondays && mondays[parseInt(week)]) {
             var firstday = mondays[week];
-            firstday.setTime(firstday.getTime() + (parseInt(day) - 7) * 24 * 60 * 60 * 1e3);
+            firstday.setTime(firstday.getTime() + parseInt(day) * 24 * 60 * 60 * 1e3 - 7 * 24 * 60 * 60 * 1e3);
             var end = new Date();
             end.setTime(firstday.getTime() + 24 * 60 * 60 * 1e3);
+            console.log(firstday);
             return {
                 start: firstday,
                 end: end
@@ -290,6 +332,7 @@ Calendar.renderer.day = function(spec) {
         }
     };
     me.draw = function(data, year, week, day) {
+        console.log(arguments);
         var calendar = this;
         var bounds = _bounds(year, week, day);
         var start;
@@ -301,28 +344,26 @@ Calendar.renderer.day = function(spec) {
         var getPeriod = function(start, period, callback, step) {
             return callback(start, new Date().setTime(start.getTime() + period), step ? step : 1);
         };
-        var colorize = function(d) {
-            var day = d.getDay();
-            var val = calendar.retreiveValueCallback(data, year, week, day == 0 ? 6 : day - 1, d.getHours());
+        var getValue = function(d, i, u) {
+            return calendar.retreiveValueCallback(data, Calendar.data.getYear(d), Calendar.data.getWeek(d), Calendar.data.getDay(d), Calendar.data.getHours(d), Calendar.data.getQuarter(d));
+        };
+        var colorize = function(val) {
             return calendar.getColor(val);
         };
         var quarter = function(d) {
             return Math.floor(d.getMinutes() / 15);
         };
-        var initLabel = function(transform) {
-            return transform.append("text").classed(me.hour_label_class, true).attr("fill", me.label_fill).attr("font-size", me.label_fontsize);
-        };
         var calculTilePosX = function(d, i) {
             return Math.floor(d.getHours() / 6) * 4 * (me.space_between_row + me.cell_size + me.space_between_tiles) + quarter(d) * (me.cell_size + me.space_between_tiles) + me.tiles_left_decal;
         };
         var calculTilePosY = function(d, i) {
-            return d.getHours() % 6 * (me.cell_size + me.space_between_tiles);
+            return me.margin + d.getHours() % 6 * (me.cell_size + me.space_between_tiles);
         };
         var calculLabelHourPosX = function(d, i) {
             return Math.floor(d.getHours() / 6) * 4 * (me.space_between_row + me.cell_size + me.space_between_tiles) + quarter(d) * (me.cell_size + me.space_between_tiles);
         };
         var calculLabelHourPosY = function(d, i) {
-            return i % 6 * (me.cell_size + me.space_between_tiles) + 20;
+            return me.margin + i % 6 * (me.cell_size + me.space_between_tiles) + 20;
         };
         var calculBBox = function() {
             return {
@@ -339,11 +380,15 @@ Calendar.renderer.day = function(spec) {
         calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px");
         calendar.tilesUpdate(tiles).transition().delay(function(d) {
             return quarter(d) * Math.random() * 50 + d.getHours() % 6 * Math.random() * 50 / calendar.duration;
-        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px").attr("fill", colorize);
+        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px").attr("fill", function(d) {
+            var val = getValue(d);
+            this.setAttributeNS("http://www.example.com/d3.calendar", "data", val);
+            return colorize(val);
+        });
         calendar.tilesExit(tiles);
         var labels_hours_transition = function(attr) {};
         me.labels_hours = svg.selectAll("." + me.hour_label_class).data(getPeriod(start, day_time, d3.time.hours));
-        initLabel(me.labels_hours.enter()).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(me.hour_label_format);
+        calendar.labelEnter(me, me.labels_hours.enter(), me.hour_label_class).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(me.hour_label_format);
         Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(me.hour_label_format);
         Calendar.animation.fadeOut(me.labels_hours.exit().transition(), calendar.duration);
         return calculBBox();
@@ -376,7 +421,8 @@ Calendar.renderer.week = function(spec) {
     me.labels_days;
     me.labels_hours;
     var _bounds = function(year, week) {
-        var mondays = d3.time.mondays(new Date(year, 0, 1), new Date(year + 1, 0, 1));
+        var mondays = Calendar.data.firstDayOfWeek(new Date(year, 0, 1), new Date(year + 1, 0, 7));
+        console.log(mondays.length);
         if (mondays && mondays[week]) {
             var firstday = mondays[week];
             firstday.setTime(firstday.getTime() - 7 * 24 * 60 * 60 * 1e3);
@@ -393,7 +439,7 @@ Calendar.renderer.week = function(spec) {
         var bounds = _bounds(year, week);
         var start;
         if (bounds && bounds.start) {
-            start = d3.time.monday(bounds.start);
+            start = bounds.start;
         } else {
             start = new Date(year, 0, 0);
             faked = true;
@@ -413,9 +459,6 @@ Calendar.renderer.week = function(spec) {
         var _hour_label_format = d3.time.format("%Hh");
         var hour_label_format = function(d, i) {
             return i % 2 == 0 ? _hour_label_format(d) : "";
-        };
-        var initLabel = function(transform, klass) {
-            return transform.append("text").classed(klass, true).attr("fill", me.label_fill).attr("font-size", me.label_fontsize);
         };
         var calculTilePosX = function(d, i) {
             return me.tiles_left_decal + d.getHours() * (me.cell_size + me.space_between_tiles);
@@ -459,13 +502,19 @@ Calendar.renderer.week = function(spec) {
         me.labels_days = svg.selectAll("." + me.day_label_class).data(getPeriod(start, week_time, d3.time.days), function(d, i) {
             return i;
         });
-        initLabel(me.labels_days.enter(), me.day_label_class).attr("x", calculLabelDayPosX).attr("y", calculLabelDayPosY).text(day_label_format);
+        calendar.labelEnter(me, me.labels_days.enter(), me.day_label_class).attr("x", calculLabelDayPosX).attr("y", calculLabelDayPosY).on("mouseover", function(d, i) {
+            calendar.eventManager.trigger("label:day:mouseover", d);
+        }).on("mouseout", function(d, i) {
+            calendar.eventManager.trigger("label:day:mouseout", d);
+        }).on("click", function(d, i) {
+            calendar.eventManager.trigger("label:day:click", d);
+        }).text(day_label_format);
         Calendar.animation.fadeIn(me.labels_days.transition(), calendar.duration).text(day_label_format);
         Calendar.animation.fadeOut(me.labels_days.exit().transition(), calendar.duration);
         me.labels_hours = svg.selectAll("." + me.hour_label_class).data(getPeriod(start, day_time, d3.time.hours), function(d, i) {
             return i;
         });
-        initLabel(me.labels_hours.enter(), me.hour_label_class).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(hour_label_format);
+        calendar.labelEnter(me, me.labels_hours.enter(), me.hour_label_class).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(hour_label_format);
         Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(hour_label_format);
         Calendar.animation.fadeOut(me.labels_hours.exit().transition(), calendar.duration);
         return calculBBox();
@@ -485,7 +534,7 @@ Calendar.renderer.month = function(spec) {
     var me = this;
     if (!spec) spec = {};
     me.cell_size = spec.cell_size || 36;
-    me.margin = spec.margin || 20;
+    me.margin = spec.margin || 40;
     me.space_between_tiles = spec.space_between_tiles || 2;
     me.space_between_months = spec.space_between_months || me.cell_size;
     me.month_label_left_decal = spec.month_label_left_decal || 80;
@@ -507,8 +556,10 @@ Calendar.renderer.month = function(spec) {
         var getPeriod = function(m, period) {
             return period(new Date(parseInt(year), parseInt(m), 1), new Date(parseInt(year), parseInt(m) + 1, 1));
         };
-        var colorize = function(d) {
-            var val = calendar.retreiveValueCallback(grab_data, year, calendar.time.getWeek(d), calendar.time.getDay(d));
+        var getValue = function(d, i, u) {
+            return calendar.retreiveValueCallback(grab_data, year, calendar.time.getWeek(d), calendar.time.getDay(d));
+        };
+        var colorize = function(val) {
             return calendar.getColor(val);
         };
         var data = [];
@@ -545,9 +596,6 @@ Calendar.renderer.month = function(spec) {
             weeks[calendar.time.getWeek(data[d])] = current_week_index;
             weeks_label.push(data[d]);
         }
-        var initLabel = function(transform, klass) {
-            return transform.append("text").classed(klass, true).attr("fill", me.label_fill).attr("font-size", me.label_fontsize);
-        };
         var calculTilePosX = function(d, i) {
             return me.margin + me.tiles_left_decal + weeks[calendar.time.getWeek(d)] * (me.cell_size + me.space_between_tiles);
         };
@@ -592,31 +640,33 @@ Calendar.renderer.month = function(spec) {
         var week_time = 7 * day_time;
         var svg = calendar.svg;
         calendar.monthPathEnter(data_month, monthPath);
-        var tiles = svg.selectAll("." + calendar.tileClass).data(data, function(d, i) {
-            return i;
+        var tiles = svg.selectAll("." + calendar.tileClass).data(data, function(d) {
+            return Calendar.data.getYear(d) + "-" + Calendar.data.getDayOfYear(d);
         });
         calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px");
-        calendar.tilesUpdate(tiles).transition().delay(function(d) {
-            return calendar.time.getWeek(d) * 20 + calendar.time.getDay(d) * 20 + Math.random() * 50 / calendar.duration;
-        }).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px").attr("fill", colorize);
+        calendar.tilesUpdate(tiles).transition().duration(calendar.duration).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("fill-opacity", 1).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px").attr("fill", function(d) {
+            var val = getValue(d);
+            this.setAttributeNS("http://www.example.com/d3.calendar", "data", val);
+            return colorize(val);
+        });
         calendar.tilesExit(tiles);
         me.labels_months = svg.selectAll("." + me.month_label_class).data(data_month, function(d, i) {
-            return i;
+            return Calendar.data.getDayOfYear(d);
         });
-        initLabel(me.labels_months.enter(), me.month_label_class).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).text(me.month_label_format);
+        calendar.labelEnter(me, me.labels_months.enter(), me.month_label_class).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).text(me.month_label_format);
         Calendar.animation.fadeIn(me.labels_months.transition(), calendar.duration).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).text(me.month_label_format);
         me.labels_months.exit().remove();
         me.label_year = svg.selectAll("." + me.year_label_class).data(getPeriod(0, d3.time.years), function(d, i) {
             return i;
         });
-        initLabel(me.label_year.enter(), me.year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).style("text-anchor", "middle").text(me.year_label_format);
+        calendar.labelEnter(me, me.label_year.enter(), me.year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).style("text-anchor", "middle").text(me.year_label_format);
         Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration).attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).text(me.year_label_format);
         Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
         console.log(weeks_label);
         me.label_weeks = calendar.svg.selectAll("." + me.week_label_class).data(weeks_label, function(d, i) {
-            return i;
+            return d.getFullYear() + "-" + Calendar.data.getWeek(d);
         });
-        initLabel(me.label_weeks.enter(), me.week_label_class).attr("x", calculLabelWeekPosX).attr("y", calculLabelWeekPosY).on("mouseover", function(d, i) {
+        calendar.labelEnter(me, me.label_weeks.enter(), me.week_label_class).attr("x", calculLabelWeekPosX).attr("y", calculLabelWeekPosY).on("mouseover", function(d, i) {
             calendar.eventManager.trigger("label:week:mouseover", d);
         }).on("mouseout", function(d, i) {
             calendar.eventManager.trigger("label:week:mouseout", d);
@@ -636,17 +686,10 @@ Calendar.renderer.month = function(spec) {
     };
     me.bounds = function(year, month) {
         if (month instanceof Array && month.length > 0) {
-            if (month.length < 2) {
-                return {
-                    start: new Date(year, d3.min(month), 1),
-                    end: new Date(year, d3.min(month) + 1, 1)
-                };
-            } else {
-                return {
-                    start: new Date(year, d3.min(month), 1),
-                    end: new Date(year, d3.max(month) + 1, 1)
-                };
-            }
+            return {
+                start: new Date(year, d3.min(month), 1),
+                end: new Date(year, d3.max(month) + 1, 1)
+            };
         } else {
             return {
                 start: new Date(year, month, 1),
@@ -661,7 +704,7 @@ Calendar.renderer.year = function(spec) {
     var me = this;
     if (!spec) spec = {};
     me.cell_size = spec.cell_size || 36;
-    me.margin = spec.margin || 20;
+    me.margin = spec.margin || 40;
     me.space_between_tiles = spec.space_between_tiles || 2;
     me.space_between_years = spec.space_between_years || me.cell_size * 2;
     me.month_label_left_decal = spec.month_label_left_decal || 80;
@@ -713,7 +756,7 @@ Calendar.renderer.year = function(spec) {
                 data_year = data_year.concat(getPeriod(year[i], d3.time.days));
                 data_year_label.push(new Date(year[i], 1, 1));
                 data_month = data_month.concat(getPeriod(year[i], d3.time.months));
-                data_week_label = data_week_label.concat(getPeriod(year[i], d3.time.weeks));
+                data_week_label = data_week_label.concat(getPeriod(year[i], Calendar.data.firstDayOfWeek));
             }
         } else {
             first_year = year;
@@ -721,12 +764,9 @@ Calendar.renderer.year = function(spec) {
             data_year = getPeriod(year, d3.time.days);
             data_year_label = [ new Date(year, 0, 1) ];
             data_month = getPeriod(year, d3.time.months);
-            data_week_label = getPeriod(year, d3.time.weeks);
+            data_week_label = getPeriod(year, Calendar.data.firstDayOfWeek);
         }
         var year_height = 7 * me.cell_size + me.margin + me.tiles_top_decal + me.space_between_years;
-        var initLabel = function(transform, klass) {
-            return transform.append("text").classed(klass, true).attr("fill", me.label_fill).attr("font-size", me.label_fontsize);
-        };
         var calculTilePosX = function(d, i) {
             return calendar.time.getWeek(d) * (me.cell_size + me.space_between_tiles) + me.margin + me.tiles_left_decal;
         };
@@ -766,8 +806,8 @@ Calendar.renderer.year = function(spec) {
             return "M" + ((w0 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "," + (me.margin + d0 * cell + me.tiles_top_decal + decal) + "H" + (w0 * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.margin + 7 * cell + me.tiles_top_decal + decal) + "H" + (w1 * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.margin + (d1 + 1) * cell + me.tiles_top_decal + decal) + "H" + ((w1 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "V" + (me.tiles_top_decal + me.margin + decal) + "H" + ((w0 + 1) * decaled_cell + me.tiles_left_decal + me.margin) + "Z";
         }
         calendar.monthPathEnter(data_month, monthPath);
-        var tiles = calendar.svg.selectAll("." + calendar.tileClass).data(data_year, function(d, i) {
-            return i;
+        var tiles = calendar.svg.selectAll("." + calendar.tileClass).data(data_year, function(d) {
+            return Calendar.data.getYear(d) + "-" + Calendar.data.getDayOfYear(d);
         });
         calendar.tilesEnter(tiles).attr("x", calculTilePosX).attr("y", calculTilePosY).attr("width", me.cell_size + "px").attr("height", me.cell_size + "px");
         calendar.tilesUpdate(tiles).transition().delay(function(d) {
@@ -779,9 +819,9 @@ Calendar.renderer.year = function(spec) {
         });
         calendar.tilesExit(tiles);
         me.labels_months = calendar.svg.selectAll("." + me.month_label_class).data(data_month, function(d, i) {
-            return i;
+            return d.getFullYear() + "-" + d.getMonth();
         });
-        initLabel(me.labels_months.enter(), me.month_label_class).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).on("mouseover", function(d, i) {
+        calendar.labelEnter(me, me.labels_months.enter(), me.month_label_class).attr("x", calculLabelMonthPosX).attr("y", calculLabelMonthPosY).on("mouseover", function(d, i) {
             calendar.eventManager.trigger("label:month:mouseover", d);
         }).on("mouseout", function(d, i) {
             calendar.eventManager.trigger("label:month:mouseout", d);
@@ -793,7 +833,7 @@ Calendar.renderer.year = function(spec) {
         me.label_year = calendar.svg.selectAll("." + me.year_label_class).data(data_year_label, function(d, i) {
             return i;
         });
-        initLabel(me.label_year.enter(), me.year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).on("mouseover", function(d, i) {
+        calendar.labelEnter(me, me.label_year.enter(), me.year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).on("mouseover", function(d, i) {
             calendar.eventManager.trigger("label:year:mouseover", d);
         }).on("mouseout", function(d, i) {
             calendar.eventManager.trigger("label:year:mouseout", d);
@@ -803,9 +843,9 @@ Calendar.renderer.year = function(spec) {
         Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration).attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).text(me.year_label_format);
         Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
         me.label_weeks = calendar.svg.selectAll("." + me.week_label_class).data(data_week_label, function(d, i) {
-            return i;
+            return d.getFullYear() + "-" + Calendar.data.getWeek(d);
         });
-        initLabel(me.label_weeks.enter(), me.week_label_class).attr("x", calculLabelWeekPosX).attr("y", calculLabelWeekPosY).on("mouseover", function(d, i) {
+        calendar.labelEnter(me, me.label_weeks.enter(), me.week_label_class).attr("x", calculLabelWeekPosX).attr("y", calculLabelWeekPosY).on("mouseover", function(d, i) {
             calendar.eventManager.trigger("label:week:mouseover", d);
         }).on("mouseout", function(d, i) {
             calendar.eventManager.trigger("label:week:mouseout", d);
@@ -825,17 +865,10 @@ Calendar.renderer.year = function(spec) {
     };
     me.bounds = function(year) {
         if (year instanceof Array && year.length > 0) {
-            if (year.length < 2) {
-                return {
-                    start: new Date(d3.min(year), 0, 1),
-                    end: new Date(d3.min(year) + 1, 0, 1)
-                };
-            } else {
-                return {
-                    start: new Date(d3.min(year), 0, 1),
-                    end: new Date(d3.max(year) + 1, 0, 1)
-                };
-            }
+            return {
+                start: new Date(d3.min(year), 0, 1),
+                end: new Date(d3.max(year) + 1, 0, 1)
+            };
         } else {
             return {
                 start: new Date(year, 0, 1),
@@ -851,7 +884,10 @@ Calendar.renderer.drillthrough = function(spec) {
     if (!spec) spec = {};
     me.possible_display = spec.possible_display;
     me.current_renderer = spec.current_renderer || new Calendar.renderer.year();
-    var previous_btn = new Calendar.decorator.previous();
+    var previous_btn = new Calendar.decorator.previous({
+        "float": "right",
+        position: "bottom"
+    });
     me.previous = [];
     me.current_display = null;
     me.draw = function() {
@@ -874,13 +910,14 @@ Calendar.renderer.drillthrough = function(spec) {
         me.current_display = display;
         var args = arguments;
         calendar.eventManager.on("tile:click", function(d) {
+            console.log(d);
             if (me.previous.length == 0) {
                 previous_btn.draw.apply(calendar);
             }
             me.previous.push(me.current_display);
             var display = {
                 renderer: new Calendar.renderer.day(),
-                retreiveDataCallback: calendar.retreiveDataClosure("hour"),
+                retreiveDataCallback: calendar.retreiveDataClosure("quarter"),
                 arguments: [ d.time.getFullYear(), calendar.time.getWeek(d.time), calendar.time.getDay(d.time) ]
             };
             displayCalendar(display);
@@ -897,6 +934,18 @@ Calendar.renderer.drillthrough = function(spec) {
             };
             displayCalendar(display);
         });
+        calendar.eventManager.on("label:year:click", function(d) {
+            if (me.previous.length == 0) {
+                previous_btn.draw.apply(calendar);
+            }
+            me.previous.push(me.current_display);
+            var display = {
+                renderer: new Calendar.renderer.year(),
+                retreiveDataCallback: calendar.retreiveDataClosure("day"),
+                arguments: [ d.getFullYear() ]
+            };
+            displayCalendar(display);
+        });
         calendar.eventManager.on("label:week:click", function(d) {
             if (me.previous.length == 0) {
                 previous_btn.draw.apply(calendar);
@@ -906,6 +955,18 @@ Calendar.renderer.drillthrough = function(spec) {
                 renderer: new Calendar.renderer.week(),
                 retreiveDataCallback: calendar.retreiveDataClosure("hour"),
                 arguments: [ d.getFullYear(), calendar.time.getWeek(d) ]
+            };
+            displayCalendar(display);
+        });
+        calendar.eventManager.on("label:day:click", function(d) {
+            if (me.previous.length == 0) {
+                previous_btn.draw.apply(calendar);
+            }
+            me.previous.push(me.current_display);
+            var display = {
+                renderer: new Calendar.renderer.day(),
+                retreiveDataCallback: calendar.retreiveDataClosure("quarter"),
+                arguments: [ d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d) ]
             };
             displayCalendar(display);
         });
@@ -932,37 +993,45 @@ Calendar.renderer.drillthrough = function(spec) {
     return me;
 };
 
-Calendar.decorator.previous = function() {
+Calendar.decorator.previous = function(spec) {
     var me = this;
     me.id = "drillthrough_previous";
+    if (!spec) spec = {};
+    me.float = spec.float || "right";
+    me.position = spec.position || "top";
     me.draw = function() {
         var calendar = this;
-        var node = d3.select(calendar.decoratorId).style("cursor", "pointer").append("div").attr("id", me.id).style("color", "#777").style("border", "1px solid #f0f0f0").style("background", "#f3f3f3").style("font-size", "11px").style("-moz-border-radius", "3px").style("border-radius", "3px").style("height", "50px").style("float", "right").style("margin", "10px 30px").on("click", function(d, i) {
+        me.decorator = calendar.decoratorEnter(me.id, me.float, me.position);
+        me.decorator.on("click", function(d, i) {
             calendar.eventManager.trigger("previous:click");
-        }).append("p").style("font-size", "14px").style("margin-left", "10px").style("margin-right", "10px").text("reset");
+        });
+        me.node = calendar.decoratorTextEnter(me.decorator).text("previous");
     };
     me.clean = function() {
         var previous = d3.select("#" + me.id).remove();
     };
 };
 
-Calendar.decorator.legend = function() {
+Calendar.decorator.legend = function(spec) {
     var me = this;
+    if (!spec) spec = {};
+    me.float = spec.float || "right";
+    me.position = spec.position || "top";
     var drawn = false;
     me.draw = function() {
         var calendar = this;
         me.calendar = calendar;
         if (!drawn) drawn = true; else return;
-        me.node = d3.select(calendar.decoratorId);
-        me.node = me.node.append("div").attr("id", calendar.legendId).style("color", "#777").style("border", "1px solid #f0f0f0").style("background", "#f3f3f3").style("font-size", "11px").style("-moz-border-radius", "3px").style("border-radius", "3px").style("width", "155px").style("height", "50px").style("float", "right").style("margin", "10px 30px").style("opacity", "0");
-        me.colors = me.node.append("ul").style("list-style-type", "none").style("overflow", "hidden").style("margin-left", "-25px").style("margin-bottom", 5);
+        me.node = calendar.decoratorEnter(me.id, me.float, me.position);
+        me.less = me.node.append("p").classed("less", true).style("float", "left").style("font-size", "14px").style("margin-right", "15px").style("margin-left", "15px");
+        var tiles_size = 14;
+        me.colors = me.node.append("ul").style("display", "inline").style("padding-left", "0 ").style("padding-top", "4px").style("float", "left").style("list-style-type", "none");
         me.colors_data = me.colors.selectAll("li").data(calendar.colorScheme, function(d, i) {
             return i;
         }).enter().append("li").style("background", function(d) {
             return d;
-        }).style("float", "left").style("width", "14px").style("height", "14px");
-        me.less = me.node.append("span").classed("less", true).style("float", "left").style("margin-left", "15px").text(calendar.downBound);
-        me.more = me.node.append("span").classed("more", true).style("float", "right").style("margin-right", "15px").text(calendar.upBound);
+        }).style("float", "left").style("width", tiles_size + "px").style("height", tiles_size + "px");
+        me.more = me.node.append("p").classed("more", true).style("float", "left").style("font-size", "14px").style("margin-right", "15px").style("margin-left", "15px");
         me.node.transition().duration(calendar.duration).style("opacity", 1);
     };
     me.refresh = function(down, up) {
@@ -971,17 +1040,18 @@ Calendar.decorator.legend = function() {
     };
 };
 
-Calendar.decorator.horodator = function() {
+Calendar.decorator.horodator = function(spec) {
     var me = this;
-    me.id = "horodator";
+    me.id = "decorator_horodator";
+    if (!spec) spec = {};
+    me.float = spec.float || "right";
+    me.position = spec.position || "top";
     var drawn = false;
     me.draw = function() {
         var calendar = this;
         if (!drawn) drawn = true; else return;
-        me.node = d3.select(calendar.decoratorId).style("cursor", "pointer").append("div").attr("id", me.id).style("color", "#777").style("border", "1px solid #f0f0f0").style("background", "#f3f3f3").style("font-size", "11px").style("-moz-border-radius", "3px").style("border-radius", "3px").style("height", "50px").style("float", "right").style("margin", "10px 30px").on("click", function(d, i) {
-            calendar.eventManager.trigger("horodator:click");
-        });
-        me.node = me.node.append("p").style("font-size", "14px").style("margin-left", "10px").style("margin-right", "10px").text("mouai c cool");
+        me.decorator = calendar.decoratorEnter(me.id, me.float, me.position);
+        me.node = calendar.decoratorTextEnter(me.decorator);
     };
     me.refresh = function(start, end) {
         var calendar = this;
@@ -992,9 +1062,12 @@ Calendar.decorator.horodator = function() {
     };
 };
 
-Calendar.decorator.hovered = function() {
+Calendar.decorator.hovered = function(spec) {
     var me = this;
     me.id = "hovered";
+    if (!spec) spec = {};
+    me.float = spec.float || "right";
+    me.position = spec.position || "top";
     var drawn = false;
     me.draw = function() {
         var calendar = this;
@@ -1004,8 +1077,9 @@ Calendar.decorator.hovered = function() {
         });
         calendar.eventManager.on("tile:mouseout", function(d) {});
         if (!drawn) drawn = true; else return;
-        me.decorator = d3.select(calendar.decoratorId).style("cursor", "pointer").append("div").attr("id", me.id).style("color", "#777").style("border", "1px solid #f0f0f0").style("background", "#f3f3f3").style("font-size", "11px").style("-moz-border-radius", "3px").style("border-radius", "3px").style("height", "50px").style("float", "right").style("margin", "10px 30px").style("display", "none");
-        me.node = me.decorator.append("p").style("font-size", "14px").style("margin-left", "10px").style("margin-right", "10px");
+        me.decorator = calendar.decoratorEnter(me.id, me.float, me.position);
+        me.decorator.style("display", "none");
+        me.node = calendar.decoratorTextEnter(me.decorator);
     };
     me.refresh = function(value) {
         var calendar = this;
@@ -1016,26 +1090,72 @@ Calendar.decorator.hovered = function() {
     };
 };
 
+Calendar.decorator.title = function(spec) {
+    var me = this;
+    me.id = "decorator_title";
+    if (!spec) spec = {};
+    me.float = spec.float || "right";
+    me.position = spec.position || "top";
+    var drawn = false;
+    me.draw = function() {
+        var calendar = this;
+        if (!drawn) drawn = true; else return;
+        me.decorator = calendar.decoratorEnter(me.id, me.float, me.position);
+        me.node = calendar.decoratorTextEnter(me.decorator);
+        me.node.text(calendar.name);
+    };
+    me.clean = function() {
+        var previous = d3.select("#" + me.id).remove();
+    };
+};
+
 Calendar.data = {
+    week_format: d3.time.format("%W"),
+    firstDayOfWeek: d3.time.mondays,
+    _firstDayOfWeek: d3.time.monday,
+    getYear: function(d) {
+        return parseInt(d.getFullYear());
+    },
+    getDay: function(d) {
+        var time = d.getTime() - Calendar.data._firstDayOfWeek(d).getTime();
+        return Math.floor(parseInt(time) / (24 * 36e5));
+    },
+    getDayOfYear: function(d) {
+        var start = new Date(d.getFullYear(), 0, 0);
+        var diff = d - start;
+        var oneDay = 1e3 * 60 * 60 * 24;
+        return Math.ceil(diff / oneDay);
+    },
+    getWeek: function(d) {
+        return parseInt(Calendar.data.week_format(d));
+    },
+    getHours: function(d) {
+        return parseInt(d.getHours());
+    },
+    getQuarter: function(d) {
+        return parseInt(Math.floor(parseInt(d.getMinutes()) / 15));
+    },
     create: function(timeCallback) {
         return function(data) {
             var year = function(d) {
-                return timeCallback(d).getFullYear();
+                return Calendar.data.getYear(timeCallback(d));
             };
             var day = function(d) {
-                var day = timeCallback(d).getDay();
-                return day == 0 ? 6 : day - 1;
+                return Calendar.data.getDay(timeCallback(d));
             };
             var week = function(d) {
-                var format = d3.time.format("%W");
-                return parseInt(format(timeCallback(d)));
+                return Calendar.data.getWeek(timeCallback(d));
             };
             var hour = function(d) {
-                return timeCallback(d).getHours();
+                return Calendar.data.getHours(timeCallback(d));
+            };
+            var quarter = function(d) {
+                return Calendar.data.getQuarter(timeCallback(d));
             };
             var nest = d3.nest();
-            nest.key(year).key(week).key(day).key(hour);
-            return nest.map(data);
+            nest.key(year).key(week).key(day).key(hour).key(quarter);
+            var data = nest.map(data);
+            return data;
         };
     },
     bounds: function(valueCallback) {
@@ -1062,7 +1182,9 @@ Calendar.data = {
                 for (var i in array) {
                     logs.push(recurr(array[i]));
                 }
-                var val = aggregatFunc(logs);
+                if (aggregatFunc && typeof aggregatFunc == "function") {
+                    return aggregatFunc(logs);
+                }
                 return val;
             }
         };

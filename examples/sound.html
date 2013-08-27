@@ -176,9 +176,6 @@ body {
 		          };
 		})();
 
-
-		// usage:
-		// instead of setInterval(render, 16) ....
 		var context = webaudio.context();
 		(function animloop(){
 		  requestAnimFrame(animloop);
@@ -187,14 +184,6 @@ body {
 				calendar.createTiles();
 			}	
 		})();
-
-		// setInterval(function(){
-		// 	if( sound.isPlayable() === false )	return;
-		// 	if(context.activeSourceCount > 0){
-		// 		calendar.createTiles();
-		// 	}	
-		// }, 1000/60);
-
 	}
 
 	

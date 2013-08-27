@@ -37,6 +37,7 @@ Calendar.decorator.legend = function(spec){
 					.style('padding-left', '0 ')
 					.style('padding-top', '4px')
 					.style("float", 'left')
+					.style("list-style-type","none")	
 
 		me.colors_data = me.colors.selectAll('li').data(calendar.colorScheme, function(d, i){return i;})
 					.enter()
@@ -47,6 +48,7 @@ Calendar.decorator.legend = function(spec){
 					.style('float','left')
 					.style('width',tiles_size+'px')
 					.style('height',tiles_size+'px')
+						
 
 		me.more = me.node.append('p').classed('more', true)
 				.style("float", 'left')
