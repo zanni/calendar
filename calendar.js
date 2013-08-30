@@ -86,15 +86,14 @@ var Calendar = function(spec) {
     me.interactive = typeof spec.interactive == "boolean" ? spec.interactive : true;
     me.drawLegend = typeof spec.drawLegend == "boolean" ? spec.drawLegend : true;
     me.drawHorodator = typeof spec.drawHorodator == "boolean" ? spec.drawHorodator : true;
-    me.drawHovered = typeof spec.drawHovered == "boolean" ? spec.drawHovered : true;
-    me.drawTitle = typeof spec.drawTitle == "boolean" ? spec.drawTitle : true;
     var range = [];
     for (var i = 0; i < me.buckets; i++) {
         range.push(i);
     }
     me.bucket = d3.scale.quantize().domain([ 20, 80 ]).range(range);
-    me.decorators = [];
     me.svg = d3.select(me.visId).append("svg:svg").attr("width", me.width).attr("height", me.height).append("svg:g").attr("transform", "translate(" + 0 + "," + 0 + ")");
+    me.decorators = spec.decorators || [];
+    d3.select(me.decoratorId).style("margin", "20px 0");
     if (me.drawLegend) {
         me.legend = new Calendar.decorator.legend();
         me.decorators.push(me.legend);
@@ -102,20 +101,6 @@ var Calendar = function(spec) {
     if (me.drawHorodator) {
         me.horodator = new Calendar.decorator.horodator();
         me.decorators.push(me.horodator);
-    }
-    if (me.drawHovered) {
-        me.hovered = new Calendar.decorator.hovered({
-            "float": "left",
-            position: "bottom"
-        });
-        me.decorators.push(me.hovered);
-    }
-    if (me.drawTitle) {
-        me.title = new Calendar.decorator.title({
-            "float": "left",
-            position: "top"
-        });
-        me.decorators.push(me.title);
     }
 };
 
@@ -186,9 +171,14 @@ Calendar.prototype.setLegend = function(bounds) {
     }
 };
 
+Calendar.prototype.redrawLegend = function(bounds) {
+    var me = this;
+    me.legend.recolor();
+};
+
 Calendar.prototype.setHorodator = function(start, end) {
     var check = function(a) {
-        return a ? a : "";
+        return a ? me.renderer.horodator_format(a) : "";
     };
     var me = this;
     me.horodator.refresh(check(start), check(end));
@@ -257,9 +247,9 @@ Calendar.prototype.labelEnter = function(renderer, transform, klass) {
     return transform.append("text").classed(klass, true).attr("fill", renderer.label_fill).attr("font-size", renderer.label_fontsize);
 };
 
-Calendar.prototype.decoratorEnter = function(id, float, position) {
+Calendar.prototype.decoratorEnter = function(id, float, position, interactive) {
     var me = this;
-    return d3.select(position && position == "bottom" ? me.decoratorBottomId : me.decoratorId).style("cursor", "pointer").append("div").attr("id", id).style("color", "#777").style("border", "1px solid #f0f0f0").style("background", "#f3f3f3").style("font-size", "11px").style("-moz-border-radius", "3px").style("border-radius", "3px").style("height", "40px").style("float", float ? float : "right").style("margin-left", "10px");
+    return d3.select(position && position == "bottom" ? me.decoratorBottomId : me.decoratorId).style("cursor", interactive ? "pointer" : "cursor").append("div").attr("id", id).style("color", "#777").style("border", "1px solid #f0f0f0").style("background", "#f3f3f3").style("font-size", "11px").style("-moz-border-radius", "3px").style("border-radius", "3px").style("height", "40px").style("float", float ? float : "right").style("margin-left", "10px");
 };
 
 Calendar.prototype.decoratorTextEnter = function(decorator) {
@@ -316,6 +306,8 @@ Calendar.renderer.day = function(spec) {
     me.label_fontsize = spec.label_fontsize || "12px";
     me.hour_label_class = spec.hour_label_class || "day_hour_label";
     me.hour_label_format = spec.hour_label_format || d3.time.format("%Hh");
+    me.horodator_format = spec.horodator_format || d3.time.format("%Y %B %d");
+    me.hovered_format = spec.hovered_format || d3.time.format("%Hh:%M");
     me.labels_hours;
     var _bounds = function(year, week, day) {
         var mondays = Calendar.data.firstDayOfWeek(new Date(year, 0, 0), new Date(year + 1, 0, 7));
@@ -324,7 +316,6 @@ Calendar.renderer.day = function(spec) {
             firstday.setTime(firstday.getTime() + parseInt(day) * 24 * 60 * 60 * 1e3 - 7 * 24 * 60 * 60 * 1e3);
             var end = new Date();
             end.setTime(firstday.getTime() + 24 * 60 * 60 * 1e3);
-            console.log(firstday);
             return {
                 start: firstday,
                 end: end
@@ -332,7 +323,6 @@ Calendar.renderer.day = function(spec) {
         }
     };
     me.draw = function(data, year, week, day) {
-        console.log(arguments);
         var calendar = this;
         var bounds = _bounds(year, week, day);
         var start;
@@ -418,11 +408,12 @@ Calendar.renderer.week = function(spec) {
     me.day_label_class = spec.day_label_class || "day_label";
     me.hour_label_class = spec.hour_label_class || "hour_label";
     me._day_label_format = spec._day_label_format || d3.time.format("%a %d %b");
+    me.horodator_format = spec.horodator_format || d3.time.format("%Y, week %w");
+    me.hovered_format = spec.hovered_format || d3.time.format("%d %Hh");
     me.labels_days;
     me.labels_hours;
     var _bounds = function(year, week) {
         var mondays = Calendar.data.firstDayOfWeek(new Date(year, 0, 1), new Date(year + 1, 0, 7));
-        console.log(mondays.length);
         if (mondays && mondays[week]) {
             var firstday = mondays[week];
             firstday.setTime(firstday.getTime() - 7 * 24 * 60 * 60 * 1e3);
@@ -548,6 +539,8 @@ Calendar.renderer.month = function(spec) {
     me.month_label_format = spec.month_label_format || d3.time.format("%B");
     me.year_label_class = spec.year_label_class || "year_label";
     me.year_label_format = spec.year_label_format || d3.time.format("%Y");
+    me.horodator_format = spec.horodator_format || d3.time.format("%B, %Y");
+    me.hovered_format = spec.hovered_format || d3.time.format("%B %d %Hh");
     me.labels_months;
     me.label_year;
     me.label_weeks;
@@ -662,7 +655,6 @@ Calendar.renderer.month = function(spec) {
         calendar.labelEnter(me, me.label_year.enter(), me.year_label_class).attr("transform", "rotate(-90)").attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).style("text-anchor", "middle").text(me.year_label_format);
         Calendar.animation.fadeIn(me.label_year.transition(), calendar.duration).attr("x", calculLabelYearPosX).attr("y", calculLabelYearPosY).text(me.year_label_format);
         Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
-        console.log(weeks_label);
         me.label_weeks = calendar.svg.selectAll("." + me.week_label_class).data(weeks_label, function(d, i) {
             return d.getFullYear() + "-" + Calendar.data.getWeek(d);
         });
@@ -720,6 +712,8 @@ Calendar.renderer.year = function(spec) {
     me.year_label_class = spec.year_label_class || "year_label";
     me.week_label_class = spec.week_label_class || "week_label";
     me.year_label_format = spec.year_label_format || d3.time.format("%Y");
+    me.horodator_format = spec.horodator_format || d3.time.format("%Y");
+    me.hovered_format = spec.hovered_format || d3.time.format("%B %d");
     me.labels_months;
     me.label_year;
     me.label_weeks;
@@ -879,14 +873,35 @@ Calendar.renderer.year = function(spec) {
     return me;
 };
 
+var previousDecorator = function(spec) {
+    var me = this;
+    me.id = "drillthrough_previous";
+    if (!spec) spec = {};
+    me.float = spec.float || "right";
+    me.position = spec.position || "top";
+    me.draw = function() {
+        var calendar = this;
+        me.decorator = calendar.decoratorEnter(me.id, me.float, me.position, true);
+        me.decorator.on("click", function(d, i) {
+            calendar.eventManager.trigger("previous:click");
+        });
+        me.node = calendar.decoratorTextEnter(me.decorator).text("previous");
+    };
+    me.clean = function() {
+        var previous = d3.select("#" + me.id).remove();
+    };
+};
+
 Calendar.renderer.drillthrough = function(spec) {
     var me = this;
     if (!spec) spec = {};
     me.possible_display = spec.possible_display;
     me.current_renderer = spec.current_renderer || new Calendar.renderer.year();
-    var previous_btn = new Calendar.decorator.previous({
-        "float": "right",
-        position: "bottom"
+    me.horodator_format = me.current_renderer.horodator_format;
+    me.hovered_format = me.current_renderer.hovered_format;
+    var previous_btn = new previousDecorator({
+        "float": "left",
+        position: "top"
     });
     me.previous = [];
     me.current_display = null;
@@ -993,29 +1008,10 @@ Calendar.renderer.drillthrough = function(spec) {
     return me;
 };
 
-Calendar.decorator.previous = function(spec) {
-    var me = this;
-    me.id = "drillthrough_previous";
-    if (!spec) spec = {};
-    me.float = spec.float || "right";
-    me.position = spec.position || "top";
-    me.draw = function() {
-        var calendar = this;
-        me.decorator = calendar.decoratorEnter(me.id, me.float, me.position);
-        me.decorator.on("click", function(d, i) {
-            calendar.eventManager.trigger("previous:click");
-        });
-        me.node = calendar.decoratorTextEnter(me.decorator).text("previous");
-    };
-    me.clean = function() {
-        var previous = d3.select("#" + me.id).remove();
-    };
-};
-
 Calendar.decorator.legend = function(spec) {
     var me = this;
     if (!spec) spec = {};
-    me.float = spec.float || "right";
+    me.float = spec.float || "left";
     me.position = spec.position || "top";
     var drawn = false;
     me.draw = function() {
@@ -1038,13 +1034,23 @@ Calendar.decorator.legend = function(spec) {
         me.less.text(down);
         me.more.text(up);
     };
+    me.recolor = function() {
+        console.log("mouai c cool");
+        var tiles = me.colors.selectAll("li").data(me.calendar.colorScheme, function(d, i) {
+            return i;
+        });
+        tiles.style("background", function(d) {
+            return d;
+        }).style("float", "left").style("width", "14px").style("height", "14px");
+        tiles.exit().remove();
+    };
 };
 
 Calendar.decorator.horodator = function(spec) {
     var me = this;
     me.id = "decorator_horodator";
     if (!spec) spec = {};
-    me.float = spec.float || "right";
+    me.float = spec.float || "left";
     me.position = spec.position || "top";
     var drawn = false;
     me.draw = function() {
@@ -1073,7 +1079,7 @@ Calendar.decorator.hovered = function(spec) {
         var calendar = this;
         calendar.eventManager.on("tile:mouseenter", function(d) {
             me.decorator.style("display", "block");
-            me.refresh(d.time + " - " + d.value);
+            me.refresh(calendar.renderer.hovered_format(d.time) + " - " + d.value);
         });
         calendar.eventManager.on("tile:mouseout", function(d) {});
         if (!drawn) drawn = true; else return;
@@ -1084,25 +1090,6 @@ Calendar.decorator.hovered = function(spec) {
     me.refresh = function(value) {
         var calendar = this;
         if (me.node) me.node.text(value);
-    };
-    me.clean = function() {
-        var previous = d3.select("#" + me.id).remove();
-    };
-};
-
-Calendar.decorator.title = function(spec) {
-    var me = this;
-    me.id = "decorator_title";
-    if (!spec) spec = {};
-    me.float = spec.float || "right";
-    me.position = spec.position || "top";
-    var drawn = false;
-    me.draw = function() {
-        var calendar = this;
-        if (!drawn) drawn = true; else return;
-        me.decorator = calendar.decoratorEnter(me.id, me.float, me.position);
-        me.node = calendar.decoratorTextEnter(me.decorator);
-        me.node.text(calendar.name);
     };
     me.clean = function() {
         var previous = d3.select("#" + me.id).remove();
