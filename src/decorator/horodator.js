@@ -4,7 +4,7 @@ Calendar.decorator.horodator = function(spec){
 	me.id = "decorator_horodator";
 	// theming
 	if(!spec) spec={};
-	me.float = spec.float || 'right';
+	me.float = spec.float || 'left';
 	me.position = spec.position || 'top';
 	var drawn = false;
 	/******************************************************/

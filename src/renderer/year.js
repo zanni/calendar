@@ -36,6 +36,12 @@ Calendar.renderer.year = function(spec){
 	me.week_label_class = spec.week_label_class || "week_label";
 	me.year_label_format = spec.year_label_format || d3.time.format("%Y");
 
+	//horodator time format
+	me.horodator_format = spec.horodator_format || d3.time.format("%Y");
+	//hovered_format time format
+	me.hovered_format = spec.hovered_format || d3.time.format("%B %d");
+
+
 	// store labels in order to clean
 	me.labels_months;
 	me.label_year;

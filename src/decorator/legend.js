@@ -4,7 +4,7 @@ Calendar.decorator.legend = function(spec){
 	
 	// theming
 	if(!spec) spec={};
-	me.float = spec.float || 'right';
+	me.float = spec.float || 'left';
 	me.position = spec.position || 'top';
 	var drawn = false;
 	/******************************************************/
@@ -62,16 +62,22 @@ Calendar.decorator.legend = function(spec){
 
 	me.refresh = function(down, up){
 		me.less.text(down);
-		me.more.text(up);	
-		// yep yep ...
-		// me.colors.selectAll('li')
-		// 	.data(me.calendar.colorScheme, function(d, i){return i;})
-		// 	.style('background', function(d){
-		// 				return d;
-		// 			})
-		// 			.style('float','left')
-		// 			.style('width','14px')
-		// 			.style('height','14px')
+		me.more.text(up);			
+	}
+
+	me.recolor = function(){
+		console.log("mouai c cool")
+		var tiles = me.colors.selectAll('li')
+			.data(me.calendar.colorScheme, function(d, i){return i;})
+
+		tiles.style('background', function(d){
+						return d;
+					})
+					.style('float','left')
+					.style('width','14px')
+					.style('height','14px')
+
+		tiles.exit().remove();	
 	}
 
 

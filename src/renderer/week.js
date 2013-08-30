@@ -29,13 +29,18 @@ Calendar.renderer.week = function(spec){
 	me.hour_label_class = spec.hour_label_class || "hour_label";
 	me._day_label_format = spec._day_label_format || d3.time.format("%a %d %b");
 
+	//horodator time format
+	me.horodator_format = spec.horodator_format || d3.time.format("%Y, week %w");
+	//hovered_format time format
+	me.hovered_format = spec.hovered_format || d3.time.format("%d %Hh");
+
+
 	// store labels in order to clean
 	me.labels_days;
 	me.labels_hours;
 
 	var _bounds = function(year, week){
 		var mondays = Calendar.data.firstDayOfWeek(new Date(year, 0, 1), new Date(year+1, 0,7));
-		console.log(mondays.length)
 		if(mondays && mondays[week]){
 			var firstday = mondays[week];
 			firstday.setTime(firstday.getTime() - 7*24*60*60*1000)

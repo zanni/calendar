@@ -6,6 +6,7 @@ Calendar.decorator.hovered = function(spec){
 	if(!spec) spec={};
 	me.float = spec.float || 'right';
 	me.position = spec.position || 'top';
+
 	var drawn = false;
 	/******************************************************/
 	// DRAW implementation
@@ -15,7 +16,7 @@ Calendar.decorator.hovered = function(spec){
 
 		calendar.eventManager.on("tile:mouseenter", function(d){
 			me.decorator.style("display","block");
-			me.refresh(d.time+" - "+d.value);
+			me.refresh(calendar.renderer.hovered_format(d.time)+" - "+d.value);
 			// me.refresh(d.value);
 		})
 		calendar.eventManager.on("tile:mouseout", function(d){

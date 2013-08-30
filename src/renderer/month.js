@@ -32,6 +32,12 @@ Calendar.renderer.month = function(spec){
 	me.year_label_class = spec.year_label_class || "year_label";
 	me.year_label_format = spec.year_label_format || d3.time.format("%Y");
 
+	//horodator time format
+	me.horodator_format = spec.horodator_format || d3.time.format("%B, %Y");
+	//hovered_format time format
+	me.hovered_format = spec.hovered_format || d3.time.format("%B %d %Hh");
+
+
 	// store labels in order to clean
 	me.labels_months;
 	me.label_year;
@@ -271,7 +277,6 @@ Calendar.renderer.month = function(spec){
 		Calendar.animation.fadeOut(me.label_year.exit().transition(), calendar.duration);
 
 		//hours labels
-		console.log(weeks_label);
 		me.label_weeks = calendar.svg.selectAll("."+me.week_label_class)
 				.data(weeks_label, function(d,i){return d.getFullYear()+"-"+Calendar.data.getWeek(d);});
 

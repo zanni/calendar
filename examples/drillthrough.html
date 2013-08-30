@@ -18,19 +18,81 @@
 	<script type="text/javascript" src="../src/decorator/legend.js"></script>
 	<script type="text/javascript" src="../src/decorator/horodator.js"></script>
 	<script type="text/javascript" src="../src/decorator/hovered.js"></script>
-	<script type="text/javascript" src="../src/decorator/title.js"></script>
-	<script type="text/javascript" src="../src/decorator/drillthrough_previous.js"></script>
 	<script type="text/javascript" src="../src/renderer/day.js"></script>
 	<script type="text/javascript" src="../src/renderer/week.js"></script>
 	<script type="text/javascript" src="../src/renderer/month.js"></script>
 	<script type="text/javascript" src="../src/renderer/year.js"></script>
 	<script type="text/javascript" src="../src/renderer/drillthrough.js"></script>
 
-	
-
 	<script type="text/javascript" src="js/rte/rte.ws.js"></script>
 	<script type="text/javascript" src="js/rte/rte.calendar.js"></script>
+	<style type="text/css">
 
+      body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; 
+        font-size: 14px;
+        line-height: 1.4em;
+        padding: 0;
+        margin: 0;
+      }
+
+      #container {
+        width: 800px;
+        margin: 0px auto;
+      }
+
+      h1 {
+        font-size: 200%;
+        margin: 0 0 15px 0;
+      }
+
+      h2 {
+        font-size: 160%;
+        margin: 0 0 10px 0;
+      }
+
+     /* p {
+        margin: 0 0 10px;
+      }*/
+
+      form, form > * {
+        margin: 0;
+      }
+
+      #status {
+        color: #999;
+      }
+
+      #vis-container {
+        text-align: center;
+        margin: 20px 0;
+      }
+
+      #vis {
+        display: block;
+        background: #fff;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      form {
+        font-size: 120%;
+      }
+
+      select {
+        font-size: inherit;
+      }
+
+      #placeholder {
+        position: absolute;
+        z-index: -1;
+        display: block;
+        left: 0;
+        top: 0;
+      }
+
+    </style>
 	<script>
 
 		/* ************************** */
@@ -82,7 +144,7 @@
 		$.ready = function(){
 			
 			var rte_ws = new RteWS({
-				url : "http://192.168.1.101:8080/rte-app"
+				url : "http://192.168.122.199:8080/rte-app"
 			});
 
 			var possible_displays = new RteCalendar({
@@ -111,17 +173,18 @@
 			var calendar = new Calendar( {
 				name: display.name
 				, renderer : new Calendar.renderer.drillthrough()
+				, decorators: [ new Calendar.decorator.hovered({float:'right'}) ]
 				, colorScheme : display.colorScheme
 				, retreiveDataClosure : display.rte_datagrab_closure
 				, retreiveDataCallback : display.rte_datagrab_closure(agg)
 				, retreiveValueCallback : display.rte_closure
 				, width : $("#container").width()
-				, height: 300		
+				, height: 600		
 			});
 
 			calendar.createTiles(selected_year);
 
-			$("#displays").change(function(e){
+			$("#years, #displays").change(function(e){
 				var selected_display = $("#displays").attr("value");
 				var years = $.map( $('#years option:selected'),
                   			function(e) { return parseInt($(e).val()) } );
@@ -136,23 +199,23 @@
 				
 
 				calendar.createTiles(years);
+
+				calendar.redrawLegend();
 			});
-			$("#years").change(function(e){
-				var years = $.map( $('#years option:selected'),
-                  			function(e) { return parseInt($(e).val()) } );
-				calendar.createTiles(years);
-			});
-		
+	
 		}
 	</script>
 	<div id="container">
-		<div id="selectors" >
-			<select id="displays" class="input-medium" style="display: none"></select>
-			<select id="years" multiple class="input-small" style="display: none"></select>
-		</div>
+		<h1>Calendar drilltrhough example</h1>
+		<form id="selectors" >
+			<label>data:<select id="displays" class="input-medium" style="display: none"></select></label>
+			<label>period:<select id="years" class="input-small" style="display: none"></select></label>
+		</form>
 		<div id="decorator_top"></div>
-		<div id="vis"></div>
+		<div id="vis-container"><div id="vis"></div></div>
 		<div id="decorator_bottom"></div>
+
 	</div>
+	<a href="#"><img style="position: absolute; top: 0; right: 0; border: 0;" src="images/github.png" alt="Fork me on GitHub"></a>
 </body>
 </html>

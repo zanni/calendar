@@ -76,8 +76,8 @@ var Calendar = function(spec){
 	// legend
 	me.drawLegend = (typeof spec.drawLegend  == "boolean") ? spec.drawLegend : true;
 	me.drawHorodator = (typeof spec.drawHorodator  == "boolean") ? spec.drawHorodator : true;
-	me.drawHovered = (typeof spec.drawHovered  == "boolean") ? spec.drawHovered : true;
-	me.drawTitle = (typeof spec.drawTitle  == "boolean") ? spec.drawTitle : true;
+	// me.drawHovered = (typeof spec.drawHovered  == "boolean") ? spec.drawHovered : true;
+	// me.drawTitle = (typeof spec.drawTitle  == "boolean") ? spec.drawTitle : true;
 
 	var range = [];
 	for (var i = 0; i < me.buckets; i++) {
@@ -86,7 +86,6 @@ var Calendar = function(spec){
 	// var bucket = d3.scale.quantize().domain([calcs.min, calcs.max]).range(range)
 	me.bucket = d3.scale.quantize().domain([20, 80]).range(range);
 
-	me.decorators = [];
 
 	/******************************************************/
 	// TILES SVG NODE CREATION
@@ -100,8 +99,10 @@ var Calendar = function(spec){
 
 	
 	
-	
-	
+	me.decorators = spec.decorators || [];
+	d3.select(me.decoratorId)
+		// .style("display", "block")
+		.style("margin", "20px 0");
 	if(me.drawLegend){
 		me.legend = new Calendar.decorator.legend();
 		me.decorators.push(me.legend);
@@ -112,21 +113,13 @@ var Calendar = function(spec){
 		me.decorators.push(me.horodator);
 	}
 		
-	if(me.drawHovered){
-		me.hovered = new Calendar.decorator.hovered({
-			float: 'left'
-			, position: 'bottom'
-		});
-		me.decorators.push(me.hovered);
-	}
-	if(me.drawTitle){
-		me.title = new Calendar.decorator.title({
-			float: 'left'
-			, position: 'top'
-		});
-		me.decorators.push(me.title);
-	}
-		
+	// if(me.drawHovered){
+	// 	me.hovered = new Calendar.decorator.hovered({
+	// 		float: 'left'
+	// 		, position: 'bottom'
+	// 	});
+	// 	me.decorators.push(me.hovered);
+	// }		
 }
 
 /******************************************************/
@@ -284,10 +277,18 @@ Calendar.prototype.setLegend = function(bounds) {
 	}
 
 /******************************************************/
+// CALENDAR PROTOTYPE REDRAW LEGEND
+/******************************************************/
+Calendar.prototype.redrawLegend = function(bounds) {
+		var me = this;
+		me.legend.recolor()		
+	}
+
+/******************************************************/
 // CALENDAR PROTOTYPE SET HORODATOR
 /******************************************************/
 Calendar.prototype.setHorodator = function(start, end) {
-		var check = function(a){ return (a) ? a : ""; }
+		var check = function(a){ return (a) ? me.renderer.horodator_format(a) : ""; }
 		var me = this;
 		me.horodator.refresh(check(start),check(end));
 	}
@@ -413,10 +414,10 @@ Calendar.prototype.labelEnter = function(renderer, transform, klass){
 // DECORATOR UTILS 
 /******************************************************/
 // ENTER
-Calendar.prototype.decoratorEnter = function(id, float, position){
+Calendar.prototype.decoratorEnter = function(id, float, position, interactive){
 	var me = this;
 	return d3.select(position && (position == "bottom") ? me.decoratorBottomId : me.decoratorId)
-			.style('cursor','pointer')
+			.style('cursor',(interactive) ? 'pointer' : 'cursor')
 			.append('div')
 			.attr("id", id)
 				.style('color', "#777")

@@ -1,14 +1,39 @@
-/*********************************************************/
-//
-// Calendar.renderer.week
-// deps on:
-//			calendar.svg;
-//			calendar.duration
-//			calendar.retreiveCalcsCallback(year, week);
-//			calendar.retreiveValueCallback(year, week, d.getDay(), d.getHours())
-//			calendar.getColor(val);
-//
-/**********************************************************/
+
+// defining previous decorator in order to drill back to previous views
+var previousDecorator = function(spec){
+	var me = this;
+
+	me.id = "drillthrough_previous"
+	// theming
+	if(!spec) spec={};
+	me.float = spec.float || 'right';
+	me.position = spec.position || 'top';
+	/******************************************************/
+	// DRAW implementation
+	/******************************************************/
+	me.draw = function(){
+
+		/******************************************************/
+		// self ref is supposed to be set with generic calendar
+		// setting when calling draw func with apply
+		/******************************************************/
+		var calendar = this;
+
+		me.decorator = calendar.decoratorEnter(me.id, me.float, me.position, true);
+
+		me.decorator.on("click", function (d, i) {
+	    	calendar.eventManager.trigger("previous:click");
+	    })
+
+		me.node = calendar.decoratorTextEnter(me.decorator)
+				.text('previous')
+	}
+
+	me.clean = function(){
+		var previous = d3.select("#"+me.id).remove();
+	}
+}
+
 Calendar.renderer.drillthrough = function(spec){
 
 	// renderer self ref
@@ -19,9 +44,12 @@ Calendar.renderer.drillthrough = function(spec){
 	me.possible_display = spec.possible_display;
 	me.current_renderer = spec.current_renderer || new Calendar.renderer.year();
 
-	var previous_btn = new Calendar.decorator.previous({
-			float: 'right'
-			, position: 'bottom'
+	me.horodator_format = me.current_renderer.horodator_format
+	me.hovered_format = me.current_renderer.hovered_format
+
+	var previous_btn = new previousDecorator({
+			float: 'left'
+			, position: 'top'
 		});
 	
 	me.previous = [];
@@ -75,6 +103,7 @@ Calendar.renderer.drillthrough = function(spec){
 				
 			};
 			displayCalendar(display);
+
 		});
 
 		calendar.eventManager.on("label:month:click", function(d){

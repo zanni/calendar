@@ -26,6 +26,11 @@ Calendar.renderer.day = function(spec){
 	me.hour_label_class = spec.hour_label_class || "day_hour_label";
 	me.hour_label_format = spec.hour_label_format || d3.time.format("%Hh");
 
+	//horodator time format
+	me.horodator_format = spec.horodator_format || d3.time.format("%Y %B %d");
+	//hovered_format time format
+	me.hovered_format = spec.hovered_format || d3.time.format("%Hh:%M");
+
 	// store labels in order to clean
 	me.labels_hours;
 
@@ -37,7 +42,6 @@ Calendar.renderer.day = function(spec){
 			firstday.setTime(firstday.getTime() + (parseInt(day)) * 24*60*60*1000 - 7* 24*60*60*1000);
 			var end = new Date();
 			end.setTime(firstday.getTime() +24*60*60*1000);
-			console.log(firstday)
 			return {
 				start : firstday
 				, end : end
@@ -48,8 +52,6 @@ Calendar.renderer.day = function(spec){
 	// DRAW implementation
 	/******************************************************/
 	me.draw = function(data, year, week, day){
-		console.log(arguments)
-
 		/******************************************************/
 		// self ref is supposed to be set with generic calendar
 		// setting when calling draw func with apply
