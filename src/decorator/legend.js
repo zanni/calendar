@@ -66,7 +66,6 @@ Calendar.decorator.legend = function(spec){
 	}
 
 	me.recolor = function(){
-		console.log("mouai c cool")
 		var tiles = me.colors.selectAll('li')
 			.data(me.calendar.colorScheme, function(d, i){return i;})
 

@@ -30,7 +30,7 @@ Calendar.renderer.week = function(spec){
 	me._day_label_format = spec._day_label_format || d3.time.format("%a %d %b");
 
 	//horodator time format
-	me.horodator_format = spec.horodator_format || d3.time.format("%Y, week %w");
+	me.horodator_format = spec.horodator_format || d3.time.format("%Y, week %W");
 	//hovered_format time format
 	me.hovered_format = spec.hovered_format || d3.time.format("%d %Hh");
 

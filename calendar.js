@@ -408,7 +408,7 @@ Calendar.renderer.week = function(spec) {
     me.day_label_class = spec.day_label_class || "day_label";
     me.hour_label_class = spec.hour_label_class || "hour_label";
     me._day_label_format = spec._day_label_format || d3.time.format("%a %d %b");
-    me.horodator_format = spec.horodator_format || d3.time.format("%Y, week %w");
+    me.horodator_format = spec.horodator_format || d3.time.format("%Y, week %W");
     me.hovered_format = spec.hovered_format || d3.time.format("%d %Hh");
     me.labels_days;
     me.labels_hours;
