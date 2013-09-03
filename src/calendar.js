@@ -299,7 +299,7 @@ Calendar.prototype.setHorodator = function(start, end) {
 Calendar.prototype.setBucket = function(bounds){
 	var me = this;
 	var range = [];
-	for (var i = 0; i < me.buckets; i++) {
+	for (var i = 0; i < me.colorScheme.length; i++) {
 		range.push(i);
 	}	
 	if(bounds){

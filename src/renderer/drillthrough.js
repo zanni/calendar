@@ -70,7 +70,7 @@ Calendar.renderer.drillthrough = function(spec){
 		var displayCalendar = function(display){
 			
 			
-			
+			calendar.eventManager.trigger("drillthrough:changed", display);
 			me.current_display = display;
 			calendar.renderer = display.renderer;
 			calendar.retreiveDataCallback = display.retreiveDataCallback;
@@ -89,8 +89,10 @@ Calendar.renderer.drillthrough = function(spec){
 		};
 		me.current_display = display;
 
-		var args = arguments
+		var args = arguments;
+
 		calendar.eventManager.on("tile:click", function(d){
+
 			console.log(d)
 			if(me.previous.length == 0 ){
 				previous_btn.draw.apply(calendar);
@@ -98,10 +100,12 @@ Calendar.renderer.drillthrough = function(spec){
 			me.previous.push(me.current_display);
 			var display = {
 				renderer: new Calendar.renderer.day()
+				, agg : "quarter"
 				, retreiveDataCallback: calendar.retreiveDataClosure("quarter")
 				, arguments: [d.time.getFullYear(), calendar.time.getWeek(d.time), calendar.time.getDay(d.time)]
 				
 			};
+
 			displayCalendar(display);
 
 		});
@@ -113,6 +117,7 @@ Calendar.renderer.drillthrough = function(spec){
 			me.previous.push(me.current_display);
 			var display = {
 				renderer: new Calendar.renderer.month()
+				, agg : "day"
 				, retreiveDataCallback: calendar.retreiveDataClosure("day")
 				, arguments: [d.getFullYear(), calendar.time.getMonth(d)-1]
 			};
@@ -127,6 +132,7 @@ Calendar.renderer.drillthrough = function(spec){
 			me.previous.push(me.current_display);
 			var display = {
 				renderer: new Calendar.renderer.year()
+				, agg : "day"
 				, retreiveDataCallback: calendar.retreiveDataClosure("day")
 				, arguments: [d.getFullYear()]
 			};
@@ -141,6 +147,7 @@ Calendar.renderer.drillthrough = function(spec){
 			me.previous.push(me.current_display);
 			var display = {
 				renderer: new Calendar.renderer.week()
+				, agg : "hour"
 				, retreiveDataCallback: calendar.retreiveDataClosure("hour")
 				, arguments: [d.getFullYear(), calendar.time.getWeek(d)]
 			};
@@ -154,6 +161,7 @@ Calendar.renderer.drillthrough = function(spec){
 			me.previous.push(me.current_display);
 			var display = {
 				renderer: new Calendar.renderer.day()
+				, agg : "quarter"
 				, retreiveDataCallback: calendar.retreiveDataClosure("quarter")
 				, arguments: [d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d)]
 			};

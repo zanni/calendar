@@ -187,7 +187,7 @@ Calendar.prototype.setHorodator = function(start, end) {
 Calendar.prototype.setBucket = function(bounds) {
     var me = this;
     var range = [];
-    for (var i = 0; i < me.buckets; i++) {
+    for (var i = 0; i < me.colorScheme.length; i++) {
         range.push(i);
     }
     if (bounds) {
@@ -908,6 +908,7 @@ Calendar.renderer.drillthrough = function(spec) {
     me.draw = function() {
         var calendar = this;
         var displayCalendar = function(display) {
+            calendar.eventManager.trigger("drillthrough:changed", display);
             me.current_display = display;
             calendar.renderer = display.renderer;
             calendar.retreiveDataCallback = display.retreiveDataCallback;
@@ -932,6 +933,7 @@ Calendar.renderer.drillthrough = function(spec) {
             me.previous.push(me.current_display);
             var display = {
                 renderer: new Calendar.renderer.day(),
+                agg: "quarter",
                 retreiveDataCallback: calendar.retreiveDataClosure("quarter"),
                 arguments: [ d.time.getFullYear(), calendar.time.getWeek(d.time), calendar.time.getDay(d.time) ]
             };
@@ -944,6 +946,7 @@ Calendar.renderer.drillthrough = function(spec) {
             me.previous.push(me.current_display);
             var display = {
                 renderer: new Calendar.renderer.month(),
+                agg: "day",
                 retreiveDataCallback: calendar.retreiveDataClosure("day"),
                 arguments: [ d.getFullYear(), calendar.time.getMonth(d) - 1 ]
             };
@@ -956,6 +959,7 @@ Calendar.renderer.drillthrough = function(spec) {
             me.previous.push(me.current_display);
             var display = {
                 renderer: new Calendar.renderer.year(),
+                agg: "day",
                 retreiveDataCallback: calendar.retreiveDataClosure("day"),
                 arguments: [ d.getFullYear() ]
             };
@@ -968,6 +972,7 @@ Calendar.renderer.drillthrough = function(spec) {
             me.previous.push(me.current_display);
             var display = {
                 renderer: new Calendar.renderer.week(),
+                agg: "hour",
                 retreiveDataCallback: calendar.retreiveDataClosure("hour"),
                 arguments: [ d.getFullYear(), calendar.time.getWeek(d) ]
             };
@@ -980,6 +985,7 @@ Calendar.renderer.drillthrough = function(spec) {
             me.previous.push(me.current_display);
             var display = {
                 renderer: new Calendar.renderer.day(),
+                agg: "quarter",
                 retreiveDataCallback: calendar.retreiveDataClosure("quarter"),
                 arguments: [ d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d) ]
             };
@@ -1035,7 +1041,6 @@ Calendar.decorator.legend = function(spec) {
         me.more.text(up);
     };
     me.recolor = function() {
-        console.log("mouai c cool");
         var tiles = me.colors.selectAll("li").data(me.calendar.colorScheme, function(d, i) {
             return i;
         });
