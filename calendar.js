@@ -85,12 +85,12 @@ var Calendar = function(spec) {
     me.name = spec.name || "";
     me.interactive = typeof spec.interactive == "boolean" ? spec.interactive : true;
     me.drawLegend = typeof spec.drawLegend == "boolean" ? spec.drawLegend : true;
-    me.drawHorodator = typeof spec.drawHorodator == "boolean" ? spec.drawHorodator : true;
+    me.drawHorodator = typeof spec.drawHorodator == "boolean" ? spec.drawHorodator : false;
     var range = [];
     for (var i = 0; i < me.buckets; i++) {
         range.push(i);
     }
-    me.bucket = d3.scale.quantize().domain([ 20, 80 ]).range(range);
+    me.bucket = d3.scale.quantize().domain([ spec.downBound, spec.upBound ]).range(range);
     me.svg = d3.select(me.visId).append("svg:svg").attr("width", me.width).attr("height", me.height).append("svg:g").attr("transform", "translate(" + 0 + "," + 0 + ")");
     me.decorators = spec.decorators || [];
     d3.select(me.decoratorId).style("margin", "20px 0");
@@ -164,6 +164,7 @@ Calendar.prototype.setLegend = function(bounds) {
         return a ? a : "";
     };
     var me = this;
+    me.setBucket(bounds);
     if (bounds) {
         me.legend.refresh(check(bounds.min), check(bounds.max));
     } else {
@@ -244,7 +245,12 @@ Calendar.prototype.monthPathExit = function(data_month, monthPath) {
 };
 
 Calendar.prototype.labelEnter = function(renderer, transform, klass) {
-    return transform.append("text").classed(klass, true).attr("fill", renderer.label_fill).attr("font-size", renderer.label_fontsize);
+    var me = this;
+    var label = transform.append("text").classed(klass, true).attr("fill", renderer.label_fill).attr("font-size", renderer.label_fontsize);
+    if (me.interactive) {
+        label = label.attr("cursor", "pointer");
+    }
+    return label;
 };
 
 Calendar.prototype.decoratorEnter = function(id, float, position, interactive) {
@@ -378,7 +384,7 @@ Calendar.renderer.day = function(spec) {
         calendar.tilesExit(tiles);
         var labels_hours_transition = function(attr) {};
         me.labels_hours = svg.selectAll("." + me.hour_label_class).data(getPeriod(start, day_time, d3.time.hours));
-        calendar.labelEnter(me, me.labels_hours.enter(), me.hour_label_class).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(me.hour_label_format);
+        calendar.labelEnter(me, me.labels_hours.enter(), me.hour_label_class).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).attr("cursor", "cursor").text(me.hour_label_format);
         Calendar.animation.fadeIn(me.labels_hours.transition(), calendar.duration).attr("x", calculLabelHourPosX).attr("y", calculLabelHourPosY).text(me.hour_label_format);
         Calendar.animation.fadeOut(me.labels_hours.exit().transition(), calendar.duration);
         return calculBBox();

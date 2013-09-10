@@ -43,12 +43,12 @@
 				var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.mean);
 
 				var calendar = new Calendar( {
-					name : "Basic example"
-					, data : data
+					data : data
 					, renderer : new Calendar.renderer.year()
 					, retreiveValueCallback : valueCallback
 					, upBound : d3.max(raw.mixenergies.list, dataCallback)
 					, downBound : d3.min(raw.mixenergies.list, dataCallback)
+					, interactive : false
 					, width : $("#container").width()
 					, height: 800		
 				});
@@ -76,7 +76,13 @@
 		}
 	</script>
 	<div id="container">
-		<div id="vis"></div>
+		<h1>Calendar Basic example</h1>
+		<div id="decorator_top"></div>
+		<div id="vis-container"><div id="vis"></div></div>
+		<div id="decorator_bottom"></div>
+
 	</div>
+	<a href="https://github.com/zanni/calendar"><img style="position: absolute; top: 0; right: 0; border: 0;" src="images/github.png" alt="Fork me on GitHub"></a>
+
 </body>
 </html>

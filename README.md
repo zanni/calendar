@@ -8,18 +8,17 @@ http://bl.ocks.org/mbostock/4063318
 http://trends.truliablog.com/vis/tru247/
 
 I do not conceive nor imagine those data visualizations, I just made a tool making them more accessible
-Dependancies
+
+Dependencies
 ============
 Calendar is build upon the awesome D3.js and therefore require inclusion of both d3.js and jquery.js
 
-Exemples
+Dev 
 ============
-
-http://rte-ws.herokuapp.com/
-
-http://rte-ws.herokuapp.com/basic.html
-
-http://rte-ws.herokuapp.com/equalizer.html
+```javascript
+npm install
+make all
+```
 
 Usage
 =====

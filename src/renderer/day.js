@@ -211,6 +211,7 @@ Calendar.renderer.day = function(spec){
 		calendar.labelEnter(me, me.labels_hours.enter(),me.hour_label_class )
 			.attr("x", calculLabelHourPosX ) 
 		    .attr("y", calculLabelHourPosY ) 
+		    .attr("cursor", "cursor")
 		    .text(me.hour_label_format);
 
 		//hour labels update

@@ -1,6 +1,6 @@
 <html>
 <head>
-	<title>RTE example</title>
+	<title>Calendar drillthrough renderer example</title>
 	<link rel="stylesheet" href="css/calendar.css"></link>
 </head>
 <body>
@@ -26,53 +26,9 @@
 
 	<script type="text/javascript" src="js/rte/rte.ws.js"></script>
 	<script type="text/javascript" src="js/rte/rte.calendar.js"></script>
-	<script>
-		/* ************************** */
-		/* 
-			fill displayed select with possible data to displayed
-		*/
-		function createColorSelector(data, selected, inversed){
-			var color = d3.select("#color");
-			var color_inversed = d3.select("#color_inversed");
-			var inversed = {
-				noninversed: "Normal"
-				, inversed: "Inverse"
-			}
-			var select = color.selectAll("option")
-				.data(d3.keys(data));
 
-			
-			select.enter().append("option")
-				.text(function(d){
-					return d
-				})
-				.attr("id", function(d){ 
-					return "color_"+d
-				})
-				.attr("value", function(d){ return d});
-			select.exit().remove();
-			
-			var select_inversed = color_inversed.selectAll("option")
-				.data(d3.keys(inversed));
-			
-			select_inversed.enter().append("option")
-				.text(function(d){ return inversed[d]; })
-				.attr("id", function(d){ return "color_inversed_"+d })
-				.attr("value", function(d){ return d});
-			
-			select_inversed.exit().remove();
-			
-			$("#color").css("display", "inline");
-			$("#color_inversed").css("display", "inline");
-			
-			color.select("#color_"+selected).attr("selected", true);	
-			if(inversed){
-				color_inversed.select("#color_inversed_inversed").attr("selected", true);	
-			}
-			else{
-				color_inversed.select("#color_inversed_noninversed").attr("selected", true);
-			}
-		}
+	<script>
+
 		/* ************************** */
 		/* 
 			fill weeks select with week data
@@ -117,299 +73,97 @@
 			
 			years.select("#years_"+selected).attr("selected", true);	
 		}
-		/* ************************** */
-		/* 
-			fill weeks select with week data
-		*/
-		function createWeekSelector(data, selected){
-			var weeks = d3.select("#weeks");
-			
-			var select = weeks.selectAll("option")
-				.data(data);
-			
-			
 
-			select.enter().append("option")
-				.text(function(d){
-					return "Semaine " + d;
-				})
-				.attr("id", function(d){ return "weeks_"+d})
-				.attr("value", function(d){ return d});
-			select.exit().remove();
-			
-			$("#weeks").css("display", "inline");
-			
-			weeks.select("#weeks_"+selected).attr("selected", true);	
-		}
-		/* ************************** */
-		/* 
-			fill weeks select with week data
-		*/
-		function createMonthSelector(selected){
-			var year = new Date().getFullYear()
-			var data = d3.time.months(
-				new Date(year, 0, 1)
-				, new Date(year+1, 0, 1)
-			);
-
-			var months = d3.select("#months");
-			var select = months.selectAll("option")
-				.data(data);
-			select.enter().append("option")
-				.text(d3.time.format("%B"))
-				.attr("id", function(d,i){ return "months_"+i})
-				.attr("value", function(d,i){ return i});
-			select.exit().remove();
-			
-			$("#months").css("display", "inline");
-			
-			months.select("#months_"+selected).attr("selected", true);	
-		}
-		/* ************************** */
-		/* 
-			fill weeks select with week data
-		*/
-		function createDaySelector(){
-			var monday = d3.time.monday(new Date());
-			var sunday = new Date();
-			sunday.setTime(monday.getTime() + 7 * 24 * 60 * 60 * 1000);
-			var data = d3.time.days(monday,sunday);
-			var days = d3.select("#days");
-			
-			var select = days.selectAll("option")
-				.data(data);
-			
-			select.enter().append("option")
-				.text(d3.time.format("%A"))
-				.attr("id", function(d,i){ return "days_"+i})
-				.attr("value", function(d, i){ return i});
-			select.exit().remove();
-			
-			$("#days").css("display", "inline");
-		}
-		/* ************************** */
-		/* 
-			fill weeks select with week data
-		*/
-		function createThemeSelector(data, selected){
-			var themes = d3.select("#themes");
-			
-			var select = themes.selectAll("option")
-				.data(data);
-			
-			
-
-			select.enter().append("option")
-				.text(function(d){
-					return d;
-				})
-				.attr("id", function(d){ return "theme_"+d})
-				.attr("value", function(d){ return d});
-			select.exit().remove();
-			
-			$("#themes").css("display", "inline");
-			
-			themes.select("#theme_"+selected).attr("selected", true);	
-		}
 
 		$.ready = function(){
+			
 			var rte_ws = new RteWS({
-				url : "192.168.1.101:8080"
+				url : "http://192.168.1.101:8080/rte-app"
 			});
 
 			var possible_displays = new RteCalendar({
 				rte_ws : rte_ws
 			});
 
-			/* ************************** */
-			/* 
-				DEFINE INITIAL VIEW
-			*/
-			var selectedColorScheme = 'RdYlGn';
-			var selectedColorSchemeInverse = true;
-			var selectedBuckets = 9;
-			var selected_year = 2013
-			var selected_week = 22
-			var selected_month = 5
-			var selected_display = "taux_co2";
-			var themes = ["day", "week", "month", "year"];
-			var displays = ["taux_co2", "consommation", "taux_co2_consommation", "nucleaire", "nrj_ren", "fossile", "all"];
-			var selected_theme = "year";
-			var years = [2011, 2012, 2013];
-			var weeks = [];
-			for(var i=0;i<53;i++) weeks[i]=i;
 
-			/* ************************** */
-			/* 
-				INJECT DATA INTO SELECTORS 
-			*/
-			createColorSelector(
-				colorbrewer
-				, selectedColorScheme
-				, selectedColorSchemeInverse
-			);
-			createYearSelector(years, selected_year);
-			createWeekSelector(weeks, selected_week);
-			createMonthSelector(selected_month);
-			createDaySelector();
-			createThemeSelector(themes, selected_theme);
+
+			var selected_display = "taux_co2";
+			var displays = ["taux_co2", "consommation", "taux_co2_consommation", "nucleaire", "nrj_ren", "fossile", "all"];
+		
+
 			createDisplaySelector(displays, selected_display);
+			
 
 			var display = possible_displays[selected_display];
 			var agg = "day";
+			var selected_year = 2011;
+			var years = [2010,2011, 2012, 2013];
+			createYearSelector(years, selected_year);
 
 			/* ************************** */
 			/* 
 				CALENDAR INITIALIZATION 
 			*/
 			var calendar = new Calendar( {
-				name: "Co2 produit par kWh consommé (g)"
-				, renderer : new Calendar.renderer.year()
-				// , buckets : display.buckets
+				name: display.name
+				, renderer : new Calendar.renderer.drillthrough()
+				, decorators: [
+					new Calendar.decorator.hovered({float:'right'})
+				]
+				, drawHorodator: true
 				, colorScheme : display.colorScheme
-				// , colorSchemeInverse : display.colorSchemeInverse
-				, retreiveDataCallback : display.rte_datagrab_closure(agg, display.fields)
+				, retreiveDataClosure : display.rte_datagrab_closure
+				, retreiveDataCallback : display.rte_datagrab_closure(agg)
 				, retreiveValueCallback : display.rte_closure
 				, width : $("#container").width()
-				, height: 800		
+				, height: 600		
 			});
 
-			/* ************************** */
-			/* 
-				REFRESH SCREEN UTIL METHOD
-			*/
-			function refresh(switch_renderer){
+			var current_displayed = {};
+			current_displayed.arguments = [];
+			current_displayed.arguments[0] = selected_year;
+			current_displayed.agg = "day";
+
+			calendar.createTiles(selected_year);
+
+
+			$("#years, #displays").change(function(e){
+				var selected_display = $("#displays").attr("value");
 				var years = $.map( $('#years option:selected'),
                   			function(e) { return parseInt($(e).val()) } );
 
-				var months = $.map( $('#months option:selected'),
-                  			function(e) { return parseInt($(e).val()); } );
-
-				var selected_display = $("#displays").attr("value");
 				var display = possible_displays[selected_display];
+				calendar.name = display.name;
+				calendar.colorScheme = display.colorScheme;
+				calendar.colorSchemeInverse = display.colorSchemeInverse;
+				calendar.retreiveValueCallback = display.rte_closure;
+				calendar.retreiveDataClosure = display.rte_datagrab_closure;
+				calendar.retreiveDataCallback = display.rte_datagrab_closure(current_displayed.agg);
+				console.log(current_displayed)
+				current_displayed.arguments[0] = years[0];
 
-				
-				switch($("#themes").attr("value")){
-					case 'day':
-						agg="hour";
-						calendar.retreiveDataCallback = possible_displays[selected_display].rte_datagrab_closure(agg, display.fields);
-						if(switch_renderer)
-							calendar.renderer = new Calendar.renderer.day();
+				calendar.createTiles.apply(calendar, current_displayed.arguments);
 
-						calendar.createTiles(
-							d3.max(years)
-							, $("#weeks").attr("value")
-							, $("#days").attr("value")
-						);
-						break;
-					case 'week':
-						agg="hour";
-						calendar.retreiveDataCallback = possible_displays[selected_display].rte_datagrab_closure(agg, display.fields);
-						if(switch_renderer)
-							calendar.renderer = new Calendar.renderer.week();
-						calendar.createTiles(
-							d3.max(years)
-							, $("#weeks").attr("value")
-						);
-						break;
-					case 'month':
-						agg="day";
-						calendar.retreiveDataCallback = possible_displays[selected_display].rte_datagrab_closure(agg, display.fields);
-						if(switch_renderer)
-							calendar.renderer = new Calendar.renderer.month();
-						calendar.createTiles(
-							d3.max(years)
-							, months
-						);
-						break;
-					case 'year':
-						agg="day";
-						calendar.retreiveDataCallback = possible_displays[selected_display].rte_datagrab_closure(agg, display.fields);
-						if(switch_renderer)
-							calendar.renderer = new Calendar.renderer.year();
-						calendar.createTiles(
-							years
-						);
-						break;
-					default:
-						break;
-				}
-
-			}
-
-			/* ************************** */
-			/* 
-				DISPLAY INITIAL VIEW 
-			*/
-			refresh();
-
-			/* ************************** */
-			/* 
-				EVENTS DEFINITION
-			*/
-			$("#themes").change(function(e){
-				refresh(true);
+				calendar.redrawLegend();
 			});
 
-			$("#color, #color_inversed").change(function(e){
-				// calendar.colorScheme = $("#color").attr("value");
-				// calendar.colorSchemeInverse = ($("#color_inversed").attr("value") == "inversed")? true : false;
-				var inversed = ($("#color_inversed").attr("value") == "inversed")? true : false;
-				calendar.colorScheme = getColorBrewerScheme($("#color").attr("value"), 9, inversed);
-				// calendar.createLegend();
-				refresh();
+			calendar.eventManager.on("drillthrough:changed", function(displayed){
+				current_displayed = displayed;
 			});
-
-			$("#weeks, #years, #months, #days").change(function(e){
-				refresh();
-			});
-
-			$("#displays").change(function(e){
-				var selected_display = $("#displays").attr("value");
-
-				var display = possible_displays[selected_display];
-
-				calendar.name = possible_displays[selected_display].name;
-
-				calendar.colorScheme = display.colorScheme
-				calendar.colorSchemeInverse = display.colorSchemeInverse
-
-				calendar.retreiveValueCallback = possible_displays[selected_display].rte_closure
-				calendar.retreiveDataCallback = possible_displays[selected_display].rte_datagrab_closure
-				
-
-				refresh();
-			});
-		
-		
+	
 		}
 	</script>
 	<div id="container">
-		<div id="header">
-			<h1 id="title"></h1>	
-			<div id="legend">
-				<div>
-					<ul>
-					</ul>
-					<p class="more"></p>
-					<p class="less"></p>
-				</div>
-			</div>
-		</div>
-		<div id="selectors" >
-			<select id="displays" class="input-medium" style="display: none"></select>
-			<select id="themes" class="input-medium" style="display: none"></select>
-			<select id="years" multiple class="input-small" style="display: none"></select>
-			<select id="months" multiple class="input-small" style="display: none"></select>
-			<select id="weeks" class="input-medium" style="display: none"></select>
-			<select id="days" class="input-medium" style="display: none"></select>
-			<select id="color" class="input-small" style="display: none"></select>
-			<select id="color_inversed" class="input-small" style="display: none"></select>
-		</div>
-		
-		<div id="vis"></div>
-		
-		
+		<h1>RTE data visualization</h1>
+		<form id="selectors" >
+			<label>data:<select id="displays" class="input-medium" style="display: none"></select></label>
+			<label>period:<select id="years" class="input-small" style="display: none"></select></label>
+		</form>
+		<div id="decorator_top"></div>
+		<div id="vis-container"><div id="vis"></div></div>
+		<div id="decorator_bottom"></div>
+
 	</div>
+	<a href="https://github.com/zanni/calendar"><img style="position: absolute; top: 0; right: 0; border: 0;" src="images/github.png" alt="Fork me on GitHub"></a>
 </body>
 </html>

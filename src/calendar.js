@@ -75,7 +75,7 @@ var Calendar = function(spec){
 	me.interactive = (typeof spec.interactive  == "boolean") ? spec.interactive : true;
 	// legend
 	me.drawLegend = (typeof spec.drawLegend  == "boolean") ? spec.drawLegend : true;
-	me.drawHorodator = (typeof spec.drawHorodator  == "boolean") ? spec.drawHorodator : true;
+	me.drawHorodator = (typeof spec.drawHorodator  == "boolean") ? spec.drawHorodator : false;
 	// me.drawHovered = (typeof spec.drawHovered  == "boolean") ? spec.drawHovered : true;
 	// me.drawTitle = (typeof spec.drawTitle  == "boolean") ? spec.drawTitle : true;
 
@@ -84,7 +84,7 @@ var Calendar = function(spec){
 		range.push(i);
 	}	
 	// var bucket = d3.scale.quantize().domain([calcs.min, calcs.max]).range(range)
-	me.bucket = d3.scale.quantize().domain([20, 80]).range(range);
+	me.bucket = d3.scale.quantize().domain([spec.downBound, spec.upBound]).range(range);
 
 
 	/******************************************************/
@@ -111,15 +111,9 @@ var Calendar = function(spec){
 	if(me.drawHorodator){
 		me.horodator = new Calendar.decorator.horodator();
 		me.decorators.push(me.horodator);
-	}
-		
-	// if(me.drawHovered){
-	// 	me.hovered = new Calendar.decorator.hovered({
-	// 		float: 'left'
-	// 		, position: 'bottom'
-	// 	});
-	// 	me.decorators.push(me.hovered);
-	// }		
+	}		
+
+	
 }
 
 /******************************************************/
@@ -266,8 +260,10 @@ Calendar.prototype.draw = function(data){
 // CALENDAR PROTOTYPE SET LEGEND
 /******************************************************/
 Calendar.prototype.setLegend = function(bounds) {
+
 		var check = function(a){ return (a) ? a : ""; }
 		var me = this;
+		me.setBucket(bounds);
 		if(bounds){
 			me.legend.refresh(check(bounds.min),check(bounds.max));
 		}
@@ -404,10 +400,15 @@ Calendar.prototype.monthPathExit = function(data_month, monthPath) {
 /******************************************************/
 // ENTER
 Calendar.prototype.labelEnter = function(renderer, transform, klass){
-	return transform.append("text")
+	var me = this;
+	var label = transform.append("text")
 				.classed(klass, true)
 				.attr("fill", renderer.label_fill)
 				.attr("font-size", renderer.label_fontsize);
+	if(me.interactive){
+		label = label.attr("cursor", "pointer");
+	}
+	return label;
 }
 
 /******************************************************/

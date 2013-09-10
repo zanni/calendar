@@ -15,8 +15,6 @@
 <script type="text/javascript" src="../src/decorator/legend.js"></script>
 <script type="text/javascript" src="../src/decorator/horodator.js"></script>
 <script type="text/javascript" src="../src/decorator/hovered.js"></script>
-<script type="text/javascript" src="../src/decorator/title.js"></script>
-<script type="text/javascript" src="../src/decorator/drillthrough_previous.js"></script>
 <script type="text/javascript" src="../src/renderer/day.js"></script>
 <script type="text/javascript" src="../src/renderer/week.js"></script>
 <script type="text/javascript" src="../src/renderer/month.js"></script>
@@ -28,18 +26,28 @@ body {
 	margin		: 0;
 	overflow	: hidden;
 }
+h1 {
+    color	: white;
+  }
+#vis {
+    background	: black;
+  }
 </style>
 <body><script>
 
 	var fpsDecorator = function(spec){
 		var me = this;
 		me.id = "fps_decorator";
+		// theming
+		if(!spec) spec={};
+		me.float = spec.float || 'left';
+		me.position = spec.position || 'top';
 		var drawn = false;
 		me.draw = function(){
 			var calendar = this;
 			if(!drawn) drawn = true;
 			else return;
-			me.decorator = calendar.decoratorEnter(me.id);
+			me.decorator = calendar.decoratorEnter(me.id,me.float, me.position);
 			me.node = calendar.decoratorTextEnter(me.decorator)
 				.text("0 fps");
 		}
@@ -65,7 +73,7 @@ body {
 				me.tiles_data.push({x:i,y:j});
 			}
 		}
-		me.fps = new fpsDecorator();
+		me.fps = new fpsDecorator({position:'bottom'});
 		var time = new Date().getTime();
 		me.draw = function(data){
 
@@ -94,9 +102,10 @@ body {
 						me.tiles_data, function(d){return d.x+"-"+d.y+"-"+d.color}
 					)
 			// tiles enter		
+			var margin_top = 20;
 			calendar.tilesEnter(tiles)
 					.attr("x", function(d){ return d.x * (me.cell_size+me.space_between_tiles)})
-		    		.attr("y", function(d){ return d.y * (me.cell_size+me.space_between_tiles)})
+		    		.attr("y", function(d){ return margin_top+d.y * (me.cell_size+me.space_between_tiles)})
 				    .attr("width", me.cell_size+"px")
 			    	.attr("height", me.cell_size+"px")
 			    	.attr("fill",function(d){ return d.color; })
@@ -138,6 +147,7 @@ body {
 		// load sound.wav and play it
 		sound.load('mokup/techno.mp3', function(sound){
 			sound.play();
+
 		});
 		var calendar = new Calendar( {
 			name: "Equalizer"
@@ -153,7 +163,7 @@ body {
 				return data[d.x];
 			}
 			, width : $("#container").width()
-			, height: 800	
+			, height: 200	
 			, duration: 0
 			, drawLegend: false
 			, drawHorodator: false
@@ -186,12 +196,13 @@ body {
 		})();
 	}
 
-	
-	
 </script>
 <div id="container">
+	<h1>Calendar Custom Renderer/Decorator example</h1>
 	<div id="decorator_top"></div>
-	<div id="vis"></div>
+	<div id="vis" ></div>
+	<div id="decorator_bottom"></div>
 
 </div>
+<a href="https://github.com/zanni/calendar"><img style="position: absolute; top: 0; right: 0; border: 0;" src="images/github.png" alt="Fork me on GitHub"></a>
 </body>
