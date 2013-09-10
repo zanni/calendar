@@ -1,13 +1,13 @@
 calendar.js
 ==================
 
-Calendar is a javascript library intended to facilitate creation of those kind of visualization:
+Calendar is a javascript library intended to facilitate creation of those kind of visualizations:
 
 http://bl.ocks.org/mbostock/4063318
 
 http://trends.truliablog.com/vis/tru247/
 
-I do not conceive nor imagine those data visualizations, I just made a tool making them more accessible
+I did not conceive nor imagine those data visualizations, I just made a tool making them more accessible
 
 Dependencies
 ============
