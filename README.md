@@ -2,9 +2,12 @@ calendar.js
 ==================
 
 Calendar is a javascript library intended to facilitate creation of those kind of visualization:
+
 http://bl.ocks.org/mbostock/4063318
+
 http://trends.truliablog.com/vis/tru247/
 
+I do not conceive nor imagine those data visualizations, I just made a tool making them more accessible
 Dependancies
 ============
 Calendar is build upon the awesome D3.js and therefore require inclusion of both d3.js and jquery.js
@@ -13,7 +16,9 @@ Exemples
 ============
 
 http://rte-ws.herokuapp.com/
+
 http://rte-ws.herokuapp.com/basic.html
+
 http://rte-ws.herokuapp.com/equalizer.html
 
 Usage
@@ -34,7 +39,7 @@ d3.json("mydata.json", function(raw){
     // parse raw data
     data = parser(raw);
     // Create valueCallback to automatically retreive and aggregate data whatever 
-    // 
+    // which renderer used
     var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.mean);
     var calendar = new Calendar( {
         name : "Basic example"
@@ -42,7 +47,6 @@ d3.json("mydata.json", function(raw){
         , data : data
         // defining data renderer
         , renderer : new Calendar.renderer.year()
-        
         , retreiveValueCallback : valueCallback
         , upBound : d3.max(raw, dataCallback)
         , downBound : d3.min(raw, dataCallback)
@@ -55,10 +59,12 @@ d3.json("mydata.json", function(raw){
 
 ```
 
-Different renderers can be used, arguments given to calendar.createTiles() depends on which renderer is loaded
+Different renderers can be used, arguments given to calendar.createTiles() depends on which renderer is loaded :
+
     - new Calendar.renderer.year() | calendar.createTiles(year);
     - new Calendar.renderer.month() | calendar.createTiles(year, month);
     - new Calendar.renderer.week() | calendar.createTiles(year, weekOfYear);
     - new Calendar.renderer.day() | calendar.createTiles(year, weekOfYear, dayOfWeek);
+
 
 
