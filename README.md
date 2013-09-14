@@ -13,9 +13,20 @@ Dependencies
 ============
 Calendar is build upon the awesome D3.js and therefore require inclusion of both d3.js and jquery.js
 
+Examples
+============
+
+http://rte-ws.herokuapp.com/
+
+http://rte-ws.herokuapp.com/basic.html
+
+http://rte-ws.herokuapp.com/equalizer.html
+
+
 Dev 
 ============
 ```javascript
+// install smash and uglifyjs
 npm install
 make all
 ```
