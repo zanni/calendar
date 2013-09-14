@@ -2,8 +2,14 @@
 <head>
 	<title>Basic example</title>
 	<link rel="stylesheet" href="css/calendar.css"></link>
+
 </head>
 <body>
+
+	<!-- highlight JS -->
+	<link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/default.min.css">
+	<script src="http://yandex.st/highlightjs/7.3/highlight.min.js"></script>
+
 	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="js/d3/d3.min.js"></script>
 	<script type="text/javascript" src="js/colorbrewer/colorbrewer.js"></script>
@@ -23,64 +29,67 @@
 	<script type="text/javascript" src="../src/renderer/month.js"></script>
 	<script type="text/javascript" src="../src/renderer/year.js"></script>
 	<script type="text/javascript" src="../src/renderer/drillthrough.js"></script>
-	<script>
+	<script id="code">
+$.ready = function(){
+	// Create time series specialization callbacks
+	var timeCallback = function(d){ return new Date(d.date); };
+	var dataCallback = function(d){ return d.tauxDeCo2;  };
 
-		$.ready = function(){
-			// Create time series specialization callbacks
-			var timeCallback = function(d){ return new Date(d.date); };
-			var dataCallback = function(d){ return d.tauxDeCo2;  };
+	// Create time serie parser
+	var parser = Calendar.data.create(timeCallback);
 
-			// Create time serie parser
-			var parser = Calendar.data.create(timeCallback);
+	// synchronous data loading
+	d3.json("mokup/rte.json", function(raw){
+		// parse raw data
+		data = parser(raw.mixenergies.list);
 
-			// synchronous data loading
-			d3.json("mokup/rte.json", function(raw){
-				// parse raw data
-				data = parser(raw.mixenergies.list);
+		console.log(data);
+		// Create valueCallback
+		var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.mean);
 
-				console.log(data);
-				// Create valueCallback
-				var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.mean);
+		var calendar = new Calendar( {
+			data : data
+			, renderer : new Calendar.renderer.year()
+			, retreiveValueCallback : valueCallback
+			, upBound : d3.max(raw.mixenergies.list, dataCallback)
+			, downBound : d3.min(raw.mixenergies.list, dataCallback)
+			, interactive : false
+			, width : $("#container").width()
+			, height: 350		
+		});
 
-				var calendar = new Calendar( {
-					data : data
-					, renderer : new Calendar.renderer.year()
-					, retreiveValueCallback : valueCallback
-					, upBound : d3.max(raw.mixenergies.list, dataCallback)
-					, downBound : d3.min(raw.mixenergies.list, dataCallback)
-					, interactive : false
-					, width : $("#container").width()
-					, height: 800		
-				});
+		calendar.createTiles(2013);
 
-				calendar.createTiles(2013);
+		setTimeout(function(){
+			calendar.renderer = new Calendar.renderer.month();
+			calendar.createTiles(2013, [4,5,6]);
+		},2000);
 
-				setTimeout(function(){
-					calendar.renderer = new Calendar.renderer.month();
-					calendar.createTiles(2013, [4,5,6]);
-				},2000);
+		setTimeout(function(){
+			calendar.renderer = new Calendar.renderer.week();
+			calendar.createTiles(2013, 23);
+		},4000);
+		setTimeout(function(){
+			calendar.renderer = new Calendar.renderer.week();
+			calendar.createTiles(2013, 22);
+		},6000);
+		setTimeout(function(){
+			calendar.renderer = new Calendar.renderer.day();
+			calendar.createTiles(2013, 23, 0);
+		},6000);
+	});
 
-				setTimeout(function(){
-					calendar.renderer = new Calendar.renderer.week();
-					calendar.createTiles(2013, 23);
-				},4000);
-				setTimeout(function(){
-					calendar.renderer = new Calendar.renderer.week();
-					calendar.createTiles(2013, 22);
-				},6000);
-				setTimeout(function(){
-					calendar.renderer = new Calendar.renderer.day();
-					calendar.createTiles(2013, 23, 0);
-				},6000);
-			})
-		}
+	// code highlight
+	$('pre code').text($('script#code').text());
+	$('pre code').each(function(i, e) {hljs.highlightBlock(e)});
+}
 	</script>
 	<div id="container">
 		<h1>Calendar Basic example</h1>
 		<div id="decorator_top"></div>
 		<div id="vis-container"><div id="vis"></div></div>
 		<div id="decorator_bottom"></div>
-
+		<pre><code class="javascript"></code></pre>
 	</div>
 	<a href="https://github.com/zanni/calendar"><img style="position: absolute; top: 0; right: 0; border: 0;" src="images/github.png" alt="Fork me on GitHub"></a>
 

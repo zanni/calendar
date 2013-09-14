@@ -4,6 +4,10 @@
 	<link rel="stylesheet" href="css/calendar.css"></link>
 </head>
 <body>
+	<!-- highlight JS -->
+	<link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/default.min.css">
+	<script src="http://yandex.st/highlightjs/7.3/highlight.min.js"></script>
+
 	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
 	<script type="text/javascript" src="js/d3/d3.min.js"></script>
 	<script type="text/javascript" src="js/colorbrewer/colorbrewer.js"></script>
@@ -27,53 +31,55 @@
 	<script type="text/javascript" src="js/rte/rte.ws.js"></script>
 	<script type="text/javascript" src="js/rte/rte.calendar.js"></script>
 
-	<script>
-		$.ready = function(){
-			
-			var rte_ws = new RteWS({
-				url : "http://192.168.1.101:8080/rte-app"
-			});
-
-			var possible_displays = new RteCalendar({
-				rte_ws : rte_ws
-			});
-
-
-
-			var selected_display = "taux_co2";
-			var display = possible_displays[selected_display];
-
-			/* ************************** */
-			/* 
-				CALENDAR INITIALIZATION 
-			*/
-			var calendar = new Calendar( {
-				name: display.name
-				, renderer : new Calendar.renderer.drillthrough()
-				, decorators: [
-					new Calendar.decorator.hovered({float:'right'})
-				]
-				, drawHorodator: true
-				, colorScheme : display.colorScheme
-				, retreiveDataClosure : display.rte_datagrab_closure
-				, retreiveDataCallback : display.rte_datagrab_closure("day")
-				, retreiveValueCallback : display.rte_closure
-				, width : $("#container").width()
-				, height: 600		
-			});
-
-			calendar.createTiles(2011);
-
-
+	<script id="code">
+$.ready = function(){
 	
-		}
+	var rte_ws = new RteWS({
+		url : "http://192.168.1.101:8080/rte-app"
+	});
+
+	var possible_displays = new RteCalendar({
+		rte_ws : rte_ws
+	});
+
+
+
+	var selected_display = "taux_co2";
+	var display = possible_displays[selected_display];
+
+	/* ************************** */
+	/* 
+		CALENDAR INITIALIZATION 
+	*/
+	var calendar = new Calendar( {
+		name: display.name
+		, renderer : new Calendar.renderer.drillthrough()
+		, decorators: [
+			new Calendar.decorator.hovered({float:'right'})
+		]
+		, drawHorodator: true
+		, colorScheme : display.colorScheme
+		, retreiveDataClosure : display.rte_datagrab_closure
+		, retreiveDataCallback : display.rte_datagrab_closure("day")
+		, retreiveValueCallback : display.rte_closure
+		, width : $("#container").width()
+		, height: 400		
+	});
+
+	calendar.createTiles(2011);
+
+	// code highlight
+	$('pre code').text($('script#code').text());
+	$('pre code').each(function(i, e) {hljs.highlightBlock(e)});
+
+}
 	</script>
 	<div id="container">
 		<h1>Calendar drillthrough example</h1>
 		<div id="decorator_top"></div>
 		<div id="vis-container"><div id="vis"></div></div>
 		<div id="decorator_bottom"></div>
-
+		<pre><code class="javascript"></code></pre>
 	</div>
 	<a href="https://github.com/zanni/calendar"><img style="position: absolute; top: 0; right: 0; border: 0;" src="images/github.png" alt="Fork me on GitHub"></a>
 </body>

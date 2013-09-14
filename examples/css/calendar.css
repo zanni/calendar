@@ -61,3 +61,10 @@ body {
     left: 0;
     top: 0;
   }
+
+  pre code{
+	width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 10px
+}
