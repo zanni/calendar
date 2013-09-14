@@ -122,9 +122,11 @@ var _createTiles = function() {
         var scale = decal = decal_h = 0;
         if (bbox.width > me.width) {
             scale = me.width / bbox.width;
+            decal_h = (me.height - bbox.height) / 2;
         } else {
             scale = 1;
             decal = (me.width - bbox.width) / 2;
+            console.log(decal_h);
         }
         me.svg.transition().duration(me.duration).attr("transform", "translate(" + decal + "," + decal_h + ")" + "scale(" + scale + ")");
     }
