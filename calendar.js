@@ -84,6 +84,7 @@ var Calendar = function(spec) {
     me.downBound = spec.downBound || 20;
     me.name = spec.name || "";
     me.interactive = typeof spec.interactive == "boolean" ? spec.interactive : true;
+    me.adaptiveHeight = typeof spec.adaptiveHeight == "boolean" ? spec.adaptiveHeight : false;
     me.drawLegend = typeof spec.drawLegend == "boolean" ? spec.drawLegend : true;
     me.drawHorodator = typeof spec.drawHorodator == "boolean" ? spec.drawHorodator : false;
     var range = [];
@@ -91,7 +92,7 @@ var Calendar = function(spec) {
         range.push(i);
     }
     me.bucket = d3.scale.quantize().domain([ spec.downBound, spec.upBound ]).range(range);
-    me.svg = d3.select(me.visId).append("svg:svg").attr("width", me.width).attr("height", me.height).append("svg:g").attr("transform", "translate(" + 0 + "," + 0 + ")");
+    me.svg = d3.select(me.visId).append("svg:svg").attr("width", me.width).attr("height", me.adaptiveHeight ? 0 : me.height).append("svg:g").attr("transform", "translate(" + 0 + "," + 0 + ")");
     me.decorators = spec.decorators || [];
     d3.select(me.decoratorId).style("margin", "20px 0");
     if (me.drawLegend) {
@@ -113,22 +114,47 @@ var _createTiles = function() {
             me.decorators[i].draw.apply(me);
         }
     }
+    var renderer_switched = false;
     if (me.current_renderer && me.current_renderer.clean && me.renderer != me.current_renderer) {
         me.current_renderer.clean.apply(me, arguments);
         me.current_renderer = me.renderer;
+        renderer_switched = true;
     }
     var bbox = me.current_renderer.draw.apply(me, arguments);
-    if (bbox && bbox.width) {
-        var scale = decal = decal_h = 0;
-        if (bbox.width > me.width) {
-            scale = me.width / bbox.width;
-            decal_h = (me.height - bbox.height) / 2;
-        } else {
+    if (bbox && bbox.width && bbox.height) {
+        var scale = decal_w = decal_h = 0;
+        var delta_h = me.height - bbox.height;
+        if (me.adaptiveHeight) delta_h = 1;
+        var delta_w = me.width - bbox.width;
+        if (delta_h > 0 && delta_w > 0) {
             scale = 1;
-            decal = (me.width - bbox.width) / 2;
-            console.log(decal_h);
+            decal_h = (me.height - bbox.height) / 2;
+            decal_w = (me.width - bbox.width) / 2;
+        } else if (delta_h < 0 && delta_w > 0) {
+            scale = me.height / bbox.height;
+            decal_w = (me.width - scale * bbox.width) / 2;
+        } else if (delta_h > 0 && delta_w < 0) {
+            scale = me.width / bbox.width;
+            decal_h = (me.height - scale * bbox.height) / 2;
+        } else if (delta_h < 0 && delta_w < 0) {
+            if (delta_h < delta_w) {
+                scale = me.height / bbox.height;
+                decal_w = (me.width - scale * bbox.width) / 2;
+            } else {
+                scale = me.width / bbox.width;
+                decal_h = (me.height - scale * bbox.height) / 2;
+            }
         }
-        me.svg.transition().duration(me.duration).attr("transform", "translate(" + decal + "," + decal_h + ")" + "scale(" + scale + ")");
+        if (me.adaptiveHeight) {
+            decal_h = 0;
+            var height = scale * bbox.height;
+            d3.select(me.visId + " svg").attr("height", height);
+        }
+        if (renderer_switched) {
+            me.svg.transition().duration(me.duration).attr("transform", "translate(" + decal_w + "," + decal_h + ")" + "scale(" + scale + ")");
+        } else {
+            me.svg.attr("transform", "translate(" + decal_w + "," + 0 + ")" + "scale(" + scale + ")");
+        }
     }
 };
 
@@ -366,7 +392,7 @@ Calendar.renderer.day = function(spec) {
         var calculBBox = function() {
             return {
                 width: 16 * (me.space_between_row + me.cell_size + me.space_between_tiles) + 3 * me.space_between_row + me.tiles_left_decal,
-                height: 6 * (me.cell_size + me.space_between_tiles)
+                height: 6 * (me.cell_size + me.space_between_tiles) + 30
             };
         };
         var day_time = 24 * 60 * 60 * 1e3;
@@ -480,7 +506,7 @@ Calendar.renderer.week = function(spec) {
         var calculBBox = function() {
             return {
                 width: me.tiles_left_decal + 24 * (me.cell_size + me.space_between_tiles),
-                height: 7 * (me.cell_size + me.space_between_tiles) + me.hour_label_top_decal
+                height: 7 * (me.cell_size + me.space_between_tiles) + me.hour_label_top_decal + 40
             };
         };
         var day_time = 24 * 60 * 60 * 1e3;
@@ -628,7 +654,7 @@ Calendar.renderer.month = function(spec) {
             });
             return {
                 width: me.tiles_left_decal + j * (me.cell_size + me.space_between_tiles) + delcalages * me.cell_size + 25,
-                height: me.tiles_top_decal + 7 * (me.cell_size + me.space_between_tiles)
+                height: me.tiles_top_decal + 7 * (me.cell_size + me.space_between_tiles) + 100
             };
         };
         function monthPath(t0) {
@@ -743,7 +769,9 @@ Calendar.renderer.year = function(spec) {
         var data_week_label;
         var first_year;
         var year_index = [];
+        var nb_year = 0;
         if (year instanceof Array) {
+            nb_year = year.length;
             data_year = [];
             data_year_label = [];
             data_month = [];
@@ -761,6 +789,7 @@ Calendar.renderer.year = function(spec) {
                 data_week_label = data_week_label.concat(getPeriod(year[i], Calendar.data.firstDayOfWeek));
             }
         } else {
+            nb_year = 1;
             first_year = year;
             year_index[year] = 0;
             data_year = getPeriod(year, d3.time.days);
@@ -797,7 +826,7 @@ Calendar.renderer.year = function(spec) {
             var j = 0;
             return {
                 width: 53 * (me.cell_size + me.space_between_tiles) + me.tiles_left_decal + me.margin + 2 * me.cell_size,
-                height: me.margin + me.tiles_top_decal + 7 * (me.cell_size + me.space_between_tiles)
+                height: nb_year * year_height
             };
         };
         function monthPath(t0) {
@@ -1157,6 +1186,72 @@ Calendar.data = {
             var data = nest.map(data);
             return data;
         };
+    },
+    merge: function(collection, tomerge_data, update) {
+        if (update == null) update = true;
+        function getKeys(obj, filter) {
+            var name, result = [];
+            for (name in obj) {
+                if ((!filter || filter.test(name)) && obj.hasOwnProperty(name)) {
+                    result[result.length] = parseInt(name);
+                }
+            }
+            return result;
+        }
+        function intersection_destructive(a, b) {
+            var result = new Array();
+            while (a.length > 0 && b.length > 0) {
+                if (a[0] < b[0]) {
+                    a.shift();
+                } else if (a[0] > b[0]) {
+                    b.shift();
+                } else {
+                    result.push(a.shift());
+                    b.shift();
+                }
+            }
+            return result;
+        }
+        function intersect_safe(a, b) {
+            var ai = 0, bi = 0;
+            var result = new Array();
+            while (ai < a.length && bi < b.length) {
+                if (a[ai] < b[bi]) {
+                    ai++;
+                } else if (a[ai] > b[bi]) {
+                    bi++;
+                } else {
+                    result.push(a[ai]);
+                    ai++;
+                    bi++;
+                }
+            }
+            return result;
+        }
+        function merge_options(obj1, obj2) {
+            var obj3 = {};
+            for (var attrname in obj1) {
+                obj3[attrname] = obj1[attrname];
+            }
+            for (var attrname in obj2) {
+                obj3[attrname] = obj2[attrname];
+            }
+            return obj3;
+        }
+        var _merge = function(arrayA, arrayB, i) {
+            var el_a = getKeys(arrayA);
+            var el_b = getKeys(arrayB);
+            el_a.sort();
+            el_b.sort();
+            var intersec = intersection_destructive(el_a, el_b);
+            for (var i in intersec) {
+                var el = _merge(arrayA[intersec[i]], arrayB[intersec[i]]);
+                arrayB[intersec[i]] = el;
+            }
+            var safe_merge = merge_options(arrayA, arrayB);
+            return safe_merge;
+        };
+        return _merge(collection, tomerge_data);
     },
     bounds: function(valueCallback) {
         return function(data) {
