@@ -1,13 +1,15 @@
 <html>
 <head>
 	<title>Basic example</title>
+	<!-- highlight JS -->
+	<link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/default.min.css">
 	<link rel="stylesheet" href="css/calendar.css"></link>
+
 
 </head>
 <body>
 
 	<!-- highlight JS -->
-	<link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/default.min.css">
 	<script src="http://yandex.st/highlightjs/7.3/highlight.min.js"></script>
 
 	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
@@ -43,7 +45,6 @@ $.ready = function(){
 		// parse raw data
 		data = parser(raw.mixenergies.list);
 
-		console.log(data);
 		// Create valueCallback
 		var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.mean);
 
@@ -54,8 +55,9 @@ $.ready = function(){
 			, upBound : d3.max(raw.mixenergies.list, dataCallback)
 			, downBound : d3.min(raw.mixenergies.list, dataCallback)
 			, interactive : false
+			, drawLegend: false
 			, width : $("#container").width()
-			, height: 350		
+			, height: 350
 		});
 
 		calendar.createTiles(2013);

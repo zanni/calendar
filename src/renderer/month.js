@@ -161,7 +161,7 @@ Calendar.renderer.month = function(spec){
 			weeks.map(function(){j++;})
 			return {
 				width : me.tiles_left_decal + (j) * (me.cell_size + me.space_between_tiles) + delcalages *me.cell_size + 25
-				, height : me.tiles_top_decal + 7 * (me.cell_size + me.space_between_tiles)
+				, height : me.tiles_top_decal + 7 * (me.cell_size + me.space_between_tiles) + 100
 			}
 		}
 

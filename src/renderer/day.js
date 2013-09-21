@@ -142,7 +142,7 @@ Calendar.renderer.day = function(spec){
 						16 * (  me.space_between_row+me.cell_size + me.space_between_tiles) 
 					+ 3	*  me.space_between_row+me.tiles_left_decal
 						
-				, height : 6 * ( me.cell_size + me.space_between_tiles )
+				, height : 6 * ( me.cell_size + me.space_between_tiles ) + 30
 			}
 		}
 		/******************************************************/

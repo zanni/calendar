@@ -73,6 +73,8 @@ var Calendar = function(spec){
 
 	// interactivity
 	me.interactive = (typeof spec.interactive  == "boolean") ? spec.interactive : true;
+	// adaptiveHeight
+	me.adaptiveHeight = (typeof spec.adaptiveHeight  == "boolean") ? spec.adaptiveHeight : false;
 	// legend
 	me.drawLegend = (typeof spec.drawLegend  == "boolean") ? spec.drawLegend : true;
 	me.drawHorodator = (typeof spec.drawHorodator  == "boolean") ? spec.drawHorodator : false;
@@ -93,7 +95,7 @@ var Calendar = function(spec){
 	me.svg = d3.select(me.visId)
 			.append('svg:svg')
 			.attr("width", me.width)
-			.attr("height", me.height)
+			.attr("height", (me.adaptiveHeight) ? 0 : me.height)
 			.append('svg:g')
 			.attr("transform", "translate(" + 0 + "," + 0+ ")");
 
@@ -145,6 +147,7 @@ var _createTiles = function () {
 
 	// if renderer != current_renderer that's mean that renderer 
 	// have been swiched 
+	var renderer_switched = false;
 	if(me.current_renderer 
 		&& me.current_renderer.clean
 		&& me.renderer != me.current_renderer){
@@ -152,7 +155,7 @@ var _createTiles = function () {
 		// clean previous renderer and relink current_renderer ref
 		me.current_renderer.clean.apply(me, arguments);
 		me.current_renderer = me.renderer;
-
+		renderer_switched = true;
 	}
 
 	// delegate drawing to the current renderer
@@ -165,26 +168,52 @@ var _createTiles = function () {
 	// renderer developper MUST return it's own computed bbox in order to 
 	// automaticaly adjust his drawing on screen calendar size
 	// expected object SHOULD be { width:... , height: ... }
-	if(bbox && bbox.width){
+	if(bbox && bbox.width && bbox.height){
 		// adjust width
 		// scale down
-		var scale = decal = decal_h = 0
-		if(bbox.width > me.width){
-			scale = me.width / bbox.width ;
-			decal_h = (me.height - bbox.height) / 2;
-		}
-		// scale 1 and center
-		else{
+		var scale = decal_w = decal_h = 0
+		var delta_h = me.height - bbox.height
+		if(me.adaptiveHeight) delta_h = 1;
+		var delta_w = me.width - bbox.width
+		if(delta_h > 0 && delta_w > 0){
 			scale = 1;
-			decal = (me.width - bbox.width) / 2;
-			
-
-			console.log(decal_h)
+			decal_h = (me.height - bbox.height) / 2;
+			decal_w = (me.width - bbox.width) / 2;
 		}
-		me.svg
-		.transition()
-		.duration(me.duration)
-		.attr("transform", "translate(" + decal + "," + decal_h + ")"+"scale("+scale+")");
+		else if(delta_h < 0 && delta_w > 0){
+			scale = me.height / bbox.height ;
+			decal_w = (me.width - scale*bbox.width) / 2;
+		}
+		else if(delta_h > 0 && delta_w < 0){
+			scale = me.width / bbox.width ;
+			decal_h = (me.height - scale*bbox.height) / 2;
+		}
+		else if(delta_h < 0 && delta_w < 0){
+			if(delta_h < delta_w){
+				scale = me.height / bbox.height ;
+				decal_w = (me.width - scale*bbox.width) / 2;
+			}
+			else{
+				scale = me.width / bbox.width ;
+				decal_h = (me.height - scale*bbox.height) / 2;
+			}
+		}
+		if(me.adaptiveHeight){
+			decal_h = 0
+			var height = scale*bbox.height
+			d3.select(me.visId+" svg").attr('height', height)
+		}
+		if(renderer_switched){
+			me.svg
+			.transition()
+			.duration(me.duration)
+			.attr("transform", "translate(" + decal_w + "," + decal_h + ")"+"scale("+scale+")");
+		}
+		else{
+			me.svg
+			.attr("transform", "translate(" + decal_w + "," + 0 + ")"+"scale("+scale+")");
+		}
+		
 	}
 }
 

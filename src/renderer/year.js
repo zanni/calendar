@@ -92,7 +92,9 @@ Calendar.renderer.year = function(spec){
 		var data_week_label
 		var first_year;
 		var year_index = [];
+		var nb_year = 0;
 		if(year instanceof Array){
+			nb_year = year.length;
 			data_year = [];
 			data_year_label = [];
 			data_month = [];
@@ -110,6 +112,7 @@ Calendar.renderer.year = function(spec){
 			}
 		}
 		else{
+			nb_year = 1;
 			first_year = year;
 			year_index[year] = 0;
 			data_year = getPeriod(year, d3.time.days);
@@ -175,7 +178,7 @@ Calendar.renderer.year = function(spec){
 			var j = 0;
 			return {
 				width : 53 * (me.cell_size+ me.space_between_tiles) + me.tiles_left_decal + me.margin + 2*me.cell_size
-				, height : me.margin+me.tiles_top_decal + 7 * (me.cell_size + me.space_between_tiles)
+				, height :nb_year * year_height
 			}
 		}
 

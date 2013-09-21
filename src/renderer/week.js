@@ -142,7 +142,7 @@ Calendar.renderer.week = function(spec){
 		var calculBBox = function(){
 			return {
 				width : me.tiles_left_decal + 24 * (me.cell_size + me.space_between_tiles)
-				, height : 7 * (me.cell_size + me.space_between_tiles) + me.hour_label_top_decal
+				, height : 7 * (me.cell_size + me.space_between_tiles) + me.hour_label_top_decal + 40
 			}
 		}
 		/******************************************************/
