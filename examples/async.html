@@ -18,7 +18,7 @@
 
 	<!-- DEV -->
 	<script type="text/javascript" src="../src/event.js"></script>
-	<script type="text/javascript" src="../src/calendar.js"></script>
+	<script type="text/javascript" src="../src/calendar.d3api.js"></script>
 	<script type="text/javascript" src="../src/data.js"></script>
 	<script type="text/javascript" src="../src/timeserie.js"></script>
 	<script type="text/javascript" src="../src/decorator/legend.js"></script>
@@ -31,7 +31,7 @@
 	<script type="text/javascript" src="../src/renderer/drillthrough.js"></script>
 
 	<script id="code">
-$.ready = function(){
+$(document).ready(function() {
 
 	var timeserie = new Calendar.timeserie({
 		time:function(d){ return new Date(d.logDate); }
@@ -41,43 +41,31 @@ $.ready = function(){
 
 	var data = {};
 	var datagrab_closure = function(year){
-		var calendar = this;
-		if(year instanceof Array){ 
-			year = year[year.length - 1];
-		}
-		console.log(year);
+		var me = this;
+		year = year[year.length - 1];
 		d3.json("mokup/"+year+"_day.json", function(raw){
 			timeserie.merge(raw);
-			calendar.draw(timeserie.data());
+			me.draw(timeserie.data());
 		});
 	}
-
-	var calendar = new Calendar( {
-		timeserie : timeserie
-		, renderer : new Calendar.renderer.year()
-		, adaptiveHeight : true
+	var config = {
+		adaptiveHeight : true
 		, animation: true
-		, retreiveDataCallback : datagrab_closure
-	});
+	}
+	var myCalendar = Calendar(config).timeserie(timeserie).grab(datagrab_closure);
 
-	calendar.createTiles([2010]);
-
-	setTimeout(function(){
-		calendar.createTiles([2010, 2011]);
-	},2000);
-	setTimeout(function(){
-		calendar.createTiles([2010, 2011, 2012]);
-	},4000);
-	setTimeout(function(){
-		calendar.createTiles([2010, 2011, 2012,2013]);
-	},6000);
-
-
+	myCalendar.createTiles([2010]);
+	setTimeout(function(){ myCalendar.createTiles([2010, 2011]); },2000);
+	setTimeout(function(){ myCalendar.createTiles([2010, 2011, 2012]); },4000);
+	setTimeout(function(){ myCalendar.createTiles([2010, 2011, 2012,2013]); },6000);
+});
+	</script>
+	<script>
+$(document).ready(function() {
 	// code highlight
 	$('pre code').text($('script#code').text());
 	$('pre code').each(function(i, e) {hljs.highlightBlock(e)});
-
-}
+});
 	</script>
 	<div id="container">
 		<h1>Calendar Async example</h1>

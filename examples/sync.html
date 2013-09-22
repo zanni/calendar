@@ -21,7 +21,7 @@
 
 	<!-- DEV -->
 	<script type="text/javascript" src="../src/event.js"></script>
-	<script type="text/javascript" src="../src/calendar.js"></script>
+	<script type="text/javascript" src="../src/calendar.d3api.js"></script>
 	<script type="text/javascript" src="../src/data.js"></script>
 	<script type="text/javascript" src="../src/timeserie.js"></script>
 	<script type="text/javascript" src="../src/decorator/legend.js"></script>
@@ -33,49 +33,38 @@
 	<script type="text/javascript" src="../src/renderer/year.js"></script>
 	<script type="text/javascript" src="../src/renderer/drillthrough.js"></script>
 	<script id="code">
-$.ready = function(){
+$(document).ready(function() {
+	
 	var timeserie = new Calendar.timeserie({
-		time:function(d){ return new Date(d.date); }
-		, indicator: function(d){ return d.tauxDeCo2;  }
+		time:function(d){ return new Date(d.logDate); }
+		, indicator: function(d){ return d.taux_co2;  }
 		, indicatorAggregation: d3.mean
 	});
 
-	// synchronous data loading
-	d3.json("mokup/rte.json", function(raw){
-		timeserie.data(raw.mixenergies.list);
+	var config = {
+		adaptiveHeight : true
+		, animation: true
+	}
 
-		var calendar = new Calendar( {
-			timeserie: timeserie
-			, renderer : new Calendar.renderer.year()
-			, adaptiveHeight : true
-			, animation: true
-		});
+	var myCalendar = Calendar(config).timeserie(timeserie);
 
-		calendar.createTiles(2013);
+	d3.json("mokup/2011_quarter.json", function(raw){
 
-		setTimeout(function(){
-			calendar.renderer = new Calendar.renderer.month();
-			calendar.createTiles(2013, [4,5,6]);
-		},2000);
+		myCalendar.data(raw).createTiles(2011);
 
-		setTimeout(function(){
-			calendar.renderer = new Calendar.renderer.week();
-			calendar.createTiles(2013, 23);
-		},4000);
-		setTimeout(function(){
-			calendar.renderer = new Calendar.renderer.week();
-			calendar.createTiles(2013, 22);
-		},6000);
-		setTimeout(function(){
-			calendar.renderer = new Calendar.renderer.day();
-			calendar.createTiles(2013, 23, 0);
-		},6000);
+		setTimeout(function(){ myCalendar.renderer("month").createTiles(2011, [4,5,6]); },2000);
+		setTimeout(function(){ myCalendar.renderer("week").createTiles(2011, 23); },4000);
+		setTimeout(function(){ myCalendar.renderer("week").createTiles(2011, 22); },6000);
+		setTimeout(function(){ myCalendar.renderer("day").createTiles(2011, 23, 0); },8000);
 	});
-
+});
+	</script>
+	<script>
+$(document).ready(function() {
 	// code highlight
 	$('pre code').text($('script#code').text());
 	$('pre code').each(function(i, e) {hljs.highlightBlock(e)});
-}
+});
 	</script>
 	<div id="container">
 		<h1>Calendar Renderer call example</h1>

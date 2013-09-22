@@ -13,16 +13,6 @@ Dependencies
 ============
 Calendar is build upon the awesome D3.js and therefore require inclusion of both d3.js and jquery.js
 
-Examples
-============
-
-http://rte-ws.herokuapp.com/
-
-http://rte-ws.herokuapp.com/basic.html
-
-http://rte-ws.herokuapp.com/equalizer.html
-
-
 Dev 
 ============
 ```javascript
@@ -35,38 +25,19 @@ Usage
 =====
 
 ```javascript
-// Create time series specialization callbacks
-var timeCallback = function(d){ return new Date(d.date); };
-var dataCallback = function(d){ return d.tauxDeCo2;  };
+var timeserie = new Calendar.timeserie({
+	time:function(d){ return new Date(d.logDate); }
+	, indicator: function(d){ return d.taux_co2;  }
+	, indicatorAggregation: d3.mean
+});
 
-// Create time serie parser
-// parser take a time serie array: raw = [{ date:date, data:data ...}, {}, ... ]
-// and transform it into a tree: [year][week][dayOfWeek][hour][quarter] 
-var parser = Calendar.data.create(timeCallback);
+var myCalendar = Calendar().timeserie(timeserie);
 
 // synchronous data loading
-d3.json("mydata.json", function(raw){
-    // parse raw data
-    data = parser(raw);
-    // Create valueCallback to automatically retreive and aggregate data whatever 
-    // which renderer used
-    var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.mean);
-    var calendar = new Calendar( {
-        name : "Basic example"
-        // data is fully loaded when calendar is created
-        , data : data
-        // defining data renderer
-        , renderer : new Calendar.renderer.year()
-        , retreiveValueCallback : valueCallback
-        , upBound : d3.max(raw, dataCallback)
-        , downBound : d3.min(raw, dataCallback)
-        , width : $("#container").width()
-        , height: 800		
-    });
-
-    calendar.createTiles(2013);
-}
-
+d3.json("mokup/2013_day.json", function(raw){
+	myCalendar.data(raw).createTiles(2013);
+	
+});
 ```
 
 Different renderers can be used, arguments given to calendar.createTiles() depends on which renderer is loaded :
