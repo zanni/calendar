@@ -12,18 +12,119 @@ if (!('map' in Array.prototype)) {
 /**********************************************************/
 // Calendar CONSTRUCTOR
 /**********************************************************/
-var Calendar = function(spec){
-	/******************************************************/
-	// INIT
-	/******************************************************/
-	// self ref
+var CalendarD3 = function(spec){
+	function my() {
+	// generate chart here, using `width` and `height`
+	}
+	
+	/**********************************************************/
+	// Calendar CONSTRUCTOR
+	/**********************************************************/
+	var width = spec.width || 800;
+	my.width = function(value) {
+		if (!arguments.length) return width;
+		width = value;
+		return my;
+	};
+	var height = spec.height;
+	my.height = function(value) {
+		if (!arguments.length) return height;
+		height = value;
+		return my;
+	};
+	var margin = spec.margin
+	my.margin = function(value) {
+		if (!arguments.length) return margin;
+		margin = value;
+		return my;
+	};
+	me.adaptiveHeight = (typeof spec.adaptiveHeight  == "boolean") ? spec.adaptiveHeight : true;
+	my.adaptiveHeight = function(value) {
+		if (!arguments.length) return adaptiveHeight;
+		adaptiveHeight = value;
+		return my;
+	};
+
+	var eventManager = {};
+	EventManager.enable.call(eventManager);
+	my.eventManager = function(value) {
+		if (!arguments.length) return eventManager;
+		eventManager = value;
+		return my;
+	};
 	var me = this;
+	// layout
+	// adaptiveHeight
+	
+	
+	
+	
 
-	// event manager
-	me.eventManager = {};
-	EventManager.enable.call(me.eventManager);
+	//retreive data according to your createTiles call
+	me.retreiveDataClosure = spec.retreiveDataClosure;
 
-	me.init(spec)
+	//retreive data according to your createTiles call
+	me.retreiveDataCallback = spec.retreiveDataCallback;
+
+	// retreive value
+	me.retreiveValueCallback = spec.retreiveValueCallback;
+
+	// synchronous data loading
+	me.data = spec.data;
+
+	me.upBound = spec.upBound || 80;
+	me.downBound = spec.downBound || 20;
+
+	me.timeserie = spec.timeserie;
+	if(me.timeserie){
+		me.retreiveValueCallback = me.timeserie.retreiveValueCallback;
+		me.data = me.timeserie.parsed;
+		me.upBound = me.timeserie.max();
+		me.downBound = me.timeserie.min();
+	}
+	console.log(me.upBound)
+	// THEME
+	// color scheme
+	me.colorScheme = spec.colorScheme 
+		|| ["#d73027","#f46d43","#fdae61","#fee08b","#ffffbf","#d9ef8b","#a6d96a","#66bd63","#1a9850"];
+
+	me.noDataColor = spec.noDataColor || "#eee";
+	me.buckets = me.colorScheme.length;
+	me.label_fill = spec.label_fill || "darkgray";
+	me.label_fontsize = spec.label_fontsize || "22px";
+
+	// Dom balise settings
+	// tiles visulatization id
+	me.visId = spec.visId || '#vis';
+	// decorator layer id
+	me.decoratorId = spec.decoratorId || '#decorator_top';
+	me.decoratorBottomId = spec.decoratorBottomId || '#decorator_bottom';
+	me.tileClass = spec.tileClass || 'tile';
+	me.monthPathClass = spec.monthPathClass || 'month_path';
+	// type of calendar displayed
+	me.renderer = spec.renderer || new Calendar.renderer.year();
+	me.current_renderer = me.renderer;
+
+	// animation duration
+	me.duration = spec.duration  || 800;
+	if(spec.duration ==0) me.duration = 0;
+
+	
+
+	me.name = spec.name || "";
+
+	// interactivity
+	me.interactive = (typeof spec.interactive  == "boolean") ? spec.interactive : true;
+	
+	// interactivity
+	me.animation = (typeof spec.interactive  == "boolean") ? spec.interactive : false;
+	if(!me.animation) me.duration=0;
+
+	// legend
+	me.drawLegend = (typeof spec.drawLegend  == "boolean") ? spec.drawLegend : false;
+	me.drawHorodator = (typeof spec.drawHorodator  == "boolean") ? spec.drawHorodator : false;
+	// me.drawHovered = (typeof spec.drawHovered  == "boolean") ? spec.drawHovered : true;
+	// me.drawTitle = (typeof spec.drawTitle  == "boolean") ? spec.drawTitle : true;
 
 	var range = [];
 	for (var i = 0; i < me.buckets; i++) {
@@ -59,6 +160,10 @@ var Calendar = function(spec){
 		me.horodator = new Calendar.decorator.horodator();
 		me.decorators.push(me.horodator);
 	}		
+
+	
+
+	return my;
 
 }
 
@@ -169,80 +274,7 @@ var _createTiles = function () {
 // 
 /******************************************************/
 Calendar.prototype.init = function(spec){
-	var me = this;
-	// layout
-	// adaptiveHeight
 	
-	me.height = spec.height;
-	me.adaptiveHeight = (typeof spec.adaptiveHeight  == "boolean") ? spec.adaptiveHeight : true;
-	me.width = spec.width || 800;
-	me.margin = spec.margin
-
-	//retreive data according to your createTiles call
-	me.retreiveDataClosure = spec.retreiveDataClosure;
-
-	//retreive data according to your createTiles call
-	me.retreiveDataCallback = spec.retreiveDataCallback;
-
-	// retreive value
-	me.retreiveValueCallback = spec.retreiveValueCallback;
-
-	// synchronous data loading
-	me.data = spec.data;
-
-	me.upBound = spec.upBound || 80;
-	me.downBound = spec.downBound || 20;
-
-	me.timeserie = spec.timeserie;
-	if(me.timeserie){
-		me.retreiveValueCallback = me.timeserie.retreiveValueCallback;
-		me.data = me.timeserie.parsed;
-		me.upBound = me.timeserie.max();
-		me.downBound = me.timeserie.min();
-	}
-	console.log(me.upBound)
-	// THEME
-	// color scheme
-	me.colorScheme = spec.colorScheme 
-		|| ["#d73027","#f46d43","#fdae61","#fee08b","#ffffbf","#d9ef8b","#a6d96a","#66bd63","#1a9850"];
-
-	me.noDataColor = spec.noDataColor || "#eee";
-	me.buckets = me.colorScheme.length;
-	me.label_fill = spec.label_fill || "darkgray";
-	me.label_fontsize = spec.label_fontsize || "22px";
-
-	// Dom balise settings
-	// tiles visulatization id
-	me.visId = spec.visId || '#vis';
-	// decorator layer id
-	me.decoratorId = spec.decoratorId || '#decorator_top';
-	me.decoratorBottomId = spec.decoratorBottomId || '#decorator_bottom';
-	me.tileClass = spec.tileClass || 'tile';
-	me.monthPathClass = spec.monthPathClass || 'month_path';
-	// type of calendar displayed
-	me.renderer = spec.renderer || new Calendar.renderer.year();
-	me.current_renderer = me.renderer;
-
-	// animation duration
-	me.duration = spec.duration  || 800;
-	if(spec.duration ==0) me.duration = 0;
-
-	
-
-	me.name = spec.name || "";
-
-	// interactivity
-	me.interactive = (typeof spec.interactive  == "boolean") ? spec.interactive : true;
-	
-	// interactivity
-	me.animation = (typeof spec.animation  == "boolean") ? spec.animation : false;
-	if(!me.animation) me.duration=0;
-
-	// legend
-	me.drawLegend = (typeof spec.drawLegend  == "boolean") ? spec.drawLegend : false;
-	me.drawHorodator = (typeof spec.drawHorodator  == "boolean") ? spec.drawHorodator : false;
-	// me.drawHovered = (typeof spec.drawHovered  == "boolean") ? spec.drawHovered : true;
-	// me.drawTitle = (typeof spec.drawTitle  == "boolean") ? spec.drawTitle : true;
 }
 
 /******************************************************/

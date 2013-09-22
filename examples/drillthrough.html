@@ -57,13 +57,14 @@ $.ready = function(){
 		, decorators: [
 			new Calendar.decorator.hovered({float:'right'})
 		]
+		, drawLegend: true
 		, drawHorodator: true
 		, colorScheme : display.colorScheme
 		, retreiveDataClosure : display.rte_datagrab_closure
 		, retreiveDataCallback : display.rte_datagrab_closure("day")
 		, retreiveValueCallback : display.rte_closure
 		, width : $("#container").width()
-		, height: 400		
+		, adaptiveHeight : true		
 	});
 
 	calendar.createTiles(2011);

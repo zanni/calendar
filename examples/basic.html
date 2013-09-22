@@ -23,6 +23,7 @@
 	<script type="text/javascript" src="../src/event.js"></script>
 	<script type="text/javascript" src="../src/calendar.js"></script>
 	<script type="text/javascript" src="../src/data.js"></script>
+	<script type="text/javascript" src="../src/timeserie.js"></script>
 	<script type="text/javascript" src="../src/decorator/legend.js"></script>
 	<script type="text/javascript" src="../src/decorator/horodator.js"></script>
 	<script type="text/javascript" src="../src/decorator/hovered.js"></script>
@@ -33,52 +34,22 @@
 	<script type="text/javascript" src="../src/renderer/drillthrough.js"></script>
 	<script id="code">
 $.ready = function(){
-	// Create time series specialization callbacks
-	var timeCallback = function(d){ return new Date(d.date); };
-	var dataCallback = function(d){ return d.tauxDeCo2;  };
-
-	// Create time serie parser
-	var parser = Calendar.data.create(timeCallback);
+	var timeserie = new Calendar.timeserie({
+		time:function(d){ return new Date(d.date); }
+		, indicator: function(d){ return d.tauxDeCo2;  }
+		, indicatorAggregation: d3.mean
+	});
 
 	// synchronous data loading
 	d3.json("mokup/rte.json", function(raw){
-		// parse raw data
-		data = parser(raw.mixenergies.list);
-
-		// Create valueCallback
-		var valueCallback = Calendar.data.retreiveValueCallbackClosure(dataCallback, d3.mean);
+		timeserie.data(raw.mixenergies.list);
 
 		var calendar = new Calendar( {
-			data : data
-			, renderer : new Calendar.renderer.year()
-			, retreiveValueCallback : valueCallback
-			, upBound : d3.max(raw.mixenergies.list, dataCallback)
-			, downBound : d3.min(raw.mixenergies.list, dataCallback)
-			, interactive : false
-			, drawLegend: false
-			, width : $("#container").width()
-			, height: 350
+			timeserie: timeserie
 		});
 
 		calendar.createTiles(2013);
 
-		setTimeout(function(){
-			calendar.renderer = new Calendar.renderer.month();
-			calendar.createTiles(2013, [4,5,6]);
-		},2000);
-
-		setTimeout(function(){
-			calendar.renderer = new Calendar.renderer.week();
-			calendar.createTiles(2013, 23);
-		},4000);
-		setTimeout(function(){
-			calendar.renderer = new Calendar.renderer.week();
-			calendar.createTiles(2013, 22);
-		},6000);
-		setTimeout(function(){
-			calendar.renderer = new Calendar.renderer.day();
-			calendar.createTiles(2013, 23, 0);
-		},6000);
 	});
 
 	// code highlight

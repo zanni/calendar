@@ -3,3 +3,4 @@ import "calendar";
 import "renderer/";
 import "decorator/";
 import "data";
+import "timeserie";
