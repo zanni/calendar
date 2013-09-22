@@ -1,0 +1,15 @@
+{
+    "tags": {
+        "allowUnknownTags": true
+    },
+    "source": {
+        "include": "src",
+        "includePattern": ".+\\.js(doc)?$",
+        "excludePattern": "smash_calendar.js"
+    },
+    "plugins": [],
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false
+    }
+}
