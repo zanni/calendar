@@ -49,17 +49,20 @@ $(document).ready(function() {
 					+fields+"/between/jsonp/"
 					+format(start) + "/" + format(end);
 	}
-
+	var cache = {}
 	var datagrab_closure = function(){
 		var me = this;
 		var args = Array.prototype.slice.call(arguments);
 		var bounds = me.renderer.bounds.apply(me, arguments);
 		if(bounds){
 			var agg = args.pop();
+			var url = getRTEURl(agg, "taux_co2", bounds.start, bounds.end)
+			if(cache[url] != undefined) {  me.draw(cache[url]); return; }
 			$.ajax({
-				url : getRTEURl(agg, "taux_co2", bounds.start, bounds.end)
+				url : url
 				, dataType : 'jsonp'
 				, success : function(json){
+					cache[url] = json;
 					me.draw(json);
 				}
 			});
@@ -69,7 +72,8 @@ $(document).ready(function() {
 
 	var config = {
 		adaptiveHeight : true
-		, animation: true
+		// , animation: true
+		, interactive : true
 		, drawLegend: true
 		, drawHorodator: true
 		, decorators : [ new Calendar.decorator.hovered({float:'right'}) ]

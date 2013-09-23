@@ -176,8 +176,9 @@ Calendar.renderer.week = function(spec){
 
 		calendar.tilesUpdate(tiles)
 			.transition()
-			// .duration(calendar.duration)
+			.duration(calendar.duration)
 			.delay(function(d){
+				if(!calendar.animation) return 0;
 				return (d.getHours() * 20) + (calendar.time.getDay(d) * 20) + (Math.random() * 50) / calendar.duration
 			})
 		    .attr("x", calculTilePosX)

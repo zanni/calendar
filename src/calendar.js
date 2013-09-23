@@ -26,7 +26,7 @@ var Calendar = function(spec){
 	var my = function(){
 
 	}
-	var timeserie = calendar._timeserie;
+	var timeserie = calendar.timeserie;
 	my.timeserie = function(value) {
 		if (!arguments.length) return timeserie;
 		timeserie = value;
@@ -35,6 +35,7 @@ var Calendar = function(spec){
 		calendar.data = timeserie.parsed;
 		calendar.upBound = timeserie.max();
 		calendar.downBound = timeserie.min();
+		calendar.setBucket();
 		return my;
 	};
 	var data = calendar._data;
@@ -42,6 +43,9 @@ var Calendar = function(spec){
 		if (!arguments.length) return calendar._data;
 		data = value;
 		calendar.data = calendar.timeserie.data(value)
+		calendar.upBound = timeserie.max();
+		calendar.downBound = timeserie.min();
+		calendar.setBucket();
 		return my;
 	};
 	var grab = calendar.retreiveDataCallback;
@@ -78,21 +82,63 @@ var CalendarObject = function(spec){
 	/******************************************************/
 	// self ref
 	var me = this;
-	console.log(spec);
 
-	if(!spec) { spec = {}; spec.decorators = []; }
+	var settings = {
+		// SIZE
+		height : null
+		, width : 960
+		, margin: {top:0, bottom:0}
+		, adaptiveHeight: true
+		// DOM
+		, visId : '#vis'
+		, decoratorId : '#decorator_top'
+		, decoratorBottomId : '#decorator_bottom'
+		, tileClass : 'tile'
+		, monthPathClass : 'month_path'
+		// THEME
+		, renderer : new Calendar.renderer.year()
+		, decorators : []
+		, noDataColor : '#eee'
+		, colorScheme : ["#d73027","#f46d43","#fdae61","#fee08b","#ffffbf","#d9ef8b","#a6d96a","#66bd63","#1a9850"]
+		, noDataColor : '#eee'
+		, label_fill : 'darkgray'
+		, label_fontsize : "22px"
+		, interactive : false
+		// ANIMATION
+		, animation : false
+		, duration : 800
+		// DECORATORS
+		, drawLegend: false
+		, drawHorodator : false
+		// DATA
+		, timeserie : null
+	}
+	$.extend(me, settings);
+	$.extend(me, spec);
+	me.current_renderer = me.renderer;
+	if(!me.animation) me.duration=0;
+
 	// event manager
 	me.eventManager = {};
 	EventManager.enable.call(me.eventManager);
 
-	me.init(spec)
+	// timeserie
+	if(me.timeserie){
+		me.retreiveValueCallback = me.timeserie.retreiveValueCallback;
+		me.data = me.timeserie.parsed;
+		me.upBound = me.timeserie.max();
+		me.downBound = me.timeserie.min();
+	}
 
+	// bucket
 	var range = [];
-	for (var i = 0; i < me.buckets; i++) {
+	for (var i = 0; i < me.colorScheme.length; i++) {
 		range.push(i);
 	}	
+
 	// var bucket = d3.scale.quantize().domain([calcs.min, calcs.max]).range(range)
 	me.bucket = d3.scale.quantize().domain([me.downBound, me.upBound]).range(range);
+	
 
 
 	/******************************************************/
@@ -107,11 +153,10 @@ var CalendarObject = function(spec){
 
 	
 	
-	me.decorators = spec.decorators ;
 	d3.select(me.decoratorId)
 		// .style("display", "block")
 		.style("margin", "20px 0");
-console.log(spec.decorators)
+
 	if(me.drawLegend){
 		me.legend = new Calendar.decorator.legend();
 		me.decorators.push(me.legend);
@@ -120,10 +165,6 @@ console.log(spec.decorators)
 	if(me.drawHorodator){
 		me.horodator = new Calendar.decorator.horodator();
 		me.decorators.push(me.horodator);
-	}	
-	
-	for(var i in spec.decorators){
-		me.decorators.push(spec.decorators[i]);
 	}	
 
 }
@@ -228,89 +269,6 @@ var _createTiles = function () {
 		}
 		
 	}
-}
-
-/******************************************************/
-// CALENDAR PROTOTYPE INIT
-//
-// configuration
-// 
-/******************************************************/
-CalendarObject.prototype.init = function(spec){
-	var me = this;
-	// layout
-	// adaptiveHeight
-	
-	me.height = spec.height;
-	me.adaptiveHeight = (typeof spec.adaptiveHeight  == "boolean") ? spec.adaptiveHeight : true;
-	me.width = spec.width || 800;
-	me.margin = spec.margin
-
-	//retreive data according to your createTiles call
-	me.retreiveDataClosure = spec.retreiveDataClosure;
-
-	//retreive data according to your createTiles call
-	me.retreiveDataCallback = spec.retreiveDataCallback;
-
-	// retreive value
-	me.retreiveValueCallback = spec.retreiveValueCallback;
-
-	// synchronous data loading
-	me.data = spec.data;
-
-	me.upBound = spec.upBound || 80;
-	me.downBound = spec.downBound || 20;
-
-	me.timeserie = spec.timeserie;
-	if(me.timeserie){
-		me.retreiveValueCallback = me.timeserie.retreiveValueCallback;
-		me.data = me.timeserie.parsed;
-		me.upBound = me.timeserie.max();
-		me.downBound = me.timeserie.min();
-	}
-	console.log(me.upBound)
-	// THEME
-	// color scheme
-	me.colorScheme = spec.colorScheme 
-		|| ["#d73027","#f46d43","#fdae61","#fee08b","#ffffbf","#d9ef8b","#a6d96a","#66bd63","#1a9850"];
-
-	me.noDataColor = spec.noDataColor || "#eee";
-	me.buckets = me.colorScheme.length;
-	me.label_fill = spec.label_fill || "darkgray";
-	me.label_fontsize = spec.label_fontsize || "22px";
-
-	// Dom balise settings
-	// tiles visulatization id
-	me.visId = spec.visId || '#vis';
-	// decorator layer id
-	me.decoratorId = spec.decoratorId || '#decorator_top';
-	me.decoratorBottomId = spec.decoratorBottomId || '#decorator_bottom';
-	me.tileClass = spec.tileClass || 'tile';
-	me.monthPathClass = spec.monthPathClass || 'month_path';
-	// type of calendar displayed
-	me.renderer = spec.renderer || new Calendar.renderer.year();
-	me.current_renderer = me.renderer;
-
-	// animation duration
-	me.duration = spec.duration  || 800;
-	if(spec.duration ==0) me.duration = 0;
-
-	
-
-	me.name = spec.name || "";
-
-	// interactivity
-	me.interactive = (typeof spec.interactive  == "boolean") ? spec.interactive : true;
-	
-	// interactivity
-	me.animation = (typeof spec.animation  == "boolean") ? spec.animation : false;
-	if(!me.animation) me.duration=0;
-
-	// legend
-	me.drawLegend = (typeof spec.drawLegend  == "boolean") ? spec.drawLegend : false;
-	me.drawHorodator = (typeof spec.drawHorodator  == "boolean") ? spec.drawHorodator : false;
-	// me.drawHovered = (typeof spec.drawHovered  == "boolean") ? spec.drawHovered : true;
-	// me.drawTitle = (typeof spec.drawTitle  == "boolean") ? spec.drawTitle : true;
 }
 
 /******************************************************/

@@ -177,7 +177,7 @@ Calendar.renderer.day = function(spec){
 
 		calendar.tilesUpdate(tiles)
 			.transition()
-			// .duration(calendar.duration)
+			.duration(calendar.duration)
 			.delay(function(d){
 				return (quarter(d) * (Math.random() * 50)) + ((d.getHours() %6)) * (Math.random() * 50)/ calendar.duration
 			})

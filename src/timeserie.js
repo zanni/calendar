@@ -38,6 +38,7 @@ Calendar.timeserie = function(spec){
 	};
 
 	me.merge = function(raw){
+		console.log(me.raw)
 		me.raw = me.raw.concat(raw);
 		me.raw.sort(function(a,b){ return (a < b) ? 1 : -1})
 		$.extend(true, me.parsed, me.parser(raw));
