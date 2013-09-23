@@ -340,9 +340,12 @@ Calendar.renderer.year = function(spec){
 	me.clean = function(){
 		var calendar = this;	
 		calendar.monthPathExit();
-		Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
-		Calendar.animation.fadeOut(me.labels_months.transition(), calendar.duration);
-		Calendar.animation.fadeOut(me.label_weeks.transition(), calendar.duration);
+		if(me.label_year)
+			Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
+		if(me.labels_months)
+			Calendar.animation.fadeOut(me.labels_months.transition(), calendar.duration);
+		if(me.label_weeks)
+			Calendar.animation.fadeOut(me.label_weeks.transition(), calendar.duration);
 	}
 
 	/******************************************************/

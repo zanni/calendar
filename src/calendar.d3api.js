@@ -172,7 +172,6 @@ var _createTiles = function () {
 		me.current_renderer = me._renderer;
 		renderer_switched = true;
 	}
-	console.log(me._renderer)
 	// delegate drawing to the current renderer
 	var bbox = me.current_renderer.draw.apply(me, arguments);
 

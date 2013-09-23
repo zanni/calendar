@@ -1,0 +1,73 @@
+<html>
+<head>
+	<title>Calendar drillthrough renderer example</title>
+	<!-- highlight JS -->
+	<link rel="stylesheet" href="http://yandex.st/highlightjs/7.3/styles/default.min.css">
+	<link rel="stylesheet" href="css/calendar.css"></link>
+</head>
+<body>
+	
+	<script src="http://yandex.st/highlightjs/7.3/highlight.min.js"></script>
+
+	<script type="text/javascript" src="js/jquery/jquery-1.8.3.min.js"></script>
+	<script type="text/javascript" src="js/d3/d3.min.js"></script>
+	<script type="text/javascript" src="js/colorbrewer/colorbrewer.js"></script>
+
+	<!-- PROD -->
+	<!-- <script type="text/javascript" src="../calendar.min.js"></script> --> 
+
+	<!-- DEV -->
+	<script type="text/javascript" src="../src/event.js"></script>
+	<script type="text/javascript" src="../src/calendar.d3api.js"></script>
+	<script type="text/javascript" src="../src/data.js"></script>
+	<script type="text/javascript" src="../src/timeserie.js"></script>
+	<script type="text/javascript" src="../src/decorator/legend.js"></script>
+	<script type="text/javascript" src="../src/decorator/horodator.js"></script>
+	<script type="text/javascript" src="../src/decorator/hovered.js"></script>
+	<script type="text/javascript" src="../src/renderer/day.js"></script>
+	<script type="text/javascript" src="../src/renderer/week.js"></script>
+	<script type="text/javascript" src="../src/renderer/month.js"></script>
+	<script type="text/javascript" src="../src/renderer/year.js"></script>
+	<script type="text/javascript" src="../src/renderer/drillthrough2.js"></script>
+
+	<script id="code">
+$(document).ready(function() {
+
+	var timeserie = new Calendar.timeserie({
+		time:function(d){ return new Date(d.logDate); }
+		, indicator: function(d){ return d.taux_co2;  }
+		, indicatorAggregation: d3.mean
+	});
+
+	var config = {
+		adaptiveHeight : true
+		, animation: true
+		, drawLegend: true
+	}
+	var myCalendar = Calendar(config)
+		.timeserie(timeserie)
+		.renderer(new Calendar.renderer.drillthrough2());
+
+	d3.json("mokup/2011_quarter.json", function(raw){
+		myCalendar.data(raw);
+		myCalendar.createTiles(2011);
+	});
+});
+	</script>
+	<script>
+$(document).ready(function() {
+	// code highlight
+	$('pre code').text($('script#code').text());
+	$('pre code').each(function(i, e) {hljs.highlightBlock(e)});
+});
+	</script>
+	<div id="container">
+		<h1>Calendar Drillthrough example</h1>
+		<div id="decorator_top"></div>
+		<div id="vis-container"><div id="vis"></div></div>
+		<div id="decorator_bottom"></div>
+		<pre><code class="javascript"></code></pre>
+	</div>
+	<a href="https://github.com/zanni/calendar"><img style="position: absolute; top: 0; right: 0; border: 0;" src="images/github.png" alt="Fork me on GitHub"></a>
+</body>
+</html>
