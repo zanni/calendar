@@ -5,11 +5,19 @@
     "source": {
         "include": "src",
         "includePattern": ".+\\.js(doc)?$",
-        "excludePattern": "smash_calendar.js"
+        "excludePattern": "smash_calendar.js|index.js"
     },
     "plugins": [],
     "templates": {
         "cleverLinks": false,
         "monospaceLinks": false
+    }
+    , "opts": {
+        "encoding": "utf8",              
+        "destination": "./docs/",          
+        "recurse": true,                  
+        "query": "value",                
+        "private": true,           
+        "lenient": true,      
     }
 }

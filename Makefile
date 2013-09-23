@@ -1,13 +1,21 @@
 GENERATED_FILES = \
+	docs \
 	calendar.js \
 	calendar.min.js 
 
-.PHONY: clean all 
+.PHONY: clean docs all 
 
 clean:
 	@rm -f -- $(GENERATED_FILES)
+	@rm -rf docs
+	@rm -rf tutorials
 
 all: $(GENERATED_FILES)
+
+docs: 
+	@rm -rf docs/*;
+	node_modules/jsdoc/jsdoc -c conf.json
+
 
 calendar.js: $(shell node_modules/.bin/smash --list src/calendar.js) package.json
 	@rm -f $@

@@ -1,7 +1,8 @@
 /**
- * @namespace	 
+ * @method Calendar
  * @Author Bertrand Zanni zanni.bertrand@gmail.com
  * @Version 0.0.1
+ * 
  * @property {integer} width 				
  *			- canvas width
  * @property {integer} height 				
@@ -71,6 +72,37 @@ var Calendar = function(spec){
 		calendar.createTiles.apply(calendar, arguments);
 	}
 	return my;
+}
+
+/**
+ * @namespace 
+ */
+Calendar.renderer = {};
+
+/**
+ * @namespace 
+ */
+Calendar.decorator = {};
+
+/**
+ * @namespace 
+ */
+Calendar.animation = {
+	// fade in animation
+	fadeIn : function(transition, duration){
+		return transition
+			.duration(duration)
+			.attr("fill-opacity", 1)	
+	}
+
+	// fade out animation
+	, fadeOut : function(transition, duration){
+		return transition
+			.duration(duration)
+			.attr("fill-opacity", 0)
+			.remove();	
+	}
+	
 }
 
 /**********************************************************/
@@ -373,14 +405,6 @@ CalendarObject.prototype.setLegend = function(bounds) {
 	}
 
 /******************************************************/
-// CALENDAR PROTOTYPE REDRAW LEGEND
-/******************************************************/
-CalendarObject.prototype.redrawLegend = function(bounds) {
-		var me = this;
-		me.legend.recolor()		
-	}
-
-/******************************************************/
 // CALENDAR PROTOTYPE SET HORODATOR
 /******************************************************/
 CalendarObject.prototype.setHorodator = function(start, end) {
@@ -572,33 +596,3 @@ CalendarObject.prototype.getColor = function(val){
 }
 
 
-/******************************************************/
-// RENDERER NAMESPACE
-/******************************************************/
-Calendar.renderer = {};
-
-/******************************************************/
-// DECORATOR NAMESPACE
-/******************************************************/
-Calendar.decorator = {};
-
-/******************************************************/
-// ANIMATION UTILS
-/******************************************************/
-Calendar.animation = {
-	// fade in animation
-	fadeIn : function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 1)	
-	}
-
-	// fade out animation
-	, fadeOut : function(transition, duration){
-		return transition
-			.duration(duration)
-			.attr("fill-opacity", 0)
-			.remove();	
-	}
-	
-}

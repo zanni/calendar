@@ -93,6 +93,19 @@ var Calendar = function(spec) {
     return my;
 };
 
+Calendar.renderer = {};
+
+Calendar.decorator = {};
+
+Calendar.animation = {
+    fadeIn: function(transition, duration) {
+        return transition.duration(duration).attr("fill-opacity", 1);
+    },
+    fadeOut: function(transition, duration) {
+        return transition.duration(duration).attr("fill-opacity", 0).remove();
+    }
+};
+
 var CalendarObject = function(spec) {
     var me = this;
     var settings = {
@@ -259,11 +272,6 @@ CalendarObject.prototype.setLegend = function(bounds) {
     }
 };
 
-CalendarObject.prototype.redrawLegend = function(bounds) {
-    var me = this;
-    me.legend.recolor();
-};
-
 CalendarObject.prototype.setHorodator = function(start, end) {
     var check = function(a) {
         return a ? me.renderer.horodator_format(a) : "";
@@ -372,19 +380,6 @@ CalendarObject.prototype.getColor = function(val) {
         color = me.colorScheme[me.bucket(val)];
     }
     return color;
-};
-
-Calendar.renderer = {};
-
-Calendar.decorator = {};
-
-Calendar.animation = {
-    fadeIn: function(transition, duration) {
-        return transition.duration(duration).attr("fill-opacity", 1);
-    },
-    fadeOut: function(transition, duration) {
-        return transition.duration(duration).attr("fill-opacity", 0).remove();
-    }
 };
 
 Calendar.data = {
