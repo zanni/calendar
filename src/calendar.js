@@ -1,8 +1,11 @@
 /**
+ * @fileOverview Various tool functions.
+ * @author <a href="mailto:zanni.bertrand@gmail.com">Bertrand Zanni </a>
+ * @version 3.1.2
+ */
+/**
+ * Description {@tutorial test-tutorial}.
  * @method Calendar
- * @Author Bertrand Zanni zanni.bertrand@gmail.com
- * @Version 0.0.1
- * 
  * @property {integer} width 				
  *			- canvas width
  * @property {integer} height 				
@@ -75,7 +78,15 @@ var Calendar = function(spec){
 }
 
 /**
- * @namespace 
+ * @namespace
+ * @property {RendererObject} day 				
+ *				- Day renderer constructor @see bar
+ * @property {RendererObject} week 				
+ *				- Week renderer constructor
+ * @property {RendererObject} month 				
+ *				- Month renderer constructor
+ * @property {RendererObject} year 				
+ *				- Year renderer constructor
  */
 Calendar.renderer = {};
 
@@ -356,11 +367,15 @@ CalendarObject.prototype.createTiles = function(){
 //
 // IT IS ONLY USED WITH ASYNC DATA GRABBING
 /******************************************************/
-CalendarObject.prototype.draw = function(data){
+CalendarObject.prototype.draw = function(data, mergeData){
 	var me = this;
 	
 	if(me.timeserie){
-		me.timeserie.data(data);
+		if(typeof mergeData == "boolean" && mergeData)
+			me.timeserie.merge(data);
+		else{
+			me.timeserie.data(data);
+		}
 		var bounds = {
 			min: me.timeserie.min()
 			, max: me.timeserie.max()

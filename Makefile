@@ -1,5 +1,4 @@
 GENERATED_FILES = \
-	docs \
 	calendar.js \
 	calendar.min.js 
 
@@ -7,13 +6,13 @@ GENERATED_FILES = \
 
 clean:
 	@rm -f -- $(GENERATED_FILES)
-	@rm -rf docs
-	@rm -rf tutorials
+	@rm -rf docs/*;
 
-all: $(GENERATED_FILES)
+all: $(GENERATED_FILES) docs
 
 docs: 
 	@rm -rf docs/*;
+	@rm -rf tutorials/*;
 	node_modules/jsdoc/jsdoc -c conf.json
 
 

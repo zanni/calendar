@@ -16,6 +16,7 @@
         "encoding": "utf8",              
         "destination": "./docs/",          
         "recurse": true,                  
+        "tutorials": "./tutorials/", 
         "query": "value",                
         "private": true,           
         "lenient": true,      

@@ -1,14 +1,6 @@
-/*********************************************************/
-//
-// Calendar.renderer.week
-// deps on:
-//			calendar.svg;
-//			calendar.duration
-//			calendar.retreiveCalcsCallback(year, week);
-//			calendar.retreiveValueCallback(year, week, d.getDay(), d.getHours())
-//			calendar.getColor(val);
-//
-/**********************************************************/
+/**
+ * @namespace Calendar.renderer.day
+ */
 Calendar.renderer.day = function(spec){
 
 	// renderer self ref

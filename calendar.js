@@ -233,10 +233,12 @@ CalendarObject.prototype.createTiles = function() {
     }
 };
 
-CalendarObject.prototype.draw = function(data) {
+CalendarObject.prototype.draw = function(data, mergeData) {
     var me = this;
     if (me.timeserie) {
-        me.timeserie.data(data);
+        if (typeof mergeData == "boolean" && mergeData) me.timeserie.merge(data); else {
+            me.timeserie.data(data);
+        }
         var bounds = {
             min: me.timeserie.min(),
             max: me.timeserie.max()

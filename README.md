@@ -16,7 +16,7 @@ Calendar is build upon the awesome D3.js and therefore require inclusion of both
 Dev 
 ============
 ```javascript
-// install smash and uglifyjs
+// install smash, uglifyjs and jsdoc
 npm install
 make all
 ```
