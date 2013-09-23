@@ -61,6 +61,7 @@ Calendar.decorator.legend = function(spec){
 	}
 
 	me.refresh = function(down, up){
+		if(!drawn) return;
 		me.less.text(down);
 		me.more.text(up);			
 	}

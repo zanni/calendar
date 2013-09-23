@@ -18,7 +18,7 @@
 
 	<!-- DEV -->
 	<script type="text/javascript" src="../src/event.js"></script>
-	<script type="text/javascript" src="../src/calendar.d3api.js"></script>
+	<script type="text/javascript" src="../src/calendar.js"></script>
 	<script type="text/javascript" src="../src/data.js"></script>
 	<script type="text/javascript" src="../src/timeserie.js"></script>
 	<script type="text/javascript" src="../src/decorator/legend.js"></script>
@@ -28,7 +28,7 @@
 	<script type="text/javascript" src="../src/renderer/week.js"></script>
 	<script type="text/javascript" src="../src/renderer/month.js"></script>
 	<script type="text/javascript" src="../src/renderer/year.js"></script>
-	<script type="text/javascript" src="../src/renderer/drillthrough2.js"></script>
+	<script type="text/javascript" src="../src/renderer/drillthrough.js"></script>
 
 	<script id="code">
 $(document).ready(function() {
@@ -46,7 +46,7 @@ $(document).ready(function() {
 	}
 	var myCalendar = Calendar(config)
 		.timeserie(timeserie)
-		.renderer(new Calendar.renderer.drillthrough2());
+		.renderer(new Calendar.renderer.drillthrough());
 
 	d3.json("mokup/2011_quarter.json", function(raw){
 		myCalendar.data(raw);

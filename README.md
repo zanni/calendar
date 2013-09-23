@@ -45,7 +45,7 @@ Different renderers can be used, arguments given to calendar.createTiles() depen
     - new Calendar.renderer.year() | calendar.createTiles(year);
     - new Calendar.renderer.month() | calendar.createTiles(year, month);
     - new Calendar.renderer.week() | calendar.createTiles(year, weekOfYear);
-    - new Calendar.renderer.day() | calendar.createTiles(year, weekOfYear, dayOfWeek);
+    - new Calendar.renderer.day() | calendar.createTiles(year, weekOfYear, dayOfWeek);	
 
 
 

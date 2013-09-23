@@ -59,39 +59,12 @@ var Calendar = function(spec) {
     var me = this;
     me.eventManager = {};
     EventManager.enable.call(me.eventManager);
-    me.height = spec.height || 600;
-    me.width = spec.width || 800;
-    me.margin = spec.margin;
-    me.retreiveDataClosure = spec.retreiveDataClosure;
-    me.retreiveDataCallback = spec.retreiveDataCallback;
-    me.retreiveValueCallback = spec.retreiveValueCallback;
-    me.data = spec.data;
-    me.colorScheme = spec.colorScheme || [ "#d73027", "#f46d43", "#fdae61", "#fee08b", "#ffffbf", "#d9ef8b", "#a6d96a", "#66bd63", "#1a9850" ];
-    me.noDataColor = spec.noDataColor || "#eee";
-    me.buckets = me.colorScheme.length;
-    me.label_fill = spec.label_fill || "darkgray";
-    me.label_fontsize = spec.label_fontsize || "22px";
-    me.visId = spec.visId || "#vis";
-    me.decoratorId = spec.decoratorId || "#decorator_top";
-    me.decoratorBottomId = spec.decoratorBottomId || "#decorator_bottom";
-    me.tileClass = spec.tileClass || "tile";
-    me.monthPathClass = spec.monthPathClass || "month_path";
-    me.renderer = spec.renderer;
-    me.current_renderer = me.renderer;
-    me.duration = spec.duration || 800;
-    if (spec.duration == 0) me.duration = 0;
-    me.upBound = spec.upBound || 80;
-    me.downBound = spec.downBound || 20;
-    me.name = spec.name || "";
-    me.interactive = typeof spec.interactive == "boolean" ? spec.interactive : true;
-    me.adaptiveHeight = typeof spec.adaptiveHeight == "boolean" ? spec.adaptiveHeight : false;
-    me.drawLegend = typeof spec.drawLegend == "boolean" ? spec.drawLegend : true;
-    me.drawHorodator = typeof spec.drawHorodator == "boolean" ? spec.drawHorodator : false;
+    me.init(spec);
     var range = [];
     for (var i = 0; i < me.buckets; i++) {
         range.push(i);
     }
-    me.bucket = d3.scale.quantize().domain([ spec.downBound, spec.upBound ]).range(range);
+    me.bucket = d3.scale.quantize().domain([ me.downBound, me.upBound ]).range(range);
     me.svg = d3.select(me.visId).append("svg:svg").attr("width", me.width).attr("height", me.adaptiveHeight ? 0 : me.height).append("svg:g").attr("transform", "translate(" + 0 + "," + 0 + ")");
     me.decorators = spec.decorators || [];
     d3.select(me.decoratorId).style("margin", "20px 0");
@@ -148,7 +121,7 @@ var _createTiles = function() {
         if (me.adaptiveHeight) {
             decal_h = 0;
             var height = scale * bbox.height;
-            d3.select(me.visId + " svg").attr("height", height);
+            d3.select(me.visId + " svg").transition().duration(me.duration).attr("height", height);
         }
         if (renderer_switched) {
             me.svg.transition().duration(me.duration).attr("transform", "translate(" + decal_w + "," + decal_h + ")" + "scale(" + scale + ")");
@@ -156,6 +129,48 @@ var _createTiles = function() {
             me.svg.attr("transform", "translate(" + decal_w + "," + 0 + ")" + "scale(" + scale + ")");
         }
     }
+};
+
+Calendar.prototype.init = function(spec) {
+    var me = this;
+    me.height = spec.height;
+    me.adaptiveHeight = typeof spec.adaptiveHeight == "boolean" ? spec.adaptiveHeight : true;
+    me.width = spec.width || 800;
+    me.margin = spec.margin;
+    me.retreiveDataClosure = spec.retreiveDataClosure;
+    me.retreiveDataCallback = spec.retreiveDataCallback;
+    me.retreiveValueCallback = spec.retreiveValueCallback;
+    me.data = spec.data;
+    me.upBound = spec.upBound || 80;
+    me.downBound = spec.downBound || 20;
+    me.timeserie = spec.timeserie;
+    if (me.timeserie) {
+        me.retreiveValueCallback = me.timeserie.retreiveValueCallback;
+        me.data = me.timeserie.parsed;
+        me.upBound = me.timeserie.max();
+        me.downBound = me.timeserie.min();
+    }
+    console.log(me.upBound);
+    me.colorScheme = spec.colorScheme || [ "#d73027", "#f46d43", "#fdae61", "#fee08b", "#ffffbf", "#d9ef8b", "#a6d96a", "#66bd63", "#1a9850" ];
+    me.noDataColor = spec.noDataColor || "#eee";
+    me.buckets = me.colorScheme.length;
+    me.label_fill = spec.label_fill || "darkgray";
+    me.label_fontsize = spec.label_fontsize || "22px";
+    me.visId = spec.visId || "#vis";
+    me.decoratorId = spec.decoratorId || "#decorator_top";
+    me.decoratorBottomId = spec.decoratorBottomId || "#decorator_bottom";
+    me.tileClass = spec.tileClass || "tile";
+    me.monthPathClass = spec.monthPathClass || "month_path";
+    me.renderer = spec.renderer || new Calendar.renderer.year();
+    me.current_renderer = me.renderer;
+    me.duration = spec.duration || 800;
+    if (spec.duration == 0) me.duration = 0;
+    me.name = spec.name || "";
+    me.interactive = typeof spec.interactive == "boolean" ? spec.interactive : true;
+    me.animation = typeof spec.animation == "boolean" ? spec.animation : false;
+    if (!me.animation) me.duration = 0;
+    me.drawLegend = typeof spec.drawLegend == "boolean" ? spec.drawLegend : false;
+    me.drawHorodator = typeof spec.drawHorodator == "boolean" ? spec.drawHorodator : false;
 };
 
 Calendar.prototype.createTiles = function() {
@@ -177,6 +192,12 @@ Calendar.prototype.createTiles = function() {
 Calendar.prototype.draw = function(data) {
     var me = this;
     me.data = data;
+    if (me.timeserie) {
+        me.setBucket({
+            min: me.timeserie.min(),
+            max: me.timeserie.max()
+        });
+    }
     if (me._tempargs) {
         var args = [];
         args.splice(0, 0, data);
@@ -326,6 +347,188 @@ Calendar.animation = {
     fadeOut: function(transition, duration) {
         return transition.duration(duration).attr("fill-opacity", 0).remove();
     }
+};
+
+Calendar.data = {
+    week_format: d3.time.format("%W"),
+    firstDayOfWeek: d3.time.mondays,
+    _firstDayOfWeek: d3.time.monday,
+    getYear: function(d) {
+        return parseInt(d.getFullYear());
+    },
+    getDay: function(d) {
+        var time = d.getTime() - Calendar.data._firstDayOfWeek(d).getTime();
+        return Math.floor(parseInt(time) / (24 * 36e5));
+    },
+    getDayOfYear: function(d) {
+        var start = new Date(d.getFullYear(), 0, 0);
+        var diff = d - start;
+        var oneDay = 1e3 * 60 * 60 * 24;
+        return Math.ceil(diff / oneDay);
+    },
+    getWeek: function(d) {
+        return parseInt(Calendar.data.week_format(d));
+    },
+    getHours: function(d) {
+        return parseInt(d.getHours());
+    },
+    getQuarter: function(d) {
+        return parseInt(Math.floor(parseInt(d.getMinutes()) / 15));
+    },
+    create: function(timeCallback) {
+        return function(data) {
+            var year = function(d) {
+                return Calendar.data.getYear(timeCallback(d));
+            };
+            var day = function(d) {
+                return Calendar.data.getDay(timeCallback(d));
+            };
+            var week = function(d) {
+                return Calendar.data.getWeek(timeCallback(d));
+            };
+            var hour = function(d) {
+                return Calendar.data.getHours(timeCallback(d));
+            };
+            var quarter = function(d) {
+                return Calendar.data.getQuarter(timeCallback(d));
+            };
+            var nest = d3.nest();
+            nest.key(year).key(week).key(day).key(hour).key(quarter);
+            var data = nest.map(data);
+            return data;
+        };
+    },
+    bounds: function(valueCallback) {
+        return function(data) {
+            var result = [];
+            data.map(function(d) {
+                result.push(valueCallback(d));
+            });
+            return {
+                min: d3.round(d3.min(result)),
+                max: d3.round(d3.max(result)),
+                mean: d3.round(d3.mean(result)),
+                median: d3.round(d3.median(result))
+            };
+        };
+    },
+    retreiveValueCallbackClosure: function(specializedFunc, aggregatFunc, filterFunc) {
+        var recurr = function(array, i) {
+            var logs = [];
+            var value = specializedFunc(array);
+            if (value != null && value != undefined && !isNaN(value)) {
+                return value;
+            } else {
+                for (var i in array) {
+                    logs.push(recurr(array[i]));
+                }
+                if (aggregatFunc && typeof aggregatFunc == "function") {
+                    return aggregatFunc(logs);
+                }
+                return val;
+            }
+        };
+        return function() {
+            try {
+                var args = [];
+                var period = arguments[0];
+                for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
+                for (var i in args) period = period[args[i]];
+                var val = recurr(period, 0);
+                return val;
+            } catch (err) {
+                return null;
+            }
+        };
+    },
+    retreiveBoundsCallbackClosure: function(specializedTimeFunc, specializedFunc, aggregatFunc, filterFunc) {
+        var findStart = function(array, i) {
+            var logs = [];
+            if (array != null && specializedFunc(array) != null && specializedTimeFunc(array) != undefined) {
+                return specializedTimeFunc(array);
+            } else {
+                for (var j in array) {
+                    return findStart(array[j]);
+                }
+            }
+        };
+        var recurr = function(array, i) {
+            var logs = [];
+            if (array != null && specializedFunc(array) != null) {
+                return specializedFunc(array);
+            } else {
+                for (var j in array) {
+                    logs = logs.concat(recurr(array[j]));
+                }
+                return logs;
+            }
+        };
+        return function() {
+            try {
+                var args = [];
+                var period = arguments[0];
+                for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
+                for (var i in args) period = period[args[i]];
+                var logs = recurr(period, 0);
+                var start = findStart(period, 0);
+                return {
+                    min: d3.round(d3.min(logs), 2),
+                    max: d3.round(d3.max(logs), 2),
+                    mean: d3.round(d3.mean(logs), 2),
+                    median: d3.round(d3.median(logs), 2),
+                    start: start
+                };
+            } catch (err) {
+                return null;
+            }
+        };
+    },
+    retreiveBoundsPercentCallbackClosure: function() {
+        return function() {
+            return {
+                min: 0,
+                max: 100
+            };
+        };
+    }
+};
+
+Calendar.timeserie = function(spec) {
+    var me = this;
+    me.time = spec.time || function(d) {
+        d.time;
+    };
+    me.indicator = spec.indicator || function(d) {
+        d.value;
+    };
+    me.indicatorAggregation = spec.indicatorAggregation || d3.mean;
+    me.raw = [];
+    me.parsed = {};
+    me.parser = Calendar.data.create(me.time);
+    me.retreiveValueCallback = Calendar.data.retreiveValueCallbackClosure(me.indicator, me.indicatorAggregation);
+    me.max = function() {
+        return d3.max(me.raw, me.indicator);
+    };
+    me.min = function() {
+        return d3.min(me.raw, me.indicator);
+    };
+    me.mean = function() {
+        return d3.mean(me.raw, me.indicator);
+    };
+    me.data = function(raw) {
+        if (!arguments.length) return me.parsed;
+        me.raw = raw;
+        me.parsed = me.parser(raw);
+        return me.parsed;
+    };
+    me.merge = function(raw) {
+        me.raw = me.raw.concat(raw);
+        me.raw.sort(function(a, b) {
+            return a < b ? 1 : -1;
+        });
+        $.extend(true, me.parsed, me.parser(raw));
+        return me.parsed;
+    };
 };
 
 Calendar.renderer.day = function(spec) {
@@ -890,9 +1093,9 @@ Calendar.renderer.year = function(spec) {
     me.clean = function() {
         var calendar = this;
         calendar.monthPathExit();
-        Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
-        Calendar.animation.fadeOut(me.labels_months.transition(), calendar.duration);
-        Calendar.animation.fadeOut(me.label_weeks.transition(), calendar.duration);
+        if (me.label_year) Calendar.animation.fadeOut(me.label_year.transition(), calendar.duration);
+        if (me.labels_months) Calendar.animation.fadeOut(me.labels_months.transition(), calendar.duration);
+        if (me.label_weeks) Calendar.animation.fadeOut(me.label_weeks.transition(), calendar.duration);
     };
     me.bounds = function(year) {
         if (year instanceof Array && year.length > 0) {
@@ -1136,214 +1339,4 @@ Calendar.decorator.hovered = function(spec) {
     me.clean = function() {
         var previous = d3.select("#" + me.id).remove();
     };
-};
-
-Calendar.data = {
-    week_format: d3.time.format("%W"),
-    firstDayOfWeek: d3.time.mondays,
-    _firstDayOfWeek: d3.time.monday,
-    getYear: function(d) {
-        return parseInt(d.getFullYear());
-    },
-    getDay: function(d) {
-        var time = d.getTime() - Calendar.data._firstDayOfWeek(d).getTime();
-        return Math.floor(parseInt(time) / (24 * 36e5));
-    },
-    getDayOfYear: function(d) {
-        var start = new Date(d.getFullYear(), 0, 0);
-        var diff = d - start;
-        var oneDay = 1e3 * 60 * 60 * 24;
-        return Math.ceil(diff / oneDay);
-    },
-    getWeek: function(d) {
-        return parseInt(Calendar.data.week_format(d));
-    },
-    getHours: function(d) {
-        return parseInt(d.getHours());
-    },
-    getQuarter: function(d) {
-        return parseInt(Math.floor(parseInt(d.getMinutes()) / 15));
-    },
-    create: function(timeCallback) {
-        return function(data) {
-            var year = function(d) {
-                return Calendar.data.getYear(timeCallback(d));
-            };
-            var day = function(d) {
-                return Calendar.data.getDay(timeCallback(d));
-            };
-            var week = function(d) {
-                return Calendar.data.getWeek(timeCallback(d));
-            };
-            var hour = function(d) {
-                return Calendar.data.getHours(timeCallback(d));
-            };
-            var quarter = function(d) {
-                return Calendar.data.getQuarter(timeCallback(d));
-            };
-            var nest = d3.nest();
-            nest.key(year).key(week).key(day).key(hour).key(quarter);
-            var data = nest.map(data);
-            return data;
-        };
-    },
-    merge: function(collection, tomerge_data, update) {
-        if (update == null) update = true;
-        function getKeys(obj, filter) {
-            var name, result = [];
-            for (name in obj) {
-                if ((!filter || filter.test(name)) && obj.hasOwnProperty(name)) {
-                    result[result.length] = parseInt(name);
-                }
-            }
-            return result;
-        }
-        function intersection_destructive(a, b) {
-            var result = new Array();
-            while (a.length > 0 && b.length > 0) {
-                if (a[0] < b[0]) {
-                    a.shift();
-                } else if (a[0] > b[0]) {
-                    b.shift();
-                } else {
-                    result.push(a.shift());
-                    b.shift();
-                }
-            }
-            return result;
-        }
-        function intersect_safe(a, b) {
-            var ai = 0, bi = 0;
-            var result = new Array();
-            while (ai < a.length && bi < b.length) {
-                if (a[ai] < b[bi]) {
-                    ai++;
-                } else if (a[ai] > b[bi]) {
-                    bi++;
-                } else {
-                    result.push(a[ai]);
-                    ai++;
-                    bi++;
-                }
-            }
-            return result;
-        }
-        function merge_options(obj1, obj2) {
-            var obj3 = {};
-            for (var attrname in obj1) {
-                obj3[attrname] = obj1[attrname];
-            }
-            for (var attrname in obj2) {
-                obj3[attrname] = obj2[attrname];
-            }
-            return obj3;
-        }
-        var _merge = function(arrayA, arrayB, i) {
-            var el_a = getKeys(arrayA);
-            var el_b = getKeys(arrayB);
-            el_a.sort();
-            el_b.sort();
-            var intersec = intersection_destructive(el_a, el_b);
-            for (var i in intersec) {
-                var el = _merge(arrayA[intersec[i]], arrayB[intersec[i]]);
-                arrayB[intersec[i]] = el;
-            }
-            var safe_merge = merge_options(arrayA, arrayB);
-            return safe_merge;
-        };
-        return _merge(collection, tomerge_data);
-    },
-    bounds: function(valueCallback) {
-        return function(data) {
-            var result = [];
-            data.map(function(d) {
-                result.push(valueCallback(d));
-            });
-            return {
-                min: d3.round(d3.min(result)),
-                max: d3.round(d3.max(result)),
-                mean: d3.round(d3.mean(result)),
-                median: d3.round(d3.median(result))
-            };
-        };
-    },
-    retreiveValueCallbackClosure: function(specializedFunc, aggregatFunc, filterFunc) {
-        var recurr = function(array, i) {
-            var logs = [];
-            var value = specializedFunc(array);
-            if (value != null && value != undefined && !isNaN(value)) {
-                return value;
-            } else {
-                for (var i in array) {
-                    logs.push(recurr(array[i]));
-                }
-                if (aggregatFunc && typeof aggregatFunc == "function") {
-                    return aggregatFunc(logs);
-                }
-                return val;
-            }
-        };
-        return function() {
-            try {
-                var args = [];
-                var period = arguments[0];
-                for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
-                for (var i in args) period = period[args[i]];
-                var val = recurr(period, 0);
-                return val;
-            } catch (err) {
-                return null;
-            }
-        };
-    },
-    retreiveBoundsCallbackClosure: function(specializedTimeFunc, specializedFunc, aggregatFunc, filterFunc) {
-        var findStart = function(array, i) {
-            var logs = [];
-            if (array != null && specializedFunc(array) != null && specializedTimeFunc(array) != undefined) {
-                return specializedTimeFunc(array);
-            } else {
-                for (var j in array) {
-                    return findStart(array[j]);
-                }
-            }
-        };
-        var recurr = function(array, i) {
-            var logs = [];
-            if (array != null && specializedFunc(array) != null) {
-                return specializedFunc(array);
-            } else {
-                for (var j in array) {
-                    logs = logs.concat(recurr(array[j]));
-                }
-                return logs;
-            }
-        };
-        return function() {
-            try {
-                var args = [];
-                var period = arguments[0];
-                for (var i = 1; i < arguments.length; i++) args.push(arguments[i]);
-                for (var i in args) period = period[args[i]];
-                var logs = recurr(period, 0);
-                var start = findStart(period, 0);
-                return {
-                    min: d3.round(d3.min(logs), 2),
-                    max: d3.round(d3.max(logs), 2),
-                    mean: d3.round(d3.mean(logs), 2),
-                    median: d3.round(d3.median(logs), 2),
-                    start: start
-                };
-            } catch (err) {
-                return null;
-            }
-        };
-    },
-    retreiveBoundsPercentCallbackClosure: function() {
-        return function() {
-            return {
-                min: 0,
-                max: 100
-            };
-        };
-    }
 };

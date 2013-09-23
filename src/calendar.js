@@ -1,24 +1,86 @@
-// Fix map for IE
-if (!('map' in Array.prototype)) { 
-  Array.prototype.map = function (mapper, that /*opt*/) { 
-    var other = new Array(this.length); 
-    for (var i = 0, n = this.length; i < n; i++) 
-      if (i in this) 
-        other[i] = mapper.call(that, this[i], i, this); 
-    return other; 
-  }; 
-};
+/**
+ * @namespace	 
+ * @Author Bertrand Zanni zanni.bertrand@gmail.com
+ * @Version 0.0.1
+ * @property {integer} width 				
+ *			- canvas width
+ * @property {integer} height 				
+ *			- canvas height
+ * @property {object} margin 				
+ *			- canvas margin
+ * @property {object} eventManager  		
+ *			- give evenemential capacity to calendar
+ * @property {boolean} adaptiveHeight 		
+ *			- whether canvas container height should adapt to effective canvas height
+ * @property {object} timeserie 		
+ *			- timeserie to display
+
+
+ *
+ * @example 
+ *	<caption>Calendar().timeserie(timeserie).createTile(2013)</caption>
+ * 
+ */
+var Calendar = function(spec){
+	var calendar = new CalendarObject(spec);
+	var my = function(){
+
+	}
+	var timeserie = calendar._timeserie;
+	my.timeserie = function(value) {
+		if (!arguments.length) return timeserie;
+		timeserie = value;
+		calendar.timeserie = timeserie
+		calendar.retreiveValueCallback = timeserie.retreiveValueCallback;
+		calendar.data = timeserie.parsed;
+		calendar.upBound = timeserie.max();
+		calendar.downBound = timeserie.min();
+		return my;
+	};
+	var data = calendar._data;
+	my.data = function(value) {
+		if (!arguments.length) return calendar._data;
+		data = value;
+		calendar.data = calendar.timeserie.data(value)
+		return my;
+	};
+	var grab = calendar.retreiveDataCallback;
+	my.grab = function(value) {
+		if (!arguments.length) return grab;
+		grab = value;
+		calendar.retreiveDataCallback = grab;
+		return my;
+	};
+	var renderer = calendar._renderer;
+	my.renderer = function(value) {
+		if(value == "year") value = new Calendar.renderer.year();
+		else if(value == "month") value = new Calendar.renderer.month();
+		else if(value == "week") value = new Calendar.renderer.week();
+		else if(value == "day") value = new Calendar.renderer.day()
+
+		if (!arguments.length) return renderer;
+		renderer = value;
+		calendar.renderer = renderer;
+		return my;
+	};
+	my.createTiles = function(){
+		calendar.createTiles.apply(calendar, arguments);
+	}
+	return my;
+}
 
 /**********************************************************/
 // Calendar CONSTRUCTOR
 /**********************************************************/
-var Calendar = function(spec){
+var CalendarObject = function(spec){
 	/******************************************************/
 	// INIT
 	/******************************************************/
 	// self ref
 	var me = this;
+	console.log(spec);
 
+	if(!spec) { spec = {}; spec.decorators = []; }
 	// event manager
 	me.eventManager = {};
 	EventManager.enable.call(me.eventManager);
@@ -45,11 +107,11 @@ var Calendar = function(spec){
 
 	
 	
-	me.decorators = spec.decorators || [];
+	me.decorators = spec.decorators ;
 	d3.select(me.decoratorId)
 		// .style("display", "block")
 		.style("margin", "20px 0");
-
+console.log(spec.decorators)
 	if(me.drawLegend){
 		me.legend = new Calendar.decorator.legend();
 		me.decorators.push(me.legend);
@@ -58,9 +120,15 @@ var Calendar = function(spec){
 	if(me.drawHorodator){
 		me.horodator = new Calendar.decorator.horodator();
 		me.decorators.push(me.horodator);
-	}		
+	}	
+	
+	for(var i in spec.decorators){
+		me.decorators.push(spec.decorators[i]);
+	}	
 
 }
+
+
 
 /******************************************************/
 // PRIVATE _ CREATE TILES
@@ -168,7 +236,7 @@ var _createTiles = function () {
 // configuration
 // 
 /******************************************************/
-Calendar.prototype.init = function(spec){
+CalendarObject.prototype.init = function(spec){
 	var me = this;
 	// layout
 	// adaptiveHeight
@@ -264,7 +332,7 @@ Calendar.prototype.init = function(spec){
 // calendar.createTiles(2012)
 // 
 /******************************************************/
-Calendar.prototype.createTiles = function(){
+CalendarObject.prototype.createTiles = function(){
 
 	// self reference 
 	var me = this;
@@ -298,21 +366,30 @@ Calendar.prototype.createTiles = function(){
 //
 // IT IS ONLY USED WITH ASYNC DATA GRABBING
 /******************************************************/
-Calendar.prototype.draw = function(data){
+CalendarObject.prototype.draw = function(data){
 	var me = this;
-	me.data = data;
+	
 	if(me.timeserie){
-		me.setBucket({
+		me.timeserie.data(data);
+		var bounds = {
 			min: me.timeserie.min()
 			, max: me.timeserie.max()
-		});
+		}
+		me.setBucket(bounds);
+		if(me.legend) me.setLegend(bounds)
+		if(me.horodator) me.setHorodator(me.timeserie.start(), me.timeserie.end());
+		me.data = me.timeserie.data();
+	}
+	else{
+		console.log(me);
+		me.data = data;
 	}
 	// if local args have been memorized,
 	// we concat grabbed data with those args and give
 	// them to _createTiles
 	if(me._tempargs) {
 		var args = [];
-		args.splice(0, 0, data);
+		args.splice(0, 0, me.data);
 		for(var i=0; i< me._tempargs.length;i++) args.push(me._tempargs[i]);
 		_createTiles.apply(this, args);
 	}
@@ -324,7 +401,7 @@ Calendar.prototype.draw = function(data){
 /******************************************************/
 // CALENDAR PROTOTYPE SET LEGEND
 /******************************************************/
-Calendar.prototype.setLegend = function(bounds) {
+CalendarObject.prototype.setLegend = function(bounds) {
 
 		var check = function(a){ return (a) ? a : ""; }
 		var me = this;
@@ -340,7 +417,7 @@ Calendar.prototype.setLegend = function(bounds) {
 /******************************************************/
 // CALENDAR PROTOTYPE REDRAW LEGEND
 /******************************************************/
-Calendar.prototype.redrawLegend = function(bounds) {
+CalendarObject.prototype.redrawLegend = function(bounds) {
 		var me = this;
 		me.legend.recolor()		
 	}
@@ -348,7 +425,7 @@ Calendar.prototype.redrawLegend = function(bounds) {
 /******************************************************/
 // CALENDAR PROTOTYPE SET HORODATOR
 /******************************************************/
-Calendar.prototype.setHorodator = function(start, end) {
+CalendarObject.prototype.setHorodator = function(start, end) {
 		var check = function(a){ return (a) ? me.renderer.horodator_format(a) : ""; }
 		var me = this;
 		me.horodator.refresh(check(start),check(end));
@@ -357,7 +434,7 @@ Calendar.prototype.setHorodator = function(start, end) {
 /******************************************************/
 // CALENDAR PROTOTYPE SET BUCKETS
 /******************************************************/
-Calendar.prototype.setBucket = function(bounds){
+CalendarObject.prototype.setBucket = function(bounds){
 	var me = this;
 	var range = [];
 	for (var i = 0; i < me.colorScheme.length; i++) {
@@ -375,7 +452,7 @@ Calendar.prototype.setBucket = function(bounds){
 // TILES UTILS
 /******************************************************/
 // ENTER
-Calendar.prototype.tilesEnter = function(tiles) {
+CalendarObject.prototype.tilesEnter = function(tiles) {
 	var me = this;
 
 	return tiles.enter()
@@ -386,7 +463,7 @@ Calendar.prototype.tilesEnter = function(tiles) {
 }
 
 // UPDATE
-Calendar.prototype.tilesUpdate = function(tiles) { 
+CalendarObject.prototype.tilesUpdate = function(tiles) { 
 	var me = this;
 	if(me.interactive){
 		return tiles.on("mouseover", function (d, i) {
@@ -414,7 +491,7 @@ Calendar.prototype.tilesUpdate = function(tiles) {
 }
 
 // EXIT
-Calendar.prototype.tilesExit = function(tiles) {
+CalendarObject.prototype.tilesExit = function(tiles) {
 	tiles.exit()
 		// .transition().duration(calendar.duration)
 		.attr("fill-opacity", 0)
@@ -425,7 +502,7 @@ Calendar.prototype.tilesExit = function(tiles) {
 // MONTH PATH UTILS 
 /******************************************************/
 // ENTER
-Calendar.prototype.monthPathEnter = function(data_month, monthPath) {
+CalendarObject.prototype.monthPathEnter = function(data_month, monthPath) {
 	var paths = this.svg.selectAll("."+this.monthPathClass)
 	    .data(data_month, function(d,i){return d.getFullYear()+"-"+d.getMonth();})
 
@@ -453,7 +530,7 @@ Calendar.prototype.monthPathEnter = function(data_month, monthPath) {
 	return paths;
 }
 // EXIT
-Calendar.prototype.monthPathExit = function(data_month, monthPath) {
+CalendarObject.prototype.monthPathExit = function(data_month, monthPath) {
 	this.svg.selectAll("."+this.monthPathClass)
 				.attr("stroke-opacity", 0)
 				// .transition().duration(this.duration).attr("fill-opacity", 0)
@@ -464,7 +541,7 @@ Calendar.prototype.monthPathExit = function(data_month, monthPath) {
 // LABEL UTILS 
 /******************************************************/
 // ENTER
-Calendar.prototype.labelEnter = function(renderer, transform, klass){
+CalendarObject.prototype.labelEnter = function(renderer, transform, klass){
 	var me = this;
 	var label = transform.append("text")
 				.classed(klass, true)
@@ -480,7 +557,7 @@ Calendar.prototype.labelEnter = function(renderer, transform, klass){
 // DECORATOR UTILS 
 /******************************************************/
 // ENTER
-Calendar.prototype.decoratorEnter = function(id, float, position, interactive){
+CalendarObject.prototype.decoratorEnter = function(id, float, position, interactive){
 	var me = this;
 	return d3.select(position && (position == "bottom") ? me.decoratorBottomId : me.decoratorId)
 			.style('cursor',(interactive) ? 'pointer' : 'cursor')
@@ -498,7 +575,7 @@ Calendar.prototype.decoratorEnter = function(id, float, position, interactive){
 				.style('float', ((float) ? float : 'right'))
 				.style('margin-left', '10px')
 }
-Calendar.prototype.decoratorTextEnter = function(decorator){
+CalendarObject.prototype.decoratorTextEnter = function(decorator){
 	var me = this;
 	return decorator.append('p')
 				.style('font-size', '14px')
@@ -509,25 +586,25 @@ Calendar.prototype.decoratorTextEnter = function(decorator){
 /******************************************************/
 // TIME HELPERS
 /******************************************************/
-Calendar.prototype.time = {};
+CalendarObject.prototype.time = {};
 // TODO permits to specify which day is the first day of week
-Calendar.prototype.time.getDay = function(d){
+CalendarObject.prototype.time.getDay = function(d){
 	return Calendar.data.getDay(d);
 }
 
-Calendar.prototype.time.getMonth = function(d){
+CalendarObject.prototype.time.getMonth = function(d){
 	var format = d3.time.format("%m");
 	return parseInt(format(d));
 }
 
-Calendar.prototype.time.getWeek = function(d){
+CalendarObject.prototype.time.getWeek = function(d){
 	return Calendar.data.getWeek(d);
 }
 
 /******************************************************/
 // COLOR HELPERS
 /******************************************************/
-Calendar.prototype.getColor = function(val){
+CalendarObject.prototype.getColor = function(val){
 	var me = this;
 	var color = me.noDataColor;
 	if(val != undefined && val !=0 ) {

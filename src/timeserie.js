@@ -23,6 +23,12 @@ Calendar.timeserie = function(spec){
 	me.mean = function(){
 		return d3.mean(me.raw, me.indicator);
 	}
+	me.start = function(){
+		return d3.min(me.raw, me.time);
+	}
+	me.end = function(){
+		return d3.max(me.raw, me.time);
+	}
 
 	me.data = function(raw) {
 		if (!arguments.length) return me.parsed;

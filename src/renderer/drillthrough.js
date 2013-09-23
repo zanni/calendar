@@ -48,9 +48,9 @@ Calendar.renderer.drillthrough = function(spec){
 	me.hovered_format = me.current_renderer.hovered_format
 
 	var previous_btn = new previousDecorator({
-			float: 'left'
-			, position: 'top'
-		});
+		float: 'left'
+		, position: 'top'
+	});
 	
 	me.previous = [];
 	me.current_display = null;
@@ -66,48 +66,38 @@ Calendar.renderer.drillthrough = function(spec){
 		// setting when calling draw func with apply
 		/******************************************************/
 		var calendar = this;
-
-		var displayCalendar = function(display){
-			
-			
-			calendar.eventManager.trigger("drillthrough:changed", display);
-			me.current_display = display;
-			calendar.renderer = display.renderer;
-			calendar.retreiveDataCallback = display.retreiveDataCallback;
-			calendar.createTiles.apply(calendar, display.arguments);
-		}
-
 		
+
 		var args = [];
 		for(var i = 1; i<arguments.length;i++) {
 			args.push(arguments[i]);
 		}
-		var display = {
-			renderer: me.current_renderer
-			, retreiveDataCallback: calendar.retreiveDataClosure("day")
-			, arguments: args
-		};
-		me.current_display = display;
+		me.current_display = {
+			renderer : new Calendar.renderer.year()
+			, args: args
+		}
 
-		var args = arguments;
+		var display = function(display){
+			calendar.renderer = display.renderer;
+			calendar.createTiles.apply(calendar, display.args);
+		}
+
+		display(me.current_display);
 
 		calendar.eventManager.on("tile:click", function(d){
-
-			console.log(d)
 			if(me.previous.length == 0 ){
 				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
-			var display = {
-				renderer: new Calendar.renderer.day()
-				, agg : "quarter"
-				, retreiveDataCallback: calendar.retreiveDataClosure("quarter")
-				, arguments: [d.time.getFullYear(), calendar.time.getWeek(d.time), calendar.time.getDay(d.time)]
-				
-			};
-
-			displayCalendar(display);
-
+			me.current_display = {
+				renderer : new Calendar.renderer.day()
+				, args: [d.time.getFullYear()
+					, calendar.time.getWeek(d.time)
+					, calendar.time.getDay(d.time)
+					, "quarter"
+				]
+			}
+			display(me.current_display);
 		});
 
 		calendar.eventManager.on("label:month:click", function(d){
@@ -115,14 +105,14 @@ Calendar.renderer.drillthrough = function(spec){
 				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
-			var display = {
-				renderer: new Calendar.renderer.month()
-				, agg : "day"
-				, retreiveDataCallback: calendar.retreiveDataClosure("day")
-				, arguments: [d.getFullYear(), calendar.time.getMonth(d)-1]
-			};
-
-			displayCalendar(display);
+			me.current_display = {
+				renderer : new Calendar.renderer.month()
+				, args: [d.getFullYear()
+					, calendar.time.getMonth(d) -1
+					, "day"
+				]
+			}
+			display(me.current_display);
 		});
 
 		calendar.eventManager.on("label:year:click", function(d){
@@ -130,14 +120,11 @@ Calendar.renderer.drillthrough = function(spec){
 				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
-			var display = {
-				renderer: new Calendar.renderer.year()
-				, agg : "day"
-				, retreiveDataCallback: calendar.retreiveDataClosure("day")
-				, arguments: [d.getFullYear()]
-			};
-
-			displayCalendar(display);
+			me.current_display = {
+				renderer : new Calendar.renderer.year()
+				, args: [d.getFullYear(), "day"]
+			}
+			display(me.current_display);
 		});
 
 		calendar.eventManager.on("label:week:click", function(d){
@@ -145,13 +132,11 @@ Calendar.renderer.drillthrough = function(spec){
 				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
-			var display = {
-				renderer: new Calendar.renderer.week()
-				, agg : "hour"
-				, retreiveDataCallback: calendar.retreiveDataClosure("hour")
-				, arguments: [d.getFullYear(), calendar.time.getWeek(d)]
-			};
-			displayCalendar(display);
+			me.current_display = {
+				renderer : new Calendar.renderer.week()
+				, args: [d.getFullYear(), calendar.time.getWeek(d), "hour"]
+			}
+			display(me.current_display);
 		});
 
 		calendar.eventManager.on("label:day:click", function(d){
@@ -159,29 +144,27 @@ Calendar.renderer.drillthrough = function(spec){
 				previous_btn.draw.apply(calendar);
 			}
 			me.previous.push(me.current_display);
-			var display = {
-				renderer: new Calendar.renderer.day()
-				, agg : "quarter"
-				, retreiveDataCallback: calendar.retreiveDataClosure("quarter")
-				, arguments: [d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d)]
-			};
-			displayCalendar(display);
+			me.current_display = {
+				renderer : new Calendar.renderer.day()
+				, args: [d.getFullYear(), calendar.time.getWeek(d), calendar.time.getDay(d), "quarter"]
+			}
+			display(me.current_display);
 		});
 
 
 		calendar.eventManager.on("previous:click", function(d){
-			var display = me.previous.pop();
-
-			if(!display) { 
+			var view = me.previous.pop();
+			if(!view) { 
 				return;
 			}
 			if(me.previous.length == 0 ){
 				previous_btn.clean.apply(calendar);
 			}
-			displayCalendar(display);
+			me.current_display = view;
+			display(view);
 		});
 
-		return me.current_renderer.draw.apply(calendar, arguments);
+		// return me.current_renderer.draw.apply(calendar, arguments);
 
 	}
 
