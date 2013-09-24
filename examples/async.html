@@ -40,15 +40,10 @@ $(document).ready(function() {
 		, indicatorAggregation: d3.mean
 	});
 
-
-
-
-	var data = {};
 	var datagrab_closure = function(year){
 		var me = this;
 		year = year[year.length - 1];
 		d3.json("mokup/"+year+"_day.json", function(raw){
-			// timeserie.data(raw);
 			me.draw(raw,true);
 		});
 	}

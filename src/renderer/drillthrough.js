@@ -1,5 +1,4 @@
 
-// defining previous decorator in order to drill back to previous views
 var previousDecorator = function(spec){
 	var me = this;
 
@@ -33,7 +32,9 @@ var previousDecorator = function(spec){
 		var previous = d3.select("#"+me.id).remove();
 	}
 }
-
+/**
+ * @class
+ */
 Calendar.renderer.drillthrough = function(spec){
 
 	// renderer self ref
@@ -163,9 +164,6 @@ Calendar.renderer.drillthrough = function(spec){
 			me.current_display = view;
 			display(view);
 		});
-
-		// return me.current_renderer.draw.apply(calendar, arguments);
-
 	}
 
 	/******************************************************/

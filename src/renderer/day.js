@@ -1,28 +1,27 @@
 /**
- * @namespace Calendar.renderer.day
+ * @class
  */
 Calendar.renderer.day = function(spec){
 
 	// renderer self ref
 	var me = this;
 
-	// theming
-	if(!spec) spec={};
-	me.margin = spec.margin || 20;
-	me.cell_size = spec.cell_size || 36;
-	me.space_between_tiles = spec.space_between_tiles || 2;
-	me.space_between_row = spec.space_between_row || 15;
-	me.tiles_left_decal = spec.tiles_left_decal || 30;
-	me.label_fill = spec.label_fill || "darkgray";
-	me.label_fontsize = spec.label_fontsize || "12px";
-	me.hour_label_class = spec.hour_label_class || "day_hour_label";
-	me.hour_label_format = spec.hour_label_format || d3.time.format("%Hh");
-
-	//horodator time format
-	me.horodator_format = spec.horodator_format || d3.time.format("%Y %B %d");
-	//hovered_format time format
-	me.hovered_format = spec.hovered_format || d3.time.format("%Hh:%M");
-
+	var settings = {
+		cell_size : 36
+		, margin : 20
+		, space_between_tiles : 2
+		, space_between_row : 15
+		, tiles_left_decal : 30
+		, label_fill : "darkgray"
+		, label_fontsize : "12px"
+		, hour_label_class : "day_hour_label"
+		, hour_label_format : d3.time.format("%Hh")
+		, horodator_format : d3.time.format("%Y %B %d")
+		, hovered_format : d3.time.format("%Hh:%M")
+	}
+	$.extend(me, settings);
+	$.extend(me, spec);
+	
 	// store labels in order to clean
 	me.labels_hours;
 

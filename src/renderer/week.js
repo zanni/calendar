@@ -1,39 +1,29 @@
-/*********************************************************/
-//
-// Calendar.renderer.week
-// deps on:
-//			calendar.svg;
-//			calendar.duration
-//			calendar.retreiveCalcsCallback(year, week);
-//			calendar.retreiveValueCallback(year, week, calendar.time.getDay(d), d.getHours())
-//			calendar.getColor(val);
-//
-/**********************************************************/
+/**
+ * @class
+ */
 Calendar.renderer.week = function(spec){
 
 	// renderer self ref
 	var me = this;
 
-	// theming
-	if(!spec) spec={};
-	me.cell_size = spec.cell_size || 36;
-	me.space_between_tiles = spec.space_between_tiles || 2;
-	me.tiles_left_decal = spec.tiles_left_decal || 85;
-	me.day_label_top_decal = spec.day_label_top_decal || 30;
-	me.tile_top_decal = spec.tile_top_decal || 10;
-	me.hour_label_top_decal = spec.hour_label_top_decal || 20;
-	me.hour_label_left_decal = spec.hour_label_left_decal || 5;
-	me.label_fill = spec.label_fill || "darkgray";
-	me.label_fontsize = spec.label_fontsize || "14px";
-	me.day_label_class = spec.day_label_class || "day_label";
-	me.hour_label_class = spec.hour_label_class || "hour_label";
-	me._day_label_format = spec._day_label_format || d3.time.format("%a %d %b");
-
-	//horodator time format
-	me.horodator_format = spec.horodator_format || d3.time.format("%Y, week %W");
-	//hovered_format time format
-	me.hovered_format = spec.hovered_format || d3.time.format("%d %Hh");
-
+	var settings = {
+		cell_size : 36
+		, space_between_tiles : 2
+		, tiles_left_decal : 85
+		, day_label_top_decal : 30
+		, tile_top_decal : 10
+		, hour_label_top_decal : 20
+		, hour_label_left_decal : 5
+		, label_fill : "darkgray"
+		, label_fontsize : "14px"
+		, day_label_class : "day_label"
+		, hour_label_class : "hour_label"
+		, _day_label_format : d3.time.format("%a %d %b")
+		, horodator_format : d3.time.format("%Y, week %W")
+		, hovered_format : d3.time.format("%d %Hh")
+	}
+	$.extend(me, settings);
+	$.extend(me, spec);
 
 	// store labels in order to clean
 	me.labels_days;

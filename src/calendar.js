@@ -1,26 +1,12 @@
 /**
- * @fileOverview Various tool functions.
+ * @fileOverview CCalendar core definitions
  * @author <a href="mailto:zanni.bertrand@gmail.com">Bertrand Zanni </a>
  * @version 3.1.2
  */
 /**
- * Description {@tutorial test-tutorial}.
+ * Description CalendarObject method wrapper intended to provide d3 recommanded API
  * @method Calendar
- * @property {integer} width 				
- *			- canvas width
- * @property {integer} height 				
- *			- canvas height
- * @property {object} margin 				
- *			- canvas margin
- * @property {object} eventManager  		
- *			- give evenemential capacity to calendar
- * @property {boolean} adaptiveHeight 		
- *			- whether canvas container height should adapt to effective canvas height
- * @property {object} timeserie 		
- *			- timeserie to display
-
-
- *
+ * @Constructs CalendarObject
  * @example 
  *	<caption>Calendar().timeserie(timeserie).createTile(2013)</caption>
  * 
@@ -28,9 +14,12 @@
 var Calendar = function(spec){
 	var calendar = new CalendarObject(spec);
 	var my = function(){
-
 	}
+
+
 	var timeserie = calendar.timeserie;
+	/** @Method */
+	/** @Description timeserie getter/setter */
 	my.timeserie = function(value) {
 		if (!arguments.length) return timeserie;
 		timeserie = value;
@@ -43,6 +32,8 @@ var Calendar = function(spec){
 		return my;
 	};
 	var data = calendar._data;
+	/** @Method */
+	/** @Description synchronously grabbed data getter/setter */
 	my.data = function(value) {
 		if (!arguments.length) return calendar._data;
 		data = value;
@@ -53,6 +44,8 @@ var Calendar = function(spec){
 		return my;
 	};
 	var grab = calendar.retreiveDataCallback;
+	/** @Method */
+	/** @Description async data callback getter/setter */
 	my.grab = function(value) {
 		if (!arguments.length) return grab;
 		grab = value;
@@ -60,6 +53,8 @@ var Calendar = function(spec){
 		return my;
 	};
 	var renderer = calendar._renderer;
+	/** @Method */
+	/** @Description renderer getter/setter */
 	my.renderer = function(value) {
 		if(value == "year") value = new Calendar.renderer.year();
 		else if(value == "month") value = new Calendar.renderer.month();
@@ -71,33 +66,19 @@ var Calendar = function(spec){
 		calendar.renderer = renderer;
 		return my;
 	};
+	/** @Method */
+	/** @Description createTiles calendar call */
 	my.createTiles = function(){
 		calendar.createTiles.apply(calendar, arguments);
 	}
 	return my;
 }
 
-/**
- * @namespace
- * @property {RendererObject} day 				
- *				- Day renderer constructor @see bar
- * @property {RendererObject} week 				
- *				- Week renderer constructor
- * @property {RendererObject} month 				
- *				- Month renderer constructor
- * @property {RendererObject} year 				
- *				- Year renderer constructor
- */
+
 Calendar.renderer = {};
 
-/**
- * @namespace 
- */
 Calendar.decorator = {};
 
-/**
- * @namespace 
- */
 Calendar.animation = {
 	// fade in animation
 	fadeIn : function(transition, duration){
@@ -119,6 +100,9 @@ Calendar.animation = {
 /**********************************************************/
 // Calendar CONSTRUCTOR
 /**********************************************************/
+/**
+ * @class
+ */
 var CalendarObject = function(spec){
 	/******************************************************/
 	// INIT
@@ -208,6 +192,15 @@ var CalendarObject = function(spec){
 	if(me.drawHorodator){
 		me.horodator = new Calendar.decorator.horodator();
 		me.decorators.push(me.horodator);
+	}
+
+	/******************************************************/
+	// DECORATORS
+	/******************************************************/
+	for(var i in me.decorators){
+		if(me.decorators[i] && typeof me.decorators[i].draw == 'function'){
+			me.decorators[i].draw.apply(me);
+		}
 	}	
 
 }
@@ -232,14 +225,7 @@ var _createTiles = function () {
 	data = [];
 	label = [];
 
-	/******************************************************/
-	// DECORATORS
-	/******************************************************/
-	for(var i in me.decorators){
-		if(me.decorators[i] && typeof me.decorators[i].draw == 'function'){
-			me.decorators[i].draw.apply(me);
-		}
-	}
+	
 
 	// if renderer != current_renderer that's mean that renderer 
 	// have been swiched 
@@ -380,6 +366,7 @@ CalendarObject.prototype.draw = function(data, mergeData){
 			min: me.timeserie.min()
 			, max: me.timeserie.max()
 		}
+		console.log(bounds);
 		me.setBucket(bounds);
 		if(me.legend) me.setLegend(bounds)
 		if(me.horodator) me.setHorodator(me.timeserie.start(), me.timeserie.end());

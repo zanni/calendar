@@ -1,43 +1,33 @@
-/*********************************************************/
-//
-// Calendar.renderer.week
-// deps on:
-//			calendar.svg;
-//			calendar.duration
-//			calendar.retreiveCalcsCallback(year, week);
-//			calendar.retreiveValueCallback(year, week, calendar.time.getDay(d), d.getHours())
-//			calendar.getColor(val);
-//
-/**********************************************************/
+/**
+ * @class
+ */
 Calendar.renderer.month = function(spec){
 
 	// renderer self ref
 	var me = this;
 
-	// theming
-	if(!spec) spec={};
-	me.cell_size = spec.cell_size || 36;
-	me.margin = spec.margin || 40;
-	me.space_between_tiles = spec.space_between_tiles || 2;
-	me.space_between_months = spec.space_between_months || me.cell_size;
-	me.month_label_left_decal = spec.month_label_left_decal || 80;
-	me.year_label_top_decal = spec.year_label_top_decal || 146;
-	me.tiles_top_decal = spec.tiles_top_decal || 15;
-	me.tiles_left_decal = spec.tiles_left_decal || 20;
-	me.label_fill = spec.label_fill || "darkgray";
-	me.label_fontsize =  spec.label_fontsize || "14px";
-	me.month_label_class = spec.month_label_class || "month_label";
-	me.week_label_class = spec.week_label_class || "week_label";
-	me.month_label_format = spec.month_label_format || d3.time.format("%B");
-	me.year_label_class = spec.year_label_class || "year_label";
-	me.year_label_format = spec.year_label_format || d3.time.format("%Y");
-
-	//horodator time format
-	me.horodator_format = spec.horodator_format || d3.time.format("%B, %Y");
-	//hovered_format time format
-	me.hovered_format = spec.hovered_format || d3.time.format("%B %d %Hh");
-
-
+	var settings = {
+		cell_size : 36
+		, margin : 40
+		, space_between_tiles : 2
+		, space_between_months : 36
+		, month_label_left_decal : 80
+		, year_label_top_decal : 146
+		, tiles_top_decal : 15
+		, tiles_left_decal : 20
+		, label_fill : "darkgray"
+		, label_fontsize : "14px"
+		, month_label_class : "month_label"
+		, week_label_class : "week_label"
+		, year_label_class : "year_label"
+		, month_label_format : d3.time.format("%B")
+		, year_label_format : d3.time.format("%Y")
+		, horodator_format : d3.time.format("%B, %Y")
+		, hovered_format : d3.time.format("%B %d %Hh")
+	}
+	$.extend(me, settings);
+	$.extend(me, spec);
+	
 	// store labels in order to clean
 	me.labels_months;
 	me.label_year;

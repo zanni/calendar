@@ -1,3 +1,6 @@
+/**
+ * @class
+ */
 Calendar.renderer.github = function(spec){
 
 	// renderer self ref

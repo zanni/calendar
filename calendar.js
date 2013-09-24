@@ -162,17 +162,17 @@ var CalendarObject = function(spec) {
         me.horodator = new Calendar.decorator.horodator();
         me.decorators.push(me.horodator);
     }
+    for (var i in me.decorators) {
+        if (me.decorators[i] && typeof me.decorators[i].draw == "function") {
+            me.decorators[i].draw.apply(me);
+        }
+    }
 };
 
 var _createTiles = function() {
     var me = this;
     data = [];
     label = [];
-    for (var i in me.decorators) {
-        if (me.decorators[i] && typeof me.decorators[i].draw == "function") {
-            me.decorators[i].draw.apply(me);
-        }
-    }
     var renderer_switched = false;
     if (me.current_renderer && me.current_renderer.clean && me.renderer != me.current_renderer) {
         me.current_renderer.clean.apply(me, arguments);
@@ -243,6 +243,7 @@ CalendarObject.prototype.draw = function(data, mergeData) {
             min: me.timeserie.min(),
             max: me.timeserie.max()
         };
+        console.log(bounds);
         me.setBucket(bounds);
         if (me.legend) me.setLegend(bounds);
         if (me.horodator) me.setHorodator(me.timeserie.start(), me.timeserie.end());
@@ -629,7 +630,6 @@ Calendar.timeserie = function(spec) {
         return me.parsed;
     };
     me.merge = function(raw) {
-        console.log(me.raw);
         me.raw = me.raw.concat(raw);
         me.raw.sort(function(a, b) {
             return a < b ? 1 : -1;
@@ -641,18 +641,21 @@ Calendar.timeserie = function(spec) {
 
 Calendar.renderer.day = function(spec) {
     var me = this;
-    if (!spec) spec = {};
-    me.margin = spec.margin || 20;
-    me.cell_size = spec.cell_size || 36;
-    me.space_between_tiles = spec.space_between_tiles || 2;
-    me.space_between_row = spec.space_between_row || 15;
-    me.tiles_left_decal = spec.tiles_left_decal || 30;
-    me.label_fill = spec.label_fill || "darkgray";
-    me.label_fontsize = spec.label_fontsize || "12px";
-    me.hour_label_class = spec.hour_label_class || "day_hour_label";
-    me.hour_label_format = spec.hour_label_format || d3.time.format("%Hh");
-    me.horodator_format = spec.horodator_format || d3.time.format("%Y %B %d");
-    me.hovered_format = spec.hovered_format || d3.time.format("%Hh:%M");
+    var settings = {
+        cell_size: 36,
+        margin: 20,
+        space_between_tiles: 2,
+        space_between_row: 15,
+        tiles_left_decal: 30,
+        label_fill: "darkgray",
+        label_fontsize: "12px",
+        hour_label_class: "day_hour_label",
+        hour_label_format: d3.time.format("%Hh"),
+        horodator_format: d3.time.format("%Y %B %d"),
+        hovered_format: d3.time.format("%Hh:%M")
+    };
+    $.extend(me, settings);
+    $.extend(me, spec);
     me.labels_hours;
     var _bounds = function(year, week, day) {
         var mondays = Calendar.data.firstDayOfWeek(new Date(year, 0, 0), new Date(year + 1, 0, 7));
@@ -740,21 +743,24 @@ Calendar.renderer.day = function(spec) {
 
 Calendar.renderer.week = function(spec) {
     var me = this;
-    if (!spec) spec = {};
-    me.cell_size = spec.cell_size || 36;
-    me.space_between_tiles = spec.space_between_tiles || 2;
-    me.tiles_left_decal = spec.tiles_left_decal || 85;
-    me.day_label_top_decal = spec.day_label_top_decal || 30;
-    me.tile_top_decal = spec.tile_top_decal || 10;
-    me.hour_label_top_decal = spec.hour_label_top_decal || 20;
-    me.hour_label_left_decal = spec.hour_label_left_decal || 5;
-    me.label_fill = spec.label_fill || "darkgray";
-    me.label_fontsize = spec.label_fontsize || "14px";
-    me.day_label_class = spec.day_label_class || "day_label";
-    me.hour_label_class = spec.hour_label_class || "hour_label";
-    me._day_label_format = spec._day_label_format || d3.time.format("%a %d %b");
-    me.horodator_format = spec.horodator_format || d3.time.format("%Y, week %W");
-    me.hovered_format = spec.hovered_format || d3.time.format("%d %Hh");
+    var settings = {
+        cell_size: 36,
+        space_between_tiles: 2,
+        tiles_left_decal: 85,
+        day_label_top_decal: 30,
+        tile_top_decal: 10,
+        hour_label_top_decal: 20,
+        hour_label_left_decal: 5,
+        label_fill: "darkgray",
+        label_fontsize: "14px",
+        day_label_class: "day_label",
+        hour_label_class: "hour_label",
+        _day_label_format: d3.time.format("%a %d %b"),
+        horodator_format: d3.time.format("%Y, week %W"),
+        hovered_format: d3.time.format("%d %Hh")
+    };
+    $.extend(me, settings);
+    $.extend(me, spec);
     me.labels_days;
     me.labels_hours;
     var _bounds = function(year, week) {
@@ -869,24 +875,27 @@ Calendar.renderer.week = function(spec) {
 
 Calendar.renderer.month = function(spec) {
     var me = this;
-    if (!spec) spec = {};
-    me.cell_size = spec.cell_size || 36;
-    me.margin = spec.margin || 40;
-    me.space_between_tiles = spec.space_between_tiles || 2;
-    me.space_between_months = spec.space_between_months || me.cell_size;
-    me.month_label_left_decal = spec.month_label_left_decal || 80;
-    me.year_label_top_decal = spec.year_label_top_decal || 146;
-    me.tiles_top_decal = spec.tiles_top_decal || 15;
-    me.tiles_left_decal = spec.tiles_left_decal || 20;
-    me.label_fill = spec.label_fill || "darkgray";
-    me.label_fontsize = spec.label_fontsize || "14px";
-    me.month_label_class = spec.month_label_class || "month_label";
-    me.week_label_class = spec.week_label_class || "week_label";
-    me.month_label_format = spec.month_label_format || d3.time.format("%B");
-    me.year_label_class = spec.year_label_class || "year_label";
-    me.year_label_format = spec.year_label_format || d3.time.format("%Y");
-    me.horodator_format = spec.horodator_format || d3.time.format("%B, %Y");
-    me.hovered_format = spec.hovered_format || d3.time.format("%B %d %Hh");
+    var settings = {
+        cell_size: 36,
+        margin: 40,
+        space_between_tiles: 2,
+        space_between_months: 36,
+        month_label_left_decal: 80,
+        year_label_top_decal: 146,
+        tiles_top_decal: 15,
+        tiles_left_decal: 20,
+        label_fill: "darkgray",
+        label_fontsize: "14px",
+        month_label_class: "month_label",
+        week_label_class: "week_label",
+        year_label_class: "year_label",
+        month_label_format: d3.time.format("%B"),
+        year_label_format: d3.time.format("%Y"),
+        horodator_format: d3.time.format("%B, %Y"),
+        hovered_format: d3.time.format("%B %d %Hh")
+    };
+    $.extend(me, settings);
+    $.extend(me, spec);
     me.labels_months;
     me.label_year;
     me.label_weeks;
@@ -1040,26 +1049,29 @@ Calendar.renderer.month = function(spec) {
 
 Calendar.renderer.year = function(spec) {
     var me = this;
-    if (!spec) spec = {};
-    me.cell_size = spec.cell_size || 36;
-    me.margin = spec.margin || 40;
-    me.space_between_tiles = spec.space_between_tiles || 2;
-    me.space_between_years = spec.space_between_years || me.cell_size * 2;
-    me.month_label_left_decal = spec.month_label_left_decal || 80;
-    me.year_label_top_decal = spec.year_label_top_decal || 146;
-    me.week_label_left_decal = spec.week_label_left_decal || 20;
-    me.week_label_top_decal = spec.week_label_top_decal || 20;
-    me.tiles_top_decal = spec.tiles_top_decal || 15;
-    me.tiles_left_decal = spec.tiles_left_decal || 20;
-    me.label_fill = spec.label_fill || "darkgray";
-    me.label_fontsize = spec.label_fontsize || "22px";
-    me.month_label_class = spec.month_label_class || "month_label";
-    me.month_label_format = spec.month_label_format || d3.time.format("%B");
-    me.year_label_class = spec.year_label_class || "year_label";
-    me.week_label_class = spec.week_label_class || "week_label";
-    me.year_label_format = spec.year_label_format || d3.time.format("%Y");
-    me.horodator_format = spec.horodator_format || d3.time.format("%Y");
-    me.hovered_format = spec.hovered_format || d3.time.format("%B %d");
+    var settings = {
+        cell_size: 36,
+        margin: 40,
+        space_between_tiles: 2,
+        space_between_years: 36 * 2,
+        month_label_left_decal: 80,
+        year_label_top_decal: 146,
+        week_label_left_decal: 20,
+        week_label_top_decal: 20,
+        tiles_top_decal: 15,
+        tiles_left_decal: 20,
+        label_fill: "darkgray",
+        label_fontsize: "22px",
+        month_label_class: "month_label",
+        month_label_format: d3.time.format("%B"),
+        year_label_class: "year_label",
+        week_label_class: "week_label",
+        year_label_format: d3.time.format("%Y"),
+        horodator_format: d3.time.format("%Y"),
+        hovered_format: d3.time.format("%B %d")
+    };
+    $.extend(me, settings);
+    $.extend(me, spec);
     me.labels_months;
     me.label_year;
     me.label_weeks;
