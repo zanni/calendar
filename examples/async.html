@@ -46,12 +46,12 @@ $(document).ready(function() {
 		d3.json("mokup/"+year+"_day.json", function(raw){
 			me.draw(raw,true);
 		});
-	}
+	};
 	var config = {
 		adaptiveHeight : true
 		, drawLegend: true
 		, animation: true
-	}
+	};
 	var myCalendar = Calendar(config).timeserie(timeserie).grab(datagrab_closure);
 
 	myCalendar.createTiles([2010]);

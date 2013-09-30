@@ -66,6 +66,11 @@ var Calendar = function(spec){
 		calendar.renderer = renderer;
 		return my;
 	};
+	my.color = function(scheme){
+		calendar.colorScheme = scheme;
+		if(calendar.legend) calendar.legend.recolor();
+		return my;
+	}
 	/** @Method */
 	/** @Description createTiles calendar call */
 	my.createTiles = function(){
@@ -194,15 +199,7 @@ var CalendarObject = function(spec){
 		me.decorators.push(me.horodator);
 	}
 
-	/******************************************************/
-	// DECORATORS
-	/******************************************************/
-	for(var i in me.decorators){
-		if(me.decorators[i] && typeof me.decorators[i].draw == 'function'){
-			me.decorators[i].draw.apply(me);
-		}
-	}	
-
+	
 }
 
 
@@ -222,9 +219,27 @@ var _createTiles = function () {
 	// self reference 
 	var me = this;
 
+		/******************************************************/
+	// DECORATORS
+	/******************************************************/
+	for(var i in me.decorators){
+		if(me.decorators[i] && typeof me.decorators[i].draw == 'function'){
+			me.decorators[i].draw.apply(me);
+		}
+	}
+
+	var bounds = {
+		min: me.timeserie.min()
+		, max: me.timeserie.max()
+	}
+	me.setBucket(bounds);
+	if(me.legend) me.setLegend(bounds)
+	if(me.horodator) me.setHorodator(me.timeserie.start(), me.timeserie.end());
+
+
 	data = [];
 	label = [];
-
+		
 	
 
 	// if renderer != current_renderer that's mean that renderer 
@@ -298,6 +313,8 @@ var _createTiles = function () {
 		}
 		
 	}
+
+	
 }
 
 /******************************************************/
@@ -323,6 +340,9 @@ CalendarObject.prototype.createTiles = function(){
 
 	// self reference 
 	var me = this;
+
+
+
 	if(me.retreiveDataCallback != null 
 		&& typeof me.retreiveDataCallback  == "function" ){
 		// asynchronous data loading
@@ -362,18 +382,10 @@ CalendarObject.prototype.draw = function(data, mergeData){
 		else{
 			me.timeserie.data(data);
 		}
-		var bounds = {
-			min: me.timeserie.min()
-			, max: me.timeserie.max()
-		}
-		console.log(bounds);
-		me.setBucket(bounds);
-		if(me.legend) me.setLegend(bounds)
-		if(me.horodator) me.setHorodator(me.timeserie.start(), me.timeserie.end());
+		
 		me.data = me.timeserie.data();
 	}
 	else{
-		console.log(me);
 		me.data = data;
 	}
 	// if local args have been memorized,

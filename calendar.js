@@ -87,6 +87,11 @@ var Calendar = function(spec) {
         calendar.renderer = renderer;
         return my;
     };
+    my.color = function(scheme) {
+        calendar.colorScheme = scheme;
+        if (calendar.legend) calendar.legend.recolor();
+        return my;
+    };
     my.createTiles = function() {
         calendar.createTiles.apply(calendar, arguments);
     };
@@ -162,15 +167,22 @@ var CalendarObject = function(spec) {
         me.horodator = new Calendar.decorator.horodator();
         me.decorators.push(me.horodator);
     }
+};
+
+var _createTiles = function() {
+    var me = this;
     for (var i in me.decorators) {
         if (me.decorators[i] && typeof me.decorators[i].draw == "function") {
             me.decorators[i].draw.apply(me);
         }
     }
-};
-
-var _createTiles = function() {
-    var me = this;
+    var bounds = {
+        min: me.timeserie.min(),
+        max: me.timeserie.max()
+    };
+    me.setBucket(bounds);
+    if (me.legend) me.setLegend(bounds);
+    if (me.horodator) me.setHorodator(me.timeserie.start(), me.timeserie.end());
     data = [];
     label = [];
     var renderer_switched = false;
@@ -239,17 +251,8 @@ CalendarObject.prototype.draw = function(data, mergeData) {
         if (typeof mergeData == "boolean" && mergeData) me.timeserie.merge(data); else {
             me.timeserie.data(data);
         }
-        var bounds = {
-            min: me.timeserie.min(),
-            max: me.timeserie.max()
-        };
-        console.log(bounds);
-        me.setBucket(bounds);
-        if (me.legend) me.setLegend(bounds);
-        if (me.horodator) me.setHorodator(me.timeserie.start(), me.timeserie.end());
         me.data = me.timeserie.data();
     } else {
-        console.log(me);
         me.data = data;
     }
     if (me._tempargs) {

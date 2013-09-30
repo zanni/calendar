@@ -48,8 +48,8 @@ $(document).ready(function() {
 		return "http://192.168.1.103:8080/rte-app/mixenergys/"+agg+"/"
 					+fields+"/between/jsonp/"
 					+format(start) + "/" + format(end);
-	}
-	var cache = {}
+	};
+	var cache = {};
 	var datagrab_closure = function(){
 		var me = this;
 		var args = Array.prototype.slice.call(arguments);
